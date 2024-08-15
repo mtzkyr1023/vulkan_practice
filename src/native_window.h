@@ -4,6 +4,7 @@
 #include <Windows.h>
 
 #include "render_engine.h"
+#include "application.h"
 
 class NativeWindow {
 public:
@@ -23,6 +24,7 @@ private:
 	HINSTANCE hinstance_;
 
 	RenderEngine engine_;
+	Application application_;
 
 	const wchar_t* kClassName = L"Vulkan Tutorial";
 };

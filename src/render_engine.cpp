@@ -57,12 +57,12 @@ void RenderEngine::initializeContext() {
 	}
 
 	{
-		uint32_t graphicsQueueIndex = 0;
+		graphicsQueueFamilyIndex_ = 0;
 		std::vector<vk::QueueFamilyProperties> queueProps = physicalDevice_.getQueueFamilyProperties();
 		uint32_t queueCount = (uint32_t)queueProps.size();
 		for (uint32_t i = 0; i < queueCount; i++) {
 			if (queueProps[i].queueFlags & vk::QueueFlagBits::eGraphics) {
-				graphicsQueueIndex = i;
+				graphicsQueueFamilyIndex_ = i;
 				break;
 			}
 		}
@@ -72,7 +72,7 @@ void RenderEngine::initializeContext() {
 		};
 		const vk::DeviceQueueCreateInfo queueCreateInfo = vk::DeviceQueueCreateInfo()
 			.setQueueCount(1)
-			.setQueueFamilyIndex(graphicsQueueIndex)
+			.setQueueFamilyIndex(graphicsQueueFamilyIndex_)
 			.setPQueuePriorities(queuePriproties);
 
 		vk::PhysicalDeviceFeatures deviceFeatures = physicalDevice_.getFeatures();
@@ -94,11 +94,11 @@ void RenderEngine::initializeContext() {
 			.setPEnabledLayerNames(layers);
 
 		device_ = physicalDevice_.createDevice(deviceCreateInfo);
-		graphicsQueue_ = device_.getQueue(graphicsQueueIndex, 0);
+		graphicsQueue_ = device_.getQueue(graphicsQueueFamilyIndex_, 0);
 
 
 		vk::CommandPoolCreateInfo commandPoolCreateInfo = vk::CommandPoolCreateInfo()
-			.setQueueFamilyIndex(graphicsQueueIndex)
+			.setQueueFamilyIndex(graphicsQueueFamilyIndex_)
 			.setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
 
 		commandPool_ = device_.createCommandPool(commandPoolCreateInfo);
@@ -127,6 +127,8 @@ void RenderEngine::cleanupContext() {
 	device_.waitIdle();
 
 	device_.destroyPipelineCache(pipelineCache_);
+
+	device_.destroyCommandPool(commandPool_);
 
 	device_.destroy();
 
@@ -270,14 +272,6 @@ void RenderEngine::initializeRenderSettings() {
 		vk::SemaphoreCreateInfo semaphoreCreateInfo;
 
 		presentCompleteSemaphore_ = device_.createSemaphore(semaphoreCreateInfo);
-
-		renderCompleteSemaphore_ = device_.createSemaphore(semaphoreCreateInfo);
-	}
-	{
-		vk::CommandBufferAllocateInfo allocInfo = vk::CommandBufferAllocateInfo()
-			.setCommandPool(commandPool_)
-			.setCommandBufferCount(imageCount_);
-		commandBuffers_ = device_.allocateCommandBuffers(allocInfo);
 	}
 }
 
@@ -285,7 +279,6 @@ void RenderEngine::initializeRenderSettings() {
 void RenderEngine::cleanupRenderSettings() {
 	device_.waitIdle();
 	device_.destroySemaphore(presentCompleteSemaphore_);
-	device_.destroySemaphore(renderCompleteSemaphore_);
 }
 
 uint32_t RenderEngine::acquireNextImage() {
@@ -335,6 +328,21 @@ std::vector<vk::CommandBuffer> RenderEngine::allocateCommandBuffer(uint32_t num)
 	return device_.allocateCommandBuffers(allocInfo);
 }
 
+uint32_t RenderEngine::getMemoryTypeIndex(uint32_t bits, const vk::MemoryPropertyFlags& properties) {
+	uint32_t result = 0;
+	vk::PhysicalDeviceMemoryProperties deviceMemoryProperties = physicalDevice_.getMemoryProperties();
+	for (uint32_t i = 0; i < 32; i++) {
+		if ((bits & 1) == 1) {
+			if ((deviceMemoryProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+				return i;
+			}
+			bits >>= 1;
+		}
+	}
+
+	return 0xffffffff;
+}
+
 VkBool32 DebugMessageCallback(
 	VkDebugReportFlagsEXT flags,
 	VkDebugReportObjectTypeEXT objType,
@@ -360,7 +368,7 @@ VkBool32 DebugMessageCallback(
 	buf << "[" << pLayerPrefix << "] Code " << msgCode << " : " << pMsg << "\n";
 	message = buf.str();
 
-	//std::cout << message << std::endl;
+	std::cout << message << std::endl;
 	OutputDebugStringA(message.c_str());
 
 	return false;

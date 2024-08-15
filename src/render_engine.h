@@ -10,9 +10,6 @@
 #include <vulkan/vk_platform.h>
 
 class RenderEngine {
-private:
-	friend class RenderPipeline;
-
 public:
 	~RenderEngine() {}
 
@@ -31,6 +28,25 @@ public:
 	vk::Fence getSubmitFence(bool destroy = false);
 
 	std::vector<vk::CommandBuffer> allocateCommandBuffer(uint32_t num);
+
+	uint32_t getMemoryTypeIndex(uint32_t bits, const vk::MemoryPropertyFlags& properties);
+
+	vk::Device device() { return device_; }
+
+	vk::PipelineCache pipelineCache() { return pipelineCache_; }
+
+	vk::Queue graphicsQueue() { return graphicsQueue_; }
+
+	vk::Format backbufferFormat() { return format_; }
+
+	std::vector<vk::Image> images() { return images_; }
+	std::vector<vk::ImageView> imageViews() { return imageViews_; }
+
+	vk::CommandPool commandPool() { return commandPool_; }
+	vk::Semaphore presentCompletedSemaphore() { return presentCompleteSemaphore_; }
+
+	uint32_t graphicsQueueFamilyIndex() { return graphicsQueueFamilyIndex_; }
+	uint32_t computeQueueFamilyIndex() { return computeQueueFamilyIndex_; }
 
 private:
 	vk::Instance instance_;
@@ -57,11 +73,12 @@ private:
 	std::vector<vk::Framebuffer> framebuffers_;
 
 	vk::CommandPool commandPool_;
-	std::vector<vk::CommandBuffer> commandBuffers_;
 
 	vk::Semaphore presentCompleteSemaphore_;
-	vk::Semaphore renderCompleteSemaphore_;
 	uint32_t currentImageIndex_;
+
+	uint32_t graphicsQueueFamilyIndex_;
+	uint32_t computeQueueFamilyIndex_;
 
 	static const uint64_t kFenceTimeout = 1000000000000;
 

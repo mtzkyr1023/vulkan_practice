@@ -52,10 +52,15 @@ void NativeWindow::initializeWindow() {
 	engine_.initializeSurface(hwnd_, hinstance_);
 	engine_.initializeSwapchain(kScreenWidth, kScreenHeight, false);
 	engine_.initializeRenderSettings();
+
+	application_.initialize(&engine_);
 }
 
 void NativeWindow::cleanupWindow() {
 	UnregisterClass(kClassName, hinstance_);
+
+	application_.cleanup(&engine_);
+
 	engine_.cleanupRenderSettings();
 	engine_.cleanupSwapchain();
 	engine_.cleanupContext();
@@ -79,7 +84,7 @@ bool NativeWindow::pollEvents() {
 }
 
 void NativeWindow::render() {
-	engine_.renderScene();
+	application_.render(&engine_);
 }
 
 static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
