@@ -17,7 +17,7 @@ public:
 
 protected:
 	std::vector<vk::Framebuffer> framebuffers_;
-	BufferSp viewProjBuffer_;
+	std::vector<BufferSp> viewProjBuffer_;
 };
 
 #endif

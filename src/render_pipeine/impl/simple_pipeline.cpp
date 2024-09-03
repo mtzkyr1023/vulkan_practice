@@ -163,10 +163,12 @@ void SimplePipeline::initialize(RenderEngine* engine) {
 		}
 	}
 
-	commandBuffers_ = engine->allocateCommandBuffer((uint32_t)engine->images().size());
+	commandBuffers_ = engine->allocateCommandBuffer(engine->swapchainImageCount());
 	
-	viewProjBuffer_ = resourceManager_.getBuffer(0);
-	viewProjBuffer_->createUniformBuffer(engine, sizeof(glm::mat4) * 8);
+	viewProjBuffer_ = resourceManager_.getBuffer(0, engine->swapchainImageCount());
+	for (auto& ite : viewProjBuffer_) {
+		ite->createUniformBuffer(engine, sizeof(glm::mat4) * 4);
+	}
 
 	for (uint32_t i = 0; i < (uint32_t)engine->images().size(); i++) {
 		renderCompletedSemaphores_.push_back(engine->device().createSemaphore(vk::SemaphoreCreateInfo()));

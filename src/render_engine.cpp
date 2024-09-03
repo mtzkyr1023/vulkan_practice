@@ -201,6 +201,7 @@ void RenderEngine::initializeSwapchain(int width, int height, bool enableVsync) 
 		preTransform = surfaceCaps.currentTransform;
 	}
 
+	swapchainImageCount_ = desiredNumSwapchainImages;
 	{
 		vk::SwapchainCreateInfoKHR swapchainCreateInfo = vk::SwapchainCreateInfoKHR()
 			.setSurface(surface_)

@@ -133,17 +133,29 @@ void Image::cleanup(RenderEngine* engine) {
 	engine->device().destroyImageView(view_);
 }
 
-BufferSp ResourceManager::getBuffer(uint32_t index) {
-	if (buffers_.find(index) == buffers_.end()) {
-		buffers_[index] = std::make_shared<Buffer>();
+std::vector<BufferSp> ResourceManager::getBuffer(uint32_t index, uint32_t num) {
+	if (images_.find(index) == images_.end()) {
+		std::vector<BufferSp> buffers;
+		buffers.resize(num);
+		for (uint32_t i = 0; i < num; i++) {
+			buffers[i] = std::make_shared<Buffer>();
+		}
+
+		buffers_[index] = buffers;
 	}
 
 	return buffers_[index];
 }
 
-ImageSp ResourceManager::getImage(uint32_t index) {
+std::vector<ImageSp> ResourceManager::getImage(uint32_t index, uint32_t num) {
 	if (images_.find(index) == images_.end()) {
-		images_[index] = std::make_shared<Image>();
+		std::vector<ImageSp> images;
+		images.resize(num);
+		for (uint32_t i = 0; i < num; i++) {
+			images[i] = std::make_shared<Image>();
+		}
+
+		images_[index] = images;
 	}
 
 	return images_[index];

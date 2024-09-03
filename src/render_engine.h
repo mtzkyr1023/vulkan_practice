@@ -48,6 +48,8 @@ public:
 	uint32_t graphicsQueueFamilyIndex() { return graphicsQueueFamilyIndex_; }
 	uint32_t computeQueueFamilyIndex() { return computeQueueFamilyIndex_; }
 
+	uint32_t swapchainImageCount() { return swapchainImageCount_; }
+
 private:
 	vk::Instance instance_;
 	std::vector<vk::PhysicalDevice> physicalDevices_;
@@ -79,6 +81,8 @@ private:
 
 	uint32_t graphicsQueueFamilyIndex_;
 	uint32_t computeQueueFamilyIndex_;
+
+	uint32_t swapchainImageCount_;
 
 	static const uint64_t kFenceTimeout = 1000000000000;
 
