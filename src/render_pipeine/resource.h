@@ -81,12 +81,12 @@ public:
 	ResourceManager() {}
 	~ResourceManager() {}
 
-	BufferSp getBuffer(uint32_t index);
-	ImageSp getImage(uint32_t index);
+	std::vector<BufferSp> getBuffer(uint32_t index, uint32_t num);
+	std::vector<ImageSp> getImage(uint32_t index, uint32_t num);
 
 private:
-	std::unordered_map<uint32_t, BufferSp> buffers_;
-	std::unordered_map<uint32_t, ImageSp> images_;
+	std::unordered_map<uint32_t, std::vector<BufferSp>> buffers_;
+	std::unordered_map<uint32_t, std::vector<ImageSp>> images_;
 };
 
 #endif
