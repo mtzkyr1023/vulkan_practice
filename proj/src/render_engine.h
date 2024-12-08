@@ -72,8 +72,6 @@ private:
 	std::vector<vk::ImageView> imageViews_;
 	std::vector<vk::Fence> fences_;
 
-	std::vector<vk::Framebuffer> framebuffers_;
-
 	vk::CommandPool commandPool_;
 
 	vk::Semaphore presentCompleteSemaphore_;

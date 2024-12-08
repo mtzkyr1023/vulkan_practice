@@ -42,6 +42,10 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\native_window.cpp" />
     <ClCompile Include="src\render_engine.cpp" />
+    <ClCompile Include="src\render_pipeine\descriptor.cpp">
+      <SubType>
+      </SubType>
+    </ClCompile>
     <ClCompile Include="src\render_pipeine\impl\simple_pipeline.cpp" />
     <ClCompile Include="src\render_pipeine\render_pipeline.cpp" />
     <ClCompile Include="src\render_pipeine\resource.cpp" />
