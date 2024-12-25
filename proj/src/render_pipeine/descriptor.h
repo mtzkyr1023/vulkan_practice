@@ -5,8 +5,7 @@
 
 #include <unordered_map>
 
-enum class EDescriptorSetID
-{
+enum class EDescriptorSetID {
 	eUniformBuffer = 0,
 };
 
@@ -25,6 +24,28 @@ public:
 private:
 	std::vector<vk::DescriptorSetLayout> layouts_;
 	std::unordered_map<EDescriptorSetID, std::vector<vk::DescriptorSetLayoutBinding>> bindings_;
+};
+
+
+class DescriptorPool {
+public:
+	DescriptorPool() {}
+	~DescriptorPool() {}
+
+	void setup(class RenderEngine* engine, uint32_t descriptorSetCount = 1024);
+	void cleanup(class RenderEngine* engine);
+
+private:
+	vk::DescriptorPool pool_;
+};
+
+
+class DescriptorSet {
+public:
+	DescriptorSet() {}
+	~DescriptorSet() {}
+
+
 };
 
 #endif
