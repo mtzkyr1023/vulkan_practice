@@ -172,11 +172,9 @@ void SimplePipeline::initialize(RenderEngine* engine) {
 	ubMemory.allocateForBuffer(
 		engine->physicalDevice(),
 		engine->device(),
-		{
-			vk::BufferCreateFlagBits::eSparseBinding,
-			sizeof(glm::mat4) * 4 * engine->swapchainImageCount(),
-			vk::BufferUsageFlagBits::eUniformBuffer
-		},
+		vk::BufferCreateInfo()
+		.setSize(sizeof(glm::mat4) * 4 * engine->swapchainImageCount())
+		.setUsage(vk::BufferUsageFlagBits::eUniformBuffer),
 		vk::MemoryPropertyFlagBits::eHostVisible);
 	for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
 	{
@@ -240,6 +238,17 @@ void SimplePipeline::cleanup(RenderEngine* engine) {
 	for (vk::Framebuffer& framebuffer : framebuffers_) {
 		engine->device().destroyFramebuffer(framebuffer);
 	}
+
+	for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
+	{
+		engine->device().destroyBuffer(viewProjBuffer_[i]);
+	}
+
+	ubMemory.free(engine->device());
+
+	engine->device().freeDescriptorSets(engine->descriptorPool(), sets_);
+	engine->device().destroyDescriptorSetLayout(layout_);
+
 }
 
 void SimplePipeline::render(RenderEngine* engine, uint32_t currentImageIndex) {

@@ -5,15 +5,25 @@ void Memory::allocateForBuffer(
 	const vk::PhysicalDevice& physicalDevice,
 	const vk::Device& device,
 	const vk::BufferCreateInfo& info,
-	vk::MemoryPropertyFlagBits flag) {
-
+	vk::MemoryPropertyFlagBits propFlag)
+{
+#if VK_VERSION_MINOR >= 3
 	vk::DeviceBufferMemoryRequirements deviceMemReqs = vk::DeviceBufferMemoryRequirements()
 		.setPCreateInfo(&info);
 	vk::MemoryRequirements2 memReqs = device.getBufferMemoryRequirements(deviceMemReqs);
 	vk::MemoryAllocateInfo allocInfo = vk::MemoryAllocateInfo()
 		.setAllocationSize(memReqs.memoryRequirements.size)
 		.setMemoryTypeIndex(getMemoryTypeIndex(physicalDevice, memReqs.memoryRequirements.memoryTypeBits, flag));
+#else
+	vk::Buffer buffer = device.createBuffer(info);
 
+	vk::MemoryRequirements memReqs = device.getBufferMemoryRequirements(buffer);
+	vk::MemoryAllocateInfo allocInfo = vk::MemoryAllocateInfo()
+		.setAllocationSize(memReqs.size)
+		.setMemoryTypeIndex(getMemoryTypeIndex(physicalDevice, memReqs.memoryTypeBits, propFlag));
+
+	device.destroyBuffer(buffer);
+#endif
 	memory_ = device.allocateMemory(allocInfo);
 }
 
@@ -23,12 +33,23 @@ void Memory::allocateForImage(
 	const vk::ImageCreateInfo& info,
 	vk::MemoryPropertyFlagBits propFlag)
 {
+#if VK_VERSION_MINOR >= 3
 	vk::DeviceImageMemoryRequirements deviceMemReqs = vk::DeviceImageMemoryRequirements()
 		.setPCreateInfo(&info);
 	vk::MemoryRequirements2 memReqs = device.getImageMemoryRequirements(deviceMemReqs);
 	vk::MemoryAllocateInfo allocInfo = vk::MemoryAllocateInfo()
 		.setAllocationSize(memReqs.memoryRequirements.size)
 		.setMemoryTypeIndex(getMemoryTypeIndex(physicalDevice, memReqs.memoryRequirements.memoryTypeBits, propFlag));
+#else
+	vk::Image image = device.createImage(info);
+
+	vk::MemoryRequirements memReqs = device.getImageMemoryRequirements(image);
+	vk::MemoryAllocateInfo allocInfo = vk::MemoryAllocateInfo()
+		.setAllocationSize(memReqs.size)
+		.setMemoryTypeIndex(getMemoryTypeIndex(physicalDevice, memReqs.memoryTypeBits, propFlag));
+
+	device.destroyImage(image);
+#endif
 
 	memory_ = device.allocateMemory(allocInfo);
 }

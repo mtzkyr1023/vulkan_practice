@@ -22,9 +22,12 @@ void RenderEngine::initializeContext() {
 	const vk::ApplicationInfo applicationInfo = vk::ApplicationInfo()
 		.setPApplicationName(kAppName)
 		.setPEngineName(kAppName)
-		.setApiVersion(0)
 		.setEngineVersion(0)
+#if VK_VERSION_MINOR >= 3
 		.setApiVersion(VK_API_VERSION_1_3);
+#else
+		.setApiVersion(VK_API_VERSION_1_3);
+#endif
 
 
 	const vk::InstanceCreateInfo instanceCreateInfo = vk::InstanceCreateInfo()
