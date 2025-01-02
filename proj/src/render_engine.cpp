@@ -274,12 +274,24 @@ void RenderEngine::initializeRenderSettings() {
 
 		presentCompleteSemaphore_ = device_.createSemaphore(semaphoreCreateInfo);
 	}
+
+	{
+		vk::DescriptorPoolSize size = vk::DescriptorPoolSize()
+			.setDescriptorCount(4096);
+		vk::DescriptorPoolCreateInfo poolCreateInfo = vk::DescriptorPoolCreateInfo()
+			.setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet)
+			.setMaxSets(4096)
+			.setPoolSizes({size});
+
+		descriptorPool_ = device_.createDescriptorPool(poolCreateInfo);
+	}
 }
 
 
 void RenderEngine::cleanupRenderSettings() {
 	device_.waitIdle();
 	device_.destroySemaphore(presentCompleteSemaphore_);
+	device_.destroyDescriptorPool(descriptorPool_);
 }
 
 uint32_t RenderEngine::acquireNextImage() {

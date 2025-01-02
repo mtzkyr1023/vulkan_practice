@@ -6,7 +6,6 @@
 #include <iostream>
 
 GameObjectManager RenderPipeline::objectManager_;
-ResourceManager RenderPipeline::resourceManager_;
 
 void RenderPipeline::cleanup(RenderEngine* engine) {
 	engine->device().destroyRenderPass(renderPass_);

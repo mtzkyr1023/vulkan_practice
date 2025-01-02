@@ -23,6 +23,8 @@ void Application::cleanup(RenderEngine* engine) {
 void Application::render(RenderEngine* engine) {
 	uint32_t currentFrameIndex = engine->acquireNextImage();
 
+	simplePipeline_.update(engine, currentFrameIndex);
+
 	simplePipeline_.render(engine, currentFrameIndex);
 
 	vk::CommandBuffer cb = simplePipeline_.commandBuffer(0);

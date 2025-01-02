@@ -15,6 +15,7 @@ public:
 	virtual void cleanup(class RenderEngine* engine);
 	
 	virtual void render(class RenderEngine* engine, uint32_t currentImageIndex) = 0;
+	virtual void update(class RenderEngine* engine, uint32_t currentImageIndex) = 0;
 
 	vk::CommandBuffer commandBuffer(uint32_t currentFrameIndex) { return commandBuffers_[currentFrameIndex]; }
 	vk::Semaphore renderCompletedSemaphore(uint32_t currentFrameIndex) { return renderCompletedSemaphores_[currentFrameIndex]; }
@@ -36,7 +37,6 @@ protected:
 	std::vector<vk::Semaphore> renderCompletedSemaphores_;
 
 	static GameObjectManager objectManager_;
-	static ResourceManager resourceManager_;
 };
 
 #endif

@@ -31,19 +31,22 @@ public:
 
 	uint32_t getMemoryTypeIndex(uint32_t bits, const vk::MemoryPropertyFlags& properties);
 
-	vk::Device device() { return device_; }
+	const vk::PhysicalDevice& physicalDevice() { return physicalDevice_; }
+	const vk::Device& device() { return device_; }
 
-	vk::PipelineCache pipelineCache() { return pipelineCache_; }
+	const vk::PipelineCache& pipelineCache() { return pipelineCache_; }
 
-	vk::Queue graphicsQueue() { return graphicsQueue_; }
+	const vk::Queue& graphicsQueue() { return graphicsQueue_; }
 
 	vk::Format backbufferFormat() { return format_; }
 
-	std::vector<vk::Image> images() { return images_; }
-	std::vector<vk::ImageView> imageViews() { return imageViews_; }
+	const std::vector<vk::Image>& images() { return images_; }
+	const std::vector<vk::ImageView>& imageViews() { return imageViews_; }
 
-	vk::CommandPool commandPool() { return commandPool_; }
-	vk::Semaphore presentCompletedSemaphore() { return presentCompleteSemaphore_; }
+	const vk::CommandPool& commandPool() { return commandPool_; }
+	const vk::DescriptorPool& descriptorPool() { return descriptorPool_; }
+
+	const vk::Semaphore& presentCompletedSemaphore() { return presentCompleteSemaphore_; }
 
 	uint32_t graphicsQueueFamilyIndex() { return graphicsQueueFamilyIndex_; }
 	uint32_t computeQueueFamilyIndex() { return computeQueueFamilyIndex_; }
@@ -73,6 +76,8 @@ private:
 	std::vector<vk::Fence> fences_;
 
 	vk::CommandPool commandPool_;
+
+	vk::DescriptorPool descriptorPool_;
 
 	vk::Semaphore presentCompleteSemaphore_;
 	uint32_t currentImageIndex_;

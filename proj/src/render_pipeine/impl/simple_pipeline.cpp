@@ -164,14 +164,73 @@ void SimplePipeline::initialize(RenderEngine* engine) {
 	}
 
 	commandBuffers_ = engine->allocateCommandBuffer(engine->swapchainImageCount());
-	
-	viewProjBuffer_ = resourceManager_.getBuffer(0, engine->swapchainImageCount());
-	for (auto& ite : viewProjBuffer_) {
-		ite->createUniformBuffer(engine, sizeof(glm::mat4) * 4);
-	}
 
 	for (uint32_t i = 0; i < (uint32_t)engine->images().size(); i++) {
 		renderCompletedSemaphores_.push_back(engine->device().createSemaphore(vk::SemaphoreCreateInfo()));
+	}
+
+	ubMemory.allocateForBuffer(
+		engine->physicalDevice(),
+		engine->device(),
+		{
+			vk::BufferCreateFlagBits::eSparseBinding,
+			sizeof(glm::mat4) * 4 * engine->swapchainImageCount(),
+			vk::BufferUsageFlagBits::eUniformBuffer
+		},
+		vk::MemoryPropertyFlagBits::eHostVisible);
+	for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
+	{
+		vk::BufferCreateInfo bufferCreateInfo = vk::BufferCreateInfo()
+			.setSize(sizeof(glm::mat4) * 4)
+			.setUsage(vk::BufferUsageFlagBits::eUniformBuffer);
+
+		viewProjBuffer_.push_back(engine->device().createBuffer(bufferCreateInfo));
+	}
+
+	for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
+	{
+		ubMemory.bind(engine->device(), viewProjBuffer_[i], sizeof(glm::mat4) * 4 * i);
+		mappedViewProjMemories_.push_back(ubMemory.map(engine->device(), sizeof(glm::mat4) * 4 * i, sizeof(glm::mat4) * 4));
+	}
+
+	{
+		vk::DescriptorSetLayoutBinding binding = vk::DescriptorSetLayoutBinding()
+			.setBinding(0)
+			.setDescriptorCount(1)
+			.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+			.setStageFlags(vk::ShaderStageFlagBits::eVertex);
+
+		vk::DescriptorSetLayoutCreateInfo layoutCreateInfo = vk::DescriptorSetLayoutCreateInfo()
+			.setBindings({ binding });
+
+		layout_ = engine->device().createDescriptorSetLayout(layoutCreateInfo);
+
+		vk::DescriptorSetAllocateInfo allocInfo = vk::DescriptorSetAllocateInfo()
+			.setDescriptorPool(engine->descriptorPool())
+			.setDescriptorSetCount(engine->swapchainImageCount())
+			.setSetLayouts(layout_);
+
+		sets_ = engine->device().allocateDescriptorSets(allocInfo);
+		
+		std::vector<vk::WriteDescriptorSet> writes;
+
+		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
+		{
+			vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
+				.setBuffer(viewProjBuffer_[i])
+				.setOffset(0)
+				.setRange(sizeof(glm::mat4) * 4);
+
+			writes.push_back(vk::WriteDescriptorSet()
+				.setBufferInfo(bufferInfo)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+				.setDstArrayElement(0)
+				.setDstBinding(0)
+				.setDstSet(sets_[i]));
+		}
+
+		engine->device().updateDescriptorSets(writes, {});
 	}
 }
 
@@ -230,6 +289,13 @@ void SimplePipeline::render(RenderEngine* engine, uint32_t currentImageIndex) {
 
 	cb.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_);
 
+	cb.bindDescriptorSets(
+		vk::PipelineBindPoint::eGraphics,
+		pipelineLayout_,
+		currentImageIndex,
+		sets_,
+		{});
+
 	cb.draw(3, 1, 0, 0);
 
 	cb.endRenderPass();
@@ -263,4 +329,32 @@ void SimplePipeline::render(RenderEngine* engine, uint32_t currentImageIndex) {
 	}
 
 	cb.end();
+}
+
+void SimplePipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
+{
+	struct ViewProj
+	{
+		glm::mat4 view;
+		glm::mat4 proj;
+	};
+	
+	ViewProj vp;
+
+	vp.view = glm::lookAt(
+		glm::vec3(0.0f, 0.0f, -5.0f),
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(0.0f, 1.0f, 0.0f));
+	vp.proj = glm::perspectiveFov(
+		glm::pi<float>() * 0.5f,
+		(float)kScreenWidth,
+		(float)kScreenHeight,
+		0.1f,
+		1000.0f);
+
+	memcpy_s(
+		mappedViewProjMemories_[currentImageIndex],
+		sizeof(ViewProj),
+		&vp,
+		sizeof(ViewProj));
 }
