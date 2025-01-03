@@ -1,3 +1,6 @@
 [submodule "shaderc"]
 	path = shaderc
 	url = https://github.com/google/shaderc.git
+[submodule "assimp"]
+	path = assimp
+	url = https://github.com/assimp/assimp.git

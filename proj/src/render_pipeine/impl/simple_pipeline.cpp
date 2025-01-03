@@ -2,12 +2,14 @@
 #include "../../render_engine.h"
 #include "../../defines.h"
 #include "../../gameobject/camera.h"
-
+#include "assimp/Importer.hpp"
 
 #undef MemoryBarrier
 
 SimplePipeline::SimplePipeline() {
+	Assimp::Importer* imp = new Assimp::Importer();
 
+	delete imp;
 }
 
 SimplePipeline::~SimplePipeline() {
@@ -15,6 +17,19 @@ SimplePipeline::~SimplePipeline() {
 }
 
 void SimplePipeline::initialize(RenderEngine* engine) {
+	{
+		vk::DescriptorSetLayoutBinding binding = vk::DescriptorSetLayoutBinding()
+			.setBinding(0)
+			.setDescriptorCount(1)
+			.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+			.setStageFlags(vk::ShaderStageFlagBits::eVertex);
+
+		vk::DescriptorSetLayoutCreateInfo layoutCreateInfo = vk::DescriptorSetLayoutCreateInfo()
+			.setBindings({ binding });
+
+		layouts_.push_back(engine->device().createDescriptorSetLayout(layoutCreateInfo));
+	}
+
 	{
 		vk::AttachmentReference attachmentRefs = vk::AttachmentReference()
 			.setAttachment(0)
@@ -76,7 +91,7 @@ void SimplePipeline::initialize(RenderEngine* engine) {
 			.setPrimitiveRestartEnable(false);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState = vk::PipelineRasterizationStateCreateInfo()
-			.setCullMode(vk::CullModeFlagBits::eBack)
+			.setCullMode(vk::CullModeFlagBits::eNone)
 			.setDepthBiasClamp(0.0f)
 			.setDepthBiasConstantFactor(0.0f)
 			.setDepthBiasEnable(vk::False)
@@ -108,8 +123,7 @@ void SimplePipeline::initialize(RenderEngine* engine) {
 			.setPAttachments(&colorBlendAttachmentState);
 
 		vk::PipelineLayoutCreateInfo pipelineLayoutCreateInfo = vk::PipelineLayoutCreateInfo()
-			.setSetLayoutCount(0)
-			.setPSetLayouts(nullptr);
+			.setSetLayouts(layouts_);
 
 		pipelineLayout_ = engine->device().createPipelineLayout(pipelineLayoutCreateInfo);
 
@@ -187,29 +201,22 @@ void SimplePipeline::initialize(RenderEngine* engine) {
 
 	for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
 	{
-		ubMemory.bind(engine->device(), viewProjBuffer_[i], sizeof(glm::mat4) * 4 * i);
-		mappedViewProjMemories_.push_back(ubMemory.map(engine->device(), sizeof(glm::mat4) * 4 * i, sizeof(glm::mat4) * 4));
+		ubMemory.bind(engine->device(), viewProjBuffer_[i], sizeof(glm::mat4) * 4 * i);	
 	}
 
+	mappedViewProjMemory_ = ubMemory.map(engine->device(), 0, sizeof(glm::mat4) * 4 * engine->swapchainImageCount());
+
+
 	{
-		vk::DescriptorSetLayoutBinding binding = vk::DescriptorSetLayoutBinding()
-			.setBinding(0)
-			.setDescriptorCount(1)
-			.setDescriptorType(vk::DescriptorType::eUniformBuffer)
-			.setStageFlags(vk::ShaderStageFlagBits::eVertex);
-
-		vk::DescriptorSetLayoutCreateInfo layoutCreateInfo = vk::DescriptorSetLayoutCreateInfo()
-			.setBindings({ binding });
-
-		layout_ = engine->device().createDescriptorSetLayout(layoutCreateInfo);
-
 		vk::DescriptorSetAllocateInfo allocInfo = vk::DescriptorSetAllocateInfo()
 			.setDescriptorPool(engine->descriptorPool())
-			.setDescriptorSetCount(engine->swapchainImageCount())
-			.setSetLayouts(layout_);
+			.setSetLayouts(layouts_);
 
-		sets_ = engine->device().allocateDescriptorSets(allocInfo);
-		
+		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
+		{
+			sets_.push_back(engine->device().allocateDescriptorSets(allocInfo)[0]);
+		}
+
 		std::vector<vk::WriteDescriptorSet> writes;
 
 		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
@@ -247,8 +254,10 @@ void SimplePipeline::cleanup(RenderEngine* engine) {
 	ubMemory.free(engine->device());
 
 	engine->device().freeDescriptorSets(engine->descriptorPool(), sets_);
-	engine->device().destroyDescriptorSetLayout(layout_);
-
+	for (const auto& layout : layouts_)
+	{
+		engine->device().destroyDescriptorSetLayout(layout);
+	}
 }
 
 void SimplePipeline::render(RenderEngine* engine, uint32_t currentImageIndex) {
@@ -301,8 +310,8 @@ void SimplePipeline::render(RenderEngine* engine, uint32_t currentImageIndex) {
 	cb.bindDescriptorSets(
 		vk::PipelineBindPoint::eGraphics,
 		pipelineLayout_,
-		currentImageIndex,
-		sets_,
+		0,
+		{ sets_[currentImageIndex] },
 		{});
 
 	cb.draw(3, 1, 0, 0);
@@ -346,10 +355,16 @@ void SimplePipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
 	{
 		glm::mat4 view;
 		glm::mat4 proj;
+		glm::mat4 world;
 	};
 	
 	ViewProj vp;
 
+	static float rot = 0.0f;
+
+	rot += glm::radians<float>(1.0f);
+
+	vp.world = glm::mat4(glm::rotate(glm::identity<glm::quat>(), rot, glm::vec3(0.0f, 1.0f, 0.0f)));
 	vp.view = glm::lookAt(
 		glm::vec3(0.0f, 0.0f, -5.0f),
 		glm::vec3(0.0f, 0.0f, 0.0f),
@@ -362,7 +377,7 @@ void SimplePipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
 		1000.0f);
 
 	memcpy_s(
-		mappedViewProjMemories_[currentImageIndex],
+		&mappedViewProjMemory_[sizeof(glm::mat4) * 4 * currentImageIndex],
 		sizeof(ViewProj),
 		&vp,
 		sizeof(ViewProj));

@@ -128,14 +128,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include\;$(ProjectDir)..\shaderc\libshaderc\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include\;$(ProjectDir)..\shaderc\libshaderc\include\;C:\work\vulkan_practice\assimp\assimp_build\include;$(ProjectDir)..\assimp\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib\;$(ProjectDir)..\shaderc\shaderc_build\libshaderc\Debug\;$(ProjectDir)..\shaderc\shaderc_build\libshaderc_util\Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;shaderc.lib;shaderc_util.lib;shaderc_combined.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib\;$(ProjectDir)..\assimp\assimp_build\bin\Debug;$(ProjectDir)..\assimp\assimp_build\lib\Debug;$(ProjectDir)..\shaderc\shaderc_build\libshaderc\Debug\;$(ProjectDir)..\shaderc\shaderc_build\libshaderc_util\Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;shaderc.lib;shaderc_util.lib;shaderc_combined.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

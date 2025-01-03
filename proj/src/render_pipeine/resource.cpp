@@ -7,13 +7,13 @@ void Memory::allocateForBuffer(
 	const vk::BufferCreateInfo& info,
 	vk::MemoryPropertyFlagBits propFlag)
 {
-#if VK_VERSION_MINOR >= 3
+#if 0
 	vk::DeviceBufferMemoryRequirements deviceMemReqs = vk::DeviceBufferMemoryRequirements()
 		.setPCreateInfo(&info);
 	vk::MemoryRequirements2 memReqs = device.getBufferMemoryRequirements(deviceMemReqs);
 	vk::MemoryAllocateInfo allocInfo = vk::MemoryAllocateInfo()
 		.setAllocationSize(memReqs.memoryRequirements.size)
-		.setMemoryTypeIndex(getMemoryTypeIndex(physicalDevice, memReqs.memoryRequirements.memoryTypeBits, flag));
+		.setMemoryTypeIndex(getMemoryTypeIndex(physicalDevice, memReqs.memoryRequirements.memoryTypeBits, propFlag));
 #else
 	vk::Buffer buffer = device.createBuffer(info);
 
@@ -33,7 +33,7 @@ void Memory::allocateForImage(
 	const vk::ImageCreateInfo& info,
 	vk::MemoryPropertyFlagBits propFlag)
 {
-#if VK_VERSION_MINOR >= 3
+#if 0
 	vk::DeviceImageMemoryRequirements deviceMemReqs = vk::DeviceImageMemoryRequirements()
 		.setPCreateInfo(&info);
 	vk::MemoryRequirements2 memReqs = device.getImageMemoryRequirements(deviceMemReqs);

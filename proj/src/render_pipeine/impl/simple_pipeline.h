@@ -20,10 +20,10 @@ protected:
 	std::vector<vk::Framebuffer> framebuffers_;
 	std::vector<vk::Buffer> viewProjBuffer_;
 	Memory ubMemory;
-	vk::DescriptorSetLayout layout_;
+	std::vector<vk::DescriptorSetLayout> layouts_;
 	std::vector<vk::DescriptorSet> sets_;
 
-	std::vector<uint8_t*> mappedViewProjMemories_;
+	uint8_t* mappedViewProjMemory_;
 };
 
 #endif

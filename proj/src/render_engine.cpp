@@ -280,7 +280,8 @@ void RenderEngine::initializeRenderSettings() {
 
 	{
 		vk::DescriptorPoolSize size = vk::DescriptorPoolSize()
-			.setDescriptorCount(4096);
+			.setDescriptorCount(4096)
+			.setType(vk::DescriptorType::eUniformBuffer);
 		vk::DescriptorPoolCreateInfo poolCreateInfo = vk::DescriptorPoolCreateInfo()
 			.setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet)
 			.setMaxSets(4096)
