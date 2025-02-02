@@ -8,7 +8,6 @@
 GameObjectManager RenderPipeline::objectManager_;
 
 void RenderPipeline::cleanup(RenderEngine* engine) {
-	engine->device().destroyRenderPass(renderPass_);
 	engine->device().destroyPipeline(pipeline_);
 	engine->device().destroyPipelineLayout(pipelineLayout_);
 	engine->device().freeCommandBuffers(engine->commandPool(), commandBuffers_);

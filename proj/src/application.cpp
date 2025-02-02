@@ -1,6 +1,8 @@
 #include "application.h"
 #include "render_engine.h"
+#include "util/timer.h"
 #include "defines.h"
+#include "imgui/imgui.h"
 
 Application::Application() {
 
@@ -10,7 +12,8 @@ Application::~Application() {
 
 }
 
-void Application::initialize(RenderEngine* engine) {
+void Application::initialize(RenderEngine* engine, HWND hwnd) {
+	imgui_.setup(engine, hwnd);
 	simplePipeline_.initialize(engine);
 }
 
@@ -18,16 +21,37 @@ void Application::cleanup(RenderEngine* engine) {
 	engine->device().waitIdle();
 	engine->graphicsQueue().waitIdle();
 	simplePipeline_.cleanup(engine);
+	imgui_.cleanup(engine);
 }
 
 void Application::render(RenderEngine* engine) {
 	uint32_t currentFrameIndex = engine->acquireNextImage();
 
-	simplePipeline_.update(engine, currentFrameIndex);
+	update(engine, currentFrameIndex);
 
+	vk::CommandBuffer cb = engine->commandBuffer(currentFrameIndex);
+
+	cb.begin(vk::CommandBufferBeginInfo());
+	
+	std::array<vk::ClearValue, 1> clearValues = {
+		vk::ClearValue()
+	};
+	vk::RenderPassBeginInfo renderPassBeginInfo = vk::RenderPassBeginInfo()
+		.setRenderPass(engine->renderPass())
+		.setFramebuffer(engine->framebuffer(currentFrameIndex))
+		.setRenderArea(vk::Rect2D({ 0, 0 }, { kScreenWidth, kScreenHeight }))
+		.setClearValueCount(1)
+		.setPClearValues(clearValues.data());
+
+	cb.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
+	
 	simplePipeline_.render(engine, currentFrameIndex);
 
-	vk::CommandBuffer cb = simplePipeline_.commandBuffer(0);
+	imgui_.render(engine, cb);
+
+	cb.endRenderPass();
+
+	cb.end();
 
 	std::vector<vk::PipelineStageFlags> waitStageMasks = {
 		vk::PipelineStageFlagBits::eBottomOfPipe
@@ -63,4 +87,18 @@ void Application::render(RenderEngine* engine) {
 	engine->present(signalSemaphores);
 
 	engine->device().destroyFence(submitFence);
+
+	Timer::instance().update();
+}
+
+void Application::update(RenderEngine* engine, uint32_t currentFrameIndex)
+{
+	imgui_.prepare();
+
+	ImGui::Begin("Hello world!");
+
+	ImGui::End();
+
+
+	simplePipeline_.update(engine, currentFrameIndex);
 }

@@ -2,7 +2,9 @@
 #include "defines.h"
 #include "mk_exception.h"
 
+#include "imgui/backends/imgui_impl_win32.h"
 
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 void NativeWindow::initializeWindow() {
 	WNDCLASSEX wc{};
@@ -53,7 +55,7 @@ void NativeWindow::initializeWindow() {
 	engine_.initializeSwapchain(kScreenWidth, kScreenHeight, false);
 	engine_.initializeRenderSettings();
 
-	application_.initialize(&engine_);
+	application_.initialize(&engine_, hwnd_);
 }
 
 void NativeWindow::cleanupWindow() {
@@ -89,6 +91,9 @@ void NativeWindow::render() {
 
 static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam))
+		return true;
+
 	switch (uMsg)
 	{
 	case WM_SETFOCUS:

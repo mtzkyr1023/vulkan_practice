@@ -27,10 +27,11 @@ public:
 	vk::Result present(const std::vector<vk::Semaphore>& waitSemaphore);
 	vk::Fence getSubmitFence(bool destroy = false);
 
-	std::vector<vk::CommandBuffer> allocateCommandBuffer(uint32_t num);
+	std::vector<vk::CommandBuffer> allocateCommandBuffer(uint32_t num, vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
 
 	uint32_t getMemoryTypeIndex(uint32_t bits, const vk::MemoryPropertyFlags& properties);
 
+	const vk::Instance& instance() { return instance_; }
 	const vk::PhysicalDevice& physicalDevice() { return physicalDevice_; }
 	const vk::Device& device() { return device_; }
 
@@ -44,7 +45,13 @@ public:
 	const std::vector<vk::ImageView>& imageViews() { return imageViews_; }
 
 	const vk::CommandPool& commandPool() { return commandPool_; }
+	const vk::CommandBuffer& commandBuffer(uint32_t currentFrameIndex) { return commandBuffers_[currentFrameIndex]; }
+
 	const vk::DescriptorPool& descriptorPool() { return descriptorPool_; }
+
+	const vk::RenderPass& renderPass() { return renderPass_; }
+
+	const vk::Framebuffer& framebuffer(uint32_t currentFrameIndex) { return framebuffers_[currentFrameIndex]; }
 
 	const vk::Semaphore& presentCompletedSemaphore() { return presentCompleteSemaphore_; }
 
@@ -76,8 +83,12 @@ private:
 	std::vector<vk::Fence> fences_;
 
 	vk::CommandPool commandPool_;
+	std::vector<vk::CommandBuffer> commandBuffers_;
 
 	vk::DescriptorPool descriptorPool_;
+
+	vk::RenderPass renderPass_;
+	std::vector<vk::Framebuffer> framebuffers_;
 
 	vk::Semaphore presentCompleteSemaphore_;
 	uint32_t currentImageIndex_;

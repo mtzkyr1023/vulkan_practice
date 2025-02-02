@@ -279,16 +279,79 @@ void RenderEngine::initializeRenderSettings() {
 	}
 
 	{
-		vk::DescriptorPoolSize size = vk::DescriptorPoolSize()
-			.setDescriptorCount(4096)
-			.setType(vk::DescriptorType::eUniformBuffer);
+		std::vector<vk::DescriptorPoolSize> poolSizes = {
+			{vk::DescriptorType::eSampler,4096},
+			{vk::DescriptorType::eCombinedImageSampler,4096},
+			{vk::DescriptorType::eSampledImage,4096},
+			{vk::DescriptorType::eStorageImage,4096},
+			{vk::DescriptorType::eUniformTexelBuffer,4096},
+			{vk::DescriptorType::eStorageTexelBuffer,4096},
+			{vk::DescriptorType::eUniformBuffer,4096},
+			{vk::DescriptorType::eStorageBuffer,4096},
+			{vk::DescriptorType::eUniformBufferDynamic,4096},
+			{vk::DescriptorType::eStorageBufferDynamic,4096},
+			{vk::DescriptorType::eInputAttachment,4096}
+		};
 		vk::DescriptorPoolCreateInfo poolCreateInfo = vk::DescriptorPoolCreateInfo()
 			.setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet)
 			.setMaxSets(4096)
-			.setPoolSizes({size});
+			.setPoolSizes(poolSizes);
 
 		descriptorPool_ = device_.createDescriptorPool(poolCreateInfo);
 	}
+
+	{
+		vk::AttachmentReference attachmentRefs = vk::AttachmentReference()
+			.setAttachment(0)
+			.setLayout(vk::ImageLayout::eColorAttachmentOptimal);
+
+		vk::AttachmentDescription attachmentDesc = vk::AttachmentDescription()
+			.setInitialLayout(vk::ImageLayout::eUndefined)
+			.setFormat(format_)
+			.setLoadOp(vk::AttachmentLoadOp::eClear)
+			.setStoreOp(vk::AttachmentStoreOp::eStore)
+			.setFinalLayout(vk::ImageLayout::ePresentSrcKHR)
+			.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
+			.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
+
+		vk::SubpassDescription subpassDesc = vk::SubpassDescription()
+			.setColorAttachmentCount(1)
+			.setPColorAttachments(&attachmentRefs)
+			.setInputAttachmentCount(0)
+			.setPInputAttachments(nullptr)
+			.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
+
+		vk::RenderPassCreateInfo renderPassCreateInfo = vk::RenderPassCreateInfo()
+			.setAttachmentCount(1)
+			.setPAttachments(&attachmentDesc)
+			.setDependencyCount(0)
+			.setSubpassCount(1)
+			.setPSubpasses(&subpassDesc);
+
+		renderPass_ = device_.createRenderPass(renderPassCreateInfo);
+	}
+
+	{
+		commandBuffers_ = allocateCommandBuffer(swapchainImageCount_);
+	}
+
+	{
+		for (size_t i = 0; i < imageViews_.size(); i++) {
+			vk::ImageView imageViews[1] = {
+				imageViews_[i],
+			};
+			vk::FramebufferCreateInfo framebufferCreateInfo = vk::FramebufferCreateInfo()
+				.setAttachmentCount(1)
+				.setPAttachments(imageViews)
+				.setWidth((uint32_t)kScreenWidth)
+				.setHeight((uint32_t)kScreenHeight)
+				.setRenderPass(renderPass_)
+				.setLayers(1);
+
+			framebuffers_.push_back(device_.createFramebuffer(framebufferCreateInfo));
+		}
+	}
+
 }
 
 
@@ -337,10 +400,11 @@ vk::Fence RenderEngine::getSubmitFence(bool destroy) {
 	return fences_[currentImageIndex_];
 }
 
-std::vector<vk::CommandBuffer> RenderEngine::allocateCommandBuffer(uint32_t num) {
+std::vector<vk::CommandBuffer> RenderEngine::allocateCommandBuffer(uint32_t num, vk::CommandBufferLevel level) {
 	vk::CommandBufferAllocateInfo allocInfo = vk::CommandBufferAllocateInfo()
 		.setCommandPool(commandPool_)
-		.setCommandBufferCount(num);
+		.setCommandBufferCount(num)
+		.setLevel(level);
 
 	return device_.allocateCommandBuffers(allocInfo);
 }

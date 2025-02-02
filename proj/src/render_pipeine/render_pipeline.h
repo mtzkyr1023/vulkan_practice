@@ -29,7 +29,6 @@ protected:
 		shaderc_shader_kind shaderKind);
 
 protected:
-	vk::RenderPass renderPass_;
 	vk::PipelineLayout pipelineLayout_;
 	vk::Pipeline pipeline_;
 	vk::Viewport viewport_;

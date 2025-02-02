@@ -3,10 +3,13 @@
 #include "../../defines.h"
 #include "../../gameobject/camera.h"
 #include "assimp/Importer.hpp"
+#include "../../util/timer.h"
 
 #undef MemoryBarrier
 
-SimplePipeline::SimplePipeline() {
+SimplePipeline::SimplePipeline() :
+	mappedViewProjMemory_(nullptr)
+{
 	Assimp::Importer* imp = new Assimp::Importer();
 
 	delete imp;
@@ -28,37 +31,6 @@ void SimplePipeline::initialize(RenderEngine* engine) {
 			.setBindings({ binding });
 
 		layouts_.push_back(engine->device().createDescriptorSetLayout(layoutCreateInfo));
-	}
-
-	{
-		vk::AttachmentReference attachmentRefs = vk::AttachmentReference()
-			.setAttachment(0)
-			.setLayout(vk::ImageLayout::eColorAttachmentOptimal);
-
-		vk::AttachmentDescription attachmentDesc = vk::AttachmentDescription()
-			.setInitialLayout(vk::ImageLayout::eUndefined)
-			.setFormat(engine->backbufferFormat())
-			.setLoadOp(vk::AttachmentLoadOp::eClear)
-			.setStoreOp(vk::AttachmentStoreOp::eStore)
-			.setFinalLayout(vk::ImageLayout::ePresentSrcKHR)
-			.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
-			.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
-
-		vk::SubpassDescription subpassDesc = vk::SubpassDescription()
-			.setColorAttachmentCount(1)
-			.setPColorAttachments(&attachmentRefs)
-			.setInputAttachmentCount(0)
-			.setPInputAttachments(nullptr)
-			.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
-
-		vk::RenderPassCreateInfo renderPassCreateInfo = vk::RenderPassCreateInfo()
-			.setAttachmentCount(1)
-			.setPAttachments(&attachmentDesc)
-			.setDependencyCount(0)
-			.setSubpassCount(1)
-			.setPSubpasses(&subpassDesc);
-
-		renderPass_ = engine->device().createRenderPass(renderPassCreateInfo);
 	}
 
 	{
@@ -147,7 +119,7 @@ void SimplePipeline::initialize(RenderEngine* engine) {
 			.setLayout(pipelineLayout_)
 			.setStageCount(2)
 			.setStages(shaderStages)
-			.setRenderPass(renderPass_)
+			.setRenderPass(engine->renderPass())
 			.setSubpass(0);
 
 		vk::ResultValue<vk::Pipeline> result = engine->device().createGraphicsPipeline(
@@ -158,23 +130,6 @@ void SimplePipeline::initialize(RenderEngine* engine) {
 
 		engine->device().destroyShaderModule(shaderStages[0].module);
 		engine->device().destroyShaderModule(shaderStages[1].module);
-	}
-
-	{
-		for (size_t i = 0; i < engine->imageViews().size(); i++) {
-			vk::ImageView imageViews[1] = {
-				engine->imageViews()[i],
-			};
-			vk::FramebufferCreateInfo framebufferCreateInfo = vk::FramebufferCreateInfo()
-				.setAttachmentCount(1)
-				.setPAttachments(imageViews)
-				.setWidth((uint32_t)kScreenWidth)
-				.setHeight((uint32_t)kScreenHeight)
-				.setRenderPass(renderPass_)
-				.setLayers(1);
-
-			framebuffers_.push_back(engine->device().createFramebuffer(framebufferCreateInfo));
-		}
 	}
 
 	commandBuffers_ = engine->allocateCommandBuffer(engine->swapchainImageCount());
@@ -242,10 +197,6 @@ void SimplePipeline::initialize(RenderEngine* engine) {
 void SimplePipeline::cleanup(RenderEngine* engine) {
 	RenderPipeline::cleanup(engine);
 
-	for (vk::Framebuffer& framebuffer : framebuffers_) {
-		engine->device().destroyFramebuffer(framebuffer);
-	}
-
 	for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
 	{
 		engine->device().destroyBuffer(viewProjBuffer_[i]);
@@ -261,9 +212,7 @@ void SimplePipeline::cleanup(RenderEngine* engine) {
 }
 
 void SimplePipeline::render(RenderEngine* engine, uint32_t currentImageIndex) {
-	vk::CommandBuffer cb = commandBuffers_[0];
-
-	cb.begin(vk::CommandBufferBeginInfo());
+	vk::CommandBuffer cb = engine->commandBuffer(currentImageIndex);
 
 	vk::ClearValue clearValues[1] = {
 		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
@@ -296,15 +245,6 @@ void SimplePipeline::render(RenderEngine* engine, uint32_t currentImageIndex) {
 		//	barriers);
 	}
 
-	vk::RenderPassBeginInfo renderPassBeginInfo = vk::RenderPassBeginInfo()
-		.setRenderPass(renderPass_)
-		.setFramebuffer(framebuffers_[currentImageIndex])
-		.setRenderArea(vk::Rect2D({ 0, 0 }, { kScreenWidth, kScreenHeight }))
-		.setClearValueCount(1)
-		.setPClearValues(clearValues);
-
-	cb.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
-
 	cb.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_);
 
 	cb.bindDescriptorSets(
@@ -315,8 +255,6 @@ void SimplePipeline::render(RenderEngine* engine, uint32_t currentImageIndex) {
 		{});
 
 	cb.draw(3, 1, 0, 0);
-
-	cb.endRenderPass();
 
 
 	{
@@ -345,8 +283,6 @@ void SimplePipeline::render(RenderEngine* engine, uint32_t currentImageIndex) {
 		//	nullptr,
 		//	barriers);
 	}
-
-	cb.end();
 }
 
 void SimplePipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
@@ -362,7 +298,7 @@ void SimplePipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
 
 	static float rot = 0.0f;
 
-	rot += glm::radians<float>(1.0f);
+	rot += glm::radians<float>(Timer::instance().deltaTime() * 360.0f);
 
 	vp.world = glm::mat4(glm::rotate(glm::identity<glm::quat>(), rot, glm::vec3(0.0f, 1.0f, 0.0f)));
 	vp.view = glm::lookAt(

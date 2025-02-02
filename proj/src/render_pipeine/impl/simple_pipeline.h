@@ -17,13 +17,12 @@ public:
 	virtual void update(class RenderEngine* engine, uint32_t currentImageIndex) override;
 
 protected:
-	std::vector<vk::Framebuffer> framebuffers_;
 	std::vector<vk::Buffer> viewProjBuffer_;
 	Memory ubMemory;
 	std::vector<vk::DescriptorSetLayout> layouts_;
 	std::vector<vk::DescriptorSet> sets_;
 
-	uint8_t* mappedViewProjMemory_;
+	uint8_t* mappedViewProjMemory_ = nullptr;
 };
 
 #endif
