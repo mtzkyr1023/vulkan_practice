@@ -90,8 +90,8 @@ uint32_t Memory::getMemoryTypeIndex(
 			if ((deviceMemoryProperties.memoryTypes[i].propertyFlags & properties) == properties) {
 				return i;
 			}
-			bits >>= 1;
 		}
+		bits >>= 1;
 	}
 
 	return 0xffffffff;
