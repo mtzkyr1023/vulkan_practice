@@ -14,13 +14,15 @@ Application::~Application() {
 
 void Application::initialize(RenderEngine* engine, HWND hwnd) {
 	imgui_.setup(engine, hwnd);
-	simplePipeline_.initialize(engine);
+	deferredPass_.setup(engine);
+	simplePipeline_.initialize(engine, &deferredPass_);
 }
 
 void Application::cleanup(RenderEngine* engine) {
 	engine->device().waitIdle();
 	engine->graphicsQueue().waitIdle();
 	simplePipeline_.cleanup(engine);
+	deferredPass_.cleanup(engine);
 	imgui_.cleanup(engine);
 }
 
@@ -33,8 +35,10 @@ void Application::render(RenderEngine* engine) {
 
 	cb.begin(vk::CommandBufferBeginInfo());
 	
+	simplePipeline_.render(engine, &deferredPass_, currentFrameIndex);
+
 	std::array<vk::ClearValue, 1> clearValues = {
-		vk::ClearValue()
+	vk::ClearValue()
 	};
 	vk::RenderPassBeginInfo renderPassBeginInfo = vk::RenderPassBeginInfo()
 		.setRenderPass(engine->renderPass())
@@ -44,8 +48,6 @@ void Application::render(RenderEngine* engine) {
 		.setPClearValues(clearValues.data());
 
 	cb.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
-	
-	simplePipeline_.render(engine, currentFrameIndex);
 
 	imgui_.render(engine, cb);
 

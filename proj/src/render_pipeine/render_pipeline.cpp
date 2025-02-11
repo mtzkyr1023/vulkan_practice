@@ -8,8 +8,14 @@
 GameObjectManager RenderPipeline::objectManager_;
 
 void RenderPipeline::cleanup(RenderEngine* engine) {
-	engine->device().destroyPipeline(pipeline_);
-	engine->device().destroyPipelineLayout(pipelineLayout_);
+	for (auto& it : pipeline_)
+	{
+		engine->device().destroyPipeline(it.second);
+	}
+	for (auto& it : pipelineLayout_)
+	{
+		engine->device().destroyPipelineLayout(it.second);
+	}
 	engine->device().freeCommandBuffers(engine->commandPool(), commandBuffers_);
 	for (vk::Semaphore& semaphore : renderCompletedSemaphores_) {
 		engine->device().destroySemaphore(semaphore);
