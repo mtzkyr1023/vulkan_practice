@@ -11,10 +11,10 @@ class RenderPipeline {
 public:
 	virtual ~RenderPipeline() {}
 
-	virtual void initialize(class RenderEngine* engine) = 0;
+	virtual void initialize(class RenderEngine* engine, class RenderPass* pass) = 0;
 	virtual void cleanup(class RenderEngine* engine);
 	
-	virtual void render(class RenderEngine* engine, uint32_t currentImageIndex) = 0;
+	virtual void render(class RenderEngine* engine, class RenderPass* pass, uint32_t currentImageIndex) = 0;
 	virtual void update(class RenderEngine* engine, uint32_t currentImageIndex) = 0;
 
 	vk::CommandBuffer commandBuffer(uint32_t currentFrameIndex) { return commandBuffers_[currentFrameIndex]; }
@@ -29,8 +29,9 @@ protected:
 		shaderc_shader_kind shaderKind);
 
 protected:
-	vk::PipelineLayout pipelineLayout_;
-	vk::Pipeline pipeline_;
+	std::unordered_map<uint32_t, std::vector<vk::DescriptorSetLayout>> descriptorLayouts_;
+	std::unordered_map<uint32_t, vk::PipelineLayout> pipelineLayout_;
+	std::unordered_map<uint32_t, vk::Pipeline> pipeline_;
 	vk::Viewport viewport_;
 	std::vector<vk::CommandBuffer> commandBuffers_;
 	std::vector<vk::Semaphore> renderCompletedSemaphores_;

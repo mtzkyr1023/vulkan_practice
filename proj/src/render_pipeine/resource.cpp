@@ -22,6 +22,8 @@ void Memory::allocateForBuffer(
 		.setAllocationSize(memReqs.size)
 		.setMemoryTypeIndex(getMemoryTypeIndex(physicalDevice, memReqs.memoryTypeBits, propFlag));
 
+	alignment_ = memReqs.alignment;
+
 	device.destroyBuffer(buffer);
 #endif
 	memory_ = device.allocateMemory(allocInfo);
@@ -47,6 +49,8 @@ void Memory::allocateForImage(
 	vk::MemoryAllocateInfo allocInfo = vk::MemoryAllocateInfo()
 		.setAllocationSize(memReqs.size)
 		.setMemoryTypeIndex(getMemoryTypeIndex(physicalDevice, memReqs.memoryTypeBits, propFlag));
+
+	alignment_ = memReqs.alignment;
 
 	device.destroyImage(image);
 #endif

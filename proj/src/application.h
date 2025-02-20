@@ -3,6 +3,7 @@
 
 
 #include "render_pipeine/impl/simple_pipeline.h"
+#include "render_pass/impl/deferred_pass.h"
 #include "util/imgui_wrapper.h"
 
 class Application {
@@ -21,6 +22,7 @@ private:
 
 private:
 	SimplePipeline simplePipeline_;
+	DeferredPass deferredPass_;
 	ImGuiWrapper imgui_;
 };
 

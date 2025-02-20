@@ -6,7 +6,9 @@
 
 class Memory {
 public:
-	Memory() {}
+	Memory() :
+		alignment_(0)
+	{}
 	~Memory() {}
 
 	void allocateForBuffer(
@@ -30,6 +32,8 @@ public:
 
 	vk::DeviceMemory memory() { return memory_; }
 
+	vk::DeviceSize alignment() { return alignment_; }
+
 private:
 	uint32_t getMemoryTypeIndex(
 		const vk::PhysicalDevice& physicalDevice,
@@ -38,6 +42,8 @@ private:
 
 private:
 	vk::DeviceMemory memory_;
+
+	vk::DeviceSize alignment_;
 };
 
 #endif

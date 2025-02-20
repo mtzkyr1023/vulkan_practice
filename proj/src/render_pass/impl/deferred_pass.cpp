@@ -1,6 +1,7 @@
 ﻿
 #include "deferred_pass.h"
 #include "../../render_engine.h"
+#include "../../defines.h"
 
 void DeferredPass::setupInternal(RenderEngine* engine)
 {
@@ -204,6 +205,253 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 
 	vk::RenderPassCreateInfo renderPassCreateInfo = vk::RenderPassCreateInfo()
 		.setAttachments(attachmentDescs)
-		.setDependencies()
+		.setDependencies(subpassDeps)
 		.setSubpasses(subpassDescs);
+
+	renderPass_ = engine->device().createRenderPass(renderPassCreateInfo);
+
+	vk::DeviceSize alignment = 0;
+
+	// GBuffer用のVRAM確保
+	{
+		memories_.resize(2);
+	}
+	{
+		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
+			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
+			.setArrayLayers(5)
+			.setFormat(vk::Format::eR16G16B16A16Sfloat)					// 一旦カラーバッファは RGBA16Float のみ
+			.setImageType(vk::ImageType::e2D)
+			.setSamples(vk::SampleCountFlagBits::e1)
+			.setTiling(vk::ImageTiling::eOptimal)
+			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
+			.setInitialLayout(vk::ImageLayout::eUndefined);
+
+		memories_[0].allocateForImage(engine->physicalDevice(), engine->device(), imageCreateInfo, vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+		alignment = (vk::DeviceSize)(kScreenWidth * kScreenHeight) % memories_[0].alignment() + (vk::DeviceSize)(kScreenWidth * kScreenHeight);
+	}
+
+	{
+		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
+			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
+			.setArrayLayers(engine->swapchainImageCount())				// Depthバッファは前フレームの情報を使う拡張性を鑑みてフレームバッファの数
+			.setFormat(vk::Format::eD32SfloatS8Uint)					// 
+			.setImageType(vk::ImageType::e2D)
+			.setSamples(vk::SampleCountFlagBits::e1)
+			.setTiling(vk::ImageTiling::eOptimal)
+			.setUsage(vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled)
+			.setInitialLayout(vk::ImageLayout::eUndefined);
+
+		memories_[1].allocateForImage(engine->physicalDevice(), engine->device(), imageCreateInfo, vk::MemoryPropertyFlagBits::eDeviceLocal);
+	}
+
+	images_.resize(ETextureType::eNum);
+	imageViews_.resize(ETextureType::eNum);
+
+	// 最終出力バッファ作成
+	{
+		auto& image = images_[ETextureType::eResult];
+		auto& view = imageViews_[ETextureType::eResult];
+		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
+			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
+			.setArrayLayers(1)
+			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setImageType(vk::ImageType::e2D)
+			.setSamples(vk::SampleCountFlagBits::e1)
+			.setTiling(vk::ImageTiling::eOptimal)
+			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
+			.setInitialLayout(vk::ImageLayout::eUndefined);
+
+		image = engine->device().createImage(imageCreateInfo);
+
+		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
+			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setSubresourceRange(
+				vk::ImageSubresourceRange()
+				.setLevelCount(1)
+				.setLayerCount(1)
+				.setAspectMask(vk::ImageAspectFlagBits::eColor))
+			.setViewType(vk::ImageViewType::e2D)
+			.setImage(image);
+
+		view = engine->device().createImageView(viewCreateInfo);
+
+		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eResult));
+	}
+
+	// アルベドバッファ作成
+	{
+		auto& image = images_[ETextureType::eAlbedo];
+		auto& view = imageViews_[ETextureType::eAlbedo];
+		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
+			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
+			.setArrayLayers(1)
+			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setImageType(vk::ImageType::e2D)
+			.setSamples(vk::SampleCountFlagBits::e1)
+			.setTiling(vk::ImageTiling::eOptimal)
+			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
+			.setInitialLayout(vk::ImageLayout::eUndefined);
+
+		image = engine->device().createImage(imageCreateInfo);
+
+		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
+			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setSubresourceRange(
+				vk::ImageSubresourceRange()
+				.setLevelCount(1)
+				.setLayerCount(1)
+				.setAspectMask(vk::ImageAspectFlagBits::eColor))
+			.setViewType(vk::ImageViewType::e2D)
+			.setImage(image);
+
+		view = engine->device().createImageView(viewCreateInfo);
+
+		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eAlbedo));
+	}
+
+	// 法線深度バッファ作成
+	{
+		auto& image = images_[ETextureType::eNormalDepth];
+		auto& view = imageViews_[ETextureType::eNormalDepth];
+		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
+			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
+			.setArrayLayers(1)
+			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setImageType(vk::ImageType::e2D)
+			.setSamples(vk::SampleCountFlagBits::e1)
+			.setTiling(vk::ImageTiling::eOptimal)
+			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
+			.setInitialLayout(vk::ImageLayout::eUndefined);
+
+		image = engine->device().createImage(imageCreateInfo);
+
+		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
+			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setSubresourceRange(
+				vk::ImageSubresourceRange()
+				.setLevelCount(1)
+				.setLayerCount(1)
+				.setAspectMask(vk::ImageAspectFlagBits::eColor))
+			.setViewType(vk::ImageViewType::e2D)
+			.setImage(image);
+
+		view = engine->device().createImageView(viewCreateInfo);
+
+		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eNormalDepth));
+	}
+
+	// RoughMetalVelocityバッファ作成
+	{
+		auto& image = images_[ETextureType::eRoughMetalVelocity];
+		auto& view = imageViews_[ETextureType::eRoughMetalVelocity];
+		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
+			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
+			.setArrayLayers(1)
+			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setImageType(vk::ImageType::e2D)
+			.setSamples(vk::SampleCountFlagBits::e1)
+			.setTiling(vk::ImageTiling::eOptimal)
+			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
+			.setInitialLayout(vk::ImageLayout::eUndefined);
+
+		image = engine->device().createImage(imageCreateInfo);
+
+		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
+			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setSubresourceRange(
+				vk::ImageSubresourceRange()
+				.setLevelCount(1)
+				.setLayerCount(1)
+				.setAspectMask(vk::ImageAspectFlagBits::eColor))
+			.setViewType(vk::ImageViewType::e2D)
+			.setImage(image);
+
+		view = engine->device().createImageView(viewCreateInfo);
+
+		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eRoughMetalVelocity));
+	}
+
+	// 不透明ライティング結果バッファ作成
+	{
+		auto& image = images_[ETextureType::eTemporary];
+		auto& view = imageViews_[ETextureType::eTemporary];
+		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
+			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
+			.setArrayLayers(1)
+			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setImageType(vk::ImageType::e2D)
+			.setSamples(vk::SampleCountFlagBits::e1)
+			.setTiling(vk::ImageTiling::eOptimal)
+			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
+			.setInitialLayout(vk::ImageLayout::eUndefined);
+
+		image = engine->device().createImage(imageCreateInfo);
+
+		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
+			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setSubresourceRange(
+				vk::ImageSubresourceRange()
+				.setLevelCount(1)
+				.setLayerCount(1)
+				.setAspectMask(vk::ImageAspectFlagBits::eColor))
+			.setViewType(vk::ImageViewType::e2D)
+			.setImage(image);
+
+		view = engine->device().createImageView(viewCreateInfo);
+
+		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eTemporary));
+	}
+
+	// 深度ステンシルバッファ作成
+	{
+		auto& image = images_[ETextureType::eDepth];
+		auto& view = imageViews_[ETextureType::eDepth];
+		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
+			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
+			.setArrayLayers(1)
+			.setFormat(vk::Format::eD32SfloatS8Uint)
+			.setImageType(vk::ImageType::e2D)
+			.setSamples(vk::SampleCountFlagBits::e1)
+			.setTiling(vk::ImageTiling::eOptimal)
+			.setUsage(vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled)
+			.setInitialLayout(vk::ImageLayout::eUndefined);
+
+		image = engine->device().createImage(imageCreateInfo);
+
+		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
+			.setFormat(vk::Format::eD32SfloatS8Uint)
+			.setSubresourceRange(
+				vk::ImageSubresourceRange()
+				.setLevelCount(1)
+				.setLayerCount(1)
+				.setAspectMask(vk::ImageAspectFlagBits::eDepth))
+			.setViewType(vk::ImageViewType::e2D)
+			.setImage(image);
+
+		view = engine->device().createImageView(viewCreateInfo);
+
+		memories_[1].bind(engine->device(), image, 0);
+	}
+
+	{
+		std::array<vk::ImageView, 6> attachments =
+		{
+			imageViews_[ETextureType::eResult],
+			imageViews_[ETextureType::eAlbedo],
+			imageViews_[ETextureType::eNormalDepth],
+			imageViews_[ETextureType::eRoughMetalVelocity],
+			imageViews_[ETextureType::eTemporary],
+			imageViews_[ETextureType::eDepth],
+		};
+		vk::FramebufferCreateInfo framebufferCreateInfo = vk::FramebufferCreateInfo()
+			.setWidth(kScreenWidth)
+			.setHeight(kScreenHeight)
+			.setRenderPass(renderPass_)
+			.setLayers(0)
+			.setAttachments(attachments);
+
+		framebuffer_ = engine->device().createFramebuffer(framebufferCreateInfo);
+	}
 }
