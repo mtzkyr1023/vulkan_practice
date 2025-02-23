@@ -24,6 +24,8 @@ private:
 	SimplePipeline simplePipeline_;
 	DeferredPass deferredPass_;
 	ImGuiWrapper imgui_;
+	vk::Sampler sampler_;
+	VkDescriptorSet depthBuffer_;
 };
 
 #endif

@@ -1,0 +1,40 @@
+﻿#ifndef _MESH_H_
+#define _MESH_H_
+
+#include "memory"
+#include "vector"
+#include "vulkan/vulkan.hpp"
+
+class Mesh
+{
+public:
+	Mesh();
+	~Mesh();
+
+	void loadMesh(class RenderEngine* engine, const char* filename);
+	void release(class RenderEngine* engine);
+
+	const vk::Buffer& vertexBuffer() { return vertexBuffer_; }
+	const vk::Buffer& indexBuffer() { return indexBuffer_; }
+
+	const vk::BufferView& vertexBufferView() { return vertexBufferView_; }
+	const vk::BufferView& indexBufferView() { return indexBufferView_; }
+
+	uint32_t allIndexCount() { return indexCount_; }
+
+protected:
+	std::shared_ptr<class Memory> vertexMemory_;
+	std::shared_ptr<class Memory> indexMemory_;
+
+	vk::Buffer vertexBuffer_;
+	vk::Buffer indexBuffer_;
+	vk::BufferView vertexBufferView_;
+	vk::BufferView indexBufferView_;
+
+	std::vector<uint32_t> vertexCounts_;
+	std::vector<uint32_t> indexCounts_;
+
+	uint32_t indexCount_;
+};
+
+#endif

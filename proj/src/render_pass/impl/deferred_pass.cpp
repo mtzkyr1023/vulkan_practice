@@ -6,8 +6,8 @@
 void DeferredPass::setupInternal(RenderEngine* engine)
 {
 	std::array<vk::AttachmentDescription, 6> attachmentDescs;
-	std::array<vk::SubpassDependency, 3> subpassDeps;
-	std::array<vk::SubpassDescription, 4> subpassDescs;
+	std::array<vk::SubpassDependency, 2> subpassDeps;
+	std::array<vk::SubpassDescription, 3> subpassDescs;
 
 	// 使用するAttachments定義
 	{
@@ -15,7 +15,7 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 		attachmentDescs[0] = vk::AttachmentDescription()
 			.setFormat(vk::Format::eR16G16B16A16Sfloat)
 			.setInitialLayout(vk::ImageLayout::eUndefined)
-			.setFinalLayout(vk::ImageLayout::eColorAttachmentOptimal)
+			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 			.setLoadOp(vk::AttachmentLoadOp::eClear)
 			.setStoreOp(vk::AttachmentStoreOp::eStore)
 			.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
@@ -25,7 +25,7 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 		attachmentDescs[1] = vk::AttachmentDescription()
 			.setFormat(vk::Format::eR16G16B16A16Sfloat)
 			.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal)
-			.setFinalLayout(vk::ImageLayout::eAttachmentOptimal)
+			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 			.setLoadOp(vk::AttachmentLoadOp::eClear)
 			.setStoreOp(vk::AttachmentStoreOp::eStore)
 			.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
@@ -35,7 +35,7 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 		attachmentDescs[2] = vk::AttachmentDescription()
 			.setFormat(vk::Format::eR16G16B16A16Sfloat)
 			.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal)
-			.setFinalLayout(vk::ImageLayout::eAttachmentOptimal)
+			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 			.setLoadOp(vk::AttachmentLoadOp::eClear)
 			.setStoreOp(vk::AttachmentStoreOp::eStore)
 			.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
@@ -45,7 +45,7 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 		attachmentDescs[3] = vk::AttachmentDescription()
 			.setFormat(vk::Format::eR16G16B16A16Sfloat)
 			.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal)
-			.setFinalLayout(vk::ImageLayout::eAttachmentOptimal)
+			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 			.setLoadOp(vk::AttachmentLoadOp::eClear)
 			.setStoreOp(vk::AttachmentStoreOp::eStore)
 			.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
@@ -54,8 +54,8 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 		// 深度バッファ
 		attachmentDescs[4] = vk::AttachmentDescription()
 			.setFormat(vk::Format::eD32SfloatS8Uint)
-			.setInitialLayout(vk::ImageLayout::eDepthAttachmentOptimal)
-			.setFinalLayout(vk::ImageLayout::eAttachmentOptimal)
+			.setInitialLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal)
+			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 			.setLoadOp(vk::AttachmentLoadOp::eClear)
 			.setStoreOp(vk::AttachmentStoreOp::eStore)
 			.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
@@ -65,7 +65,7 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 		attachmentDescs[5] = vk::AttachmentDescription()
 			.setFormat(vk::Format::eR16G16B16A16Sfloat)
 			.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal)
-			.setFinalLayout(vk::ImageLayout::eAttachmentOptimal)
+			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 			.setLoadOp(vk::AttachmentLoadOp::eClear)
 			.setStoreOp(vk::AttachmentStoreOp::eStore)
 			.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
@@ -78,7 +78,7 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 		std::array<vk::AttachmentReference, 0> colorAttachments;
 		vk::AttachmentReference depthStencilAttachment = vk::AttachmentReference()
 			.setAttachment(4)
-			.setLayout(vk::ImageLayout::eDepthAttachmentOptimal);
+			.setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
 		subpassDescs[0] = vk::SubpassDescription()
 			.setColorAttachments(colorAttachments)
@@ -104,7 +104,7 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 		};
 		vk::AttachmentReference depthStencilAttachment = vk::AttachmentReference()
 			.setAttachment(4)
-			.setLayout(vk::ImageLayout::eDepthAttachmentOptimal);
+			.setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
 		subpassDescs[1] = vk::SubpassDescription()
 			.setColorAttachments(colorAttachments)
@@ -119,18 +119,18 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 		{
 			vk::AttachmentReference()
 			.setAttachment(1)
-			.setLayout(vk::ImageLayout::eAttachmentOptimal),
+			.setLayout(vk::ImageLayout::eShaderReadOnlyOptimal),
 			vk::AttachmentReference()
 			.setAttachment(2)
-			.setLayout(vk::ImageLayout::eAttachmentOptimal),
+			.setLayout(vk::ImageLayout::eShaderReadOnlyOptimal),
 			vk::AttachmentReference()
 			.setAttachment(3)
-			.setLayout(vk::ImageLayout::eAttachmentOptimal),
+			.setLayout(vk::ImageLayout::eShaderReadOnlyOptimal),
 			vk::AttachmentReference()
 			.setAttachment(4)
-			.setLayout(vk::ImageLayout::eAttachmentOptimal)
+			.setLayout(vk::ImageLayout::eShaderReadOnlyOptimal),
 		};
-		std::array<vk::AttachmentReference, 4> colorAttachments =
+		std::array<vk::AttachmentReference, 1> colorAttachments =
 		{
 			vk::AttachmentReference()
 			.setAttachment(5)
@@ -145,25 +145,26 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 
 	// 透明 Subpass の定義
 	{
-		std::array<vk::AttachmentReference, 4> inputAttachments =
-		{
-			vk::AttachmentReference()
-			.setAttachment(5)
-		};
-		std::array<vk::AttachmentReference, 4> colorAttachments =
-		{
-			vk::AttachmentReference()
-			.setAttachment(0)
-			.setLayout(vk::ImageLayout::eColorAttachmentOptimal),
-		};
-		vk::AttachmentReference depthStencilAttachment = vk::AttachmentReference()
-			.setAttachment(4)
-			.setLayout(vk::ImageLayout::eDepthAttachmentOptimal);
+		//std::array<vk::AttachmentReference, 1> inputAttachments =
+		//{
+		//	vk::AttachmentReference()
+		//	.setAttachment(5)
+		//	.setLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+		//};
+		//std::array<vk::AttachmentReference, 1> colorAttachments =
+		//{
+		//	vk::AttachmentReference()
+		//	.setAttachment(0)
+		//	.setLayout(vk::ImageLayout::eColorAttachmentOptimal),
+		//};
+		//vk::AttachmentReference depthStencilAttachment = vk::AttachmentReference()
+		//	.setAttachment(4)
+		//	.setLayout(vk::ImageLayout::eDepthAttachmentOptimal);
 
-		subpassDescs[3] = vk::SubpassDescription()
-			.setColorAttachments(colorAttachments)
-			.setInputAttachments(inputAttachments)
-			.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
+		//subpassDescs[3] = vk::SubpassDescription()
+		//	.setColorAttachments(colorAttachments)
+		//	.setInputAttachments(inputAttachments)
+		//	.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
 	}
 
 	{
@@ -185,22 +186,14 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 			.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite)
 			.setDstAccessMask(vk::AccessFlagBits::eColorAttachmentRead);
 
-		subpassDeps[2] = vk::SubpassDependency()
-			.setDependencyFlags(vk::DependencyFlagBits::eByRegion)
-			.setSrcSubpass(2)
-			.setDstSubpass(3)
-			.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
-			.setDstStageMask(vk::PipelineStageFlagBits::eFragmentShader)
-			.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eColorAttachmentRead)
-			.setDstAccessMask(vk::AccessFlagBits::eColorAttachmentRead);
-		subpassDeps[2] = vk::SubpassDependency()
-			.setDependencyFlags(vk::DependencyFlagBits::eByRegion)
-			.setSrcSubpass(2)
-			.setDstSubpass(3)
-			.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
-			.setDstStageMask(vk::PipelineStageFlagBits::eFragmentShader)
-			.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eColorAttachmentRead)
-			.setDstAccessMask(vk::AccessFlagBits::eColorAttachmentRead);
+		//subpassDeps[2] = vk::SubpassDependency()
+		//	.setDependencyFlags(vk::DependencyFlagBits::eByRegion)
+		//	.setSrcSubpass(2)
+		//	.setDstSubpass(3)
+		//	.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
+		//	.setDstStageMask(vk::PipelineStageFlagBits::eFragmentShader)
+		//	.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eColorAttachmentRead)
+		//	.setDstAccessMask(vk::AccessFlagBits::eColorAttachmentRead);
 	}
 
 	vk::RenderPassCreateInfo renderPassCreateInfo = vk::RenderPassCreateInfo()
@@ -220,27 +213,29 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
 			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
 			.setArrayLayers(5)
+			.setMipLevels(1)
 			.setFormat(vk::Format::eR16G16B16A16Sfloat)					// 一旦カラーバッファは RGBA16Float のみ
 			.setImageType(vk::ImageType::e2D)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
+			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment)
 			.setInitialLayout(vk::ImageLayout::eUndefined);
 
 		memories_[0].allocateForImage(engine->physicalDevice(), engine->device(), imageCreateInfo, vk::MemoryPropertyFlagBits::eDeviceLocal);
 
-		alignment = (vk::DeviceSize)(kScreenWidth * kScreenHeight) % memories_[0].alignment() + (vk::DeviceSize)(kScreenWidth * kScreenHeight);
+		alignment = (vk::DeviceSize)((kScreenWidth * kScreenHeight * sizeof(float) * 2) % memories_[0].alignment() + (vk::DeviceSize)(kScreenWidth * kScreenHeight) * sizeof(float) * 2);
 	}
 
 	{
 		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
 			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
 			.setArrayLayers(engine->swapchainImageCount())				// Depthバッファは前フレームの情報を使う拡張性を鑑みてフレームバッファの数
+			.setMipLevels(1)
 			.setFormat(vk::Format::eD32SfloatS8Uint)					// 
 			.setImageType(vk::ImageType::e2D)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled)
+			.setUsage(vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eInputAttachment)
 			.setInitialLayout(vk::ImageLayout::eUndefined);
 
 		memories_[1].allocateForImage(engine->physicalDevice(), engine->device(), imageCreateInfo, vk::MemoryPropertyFlagBits::eDeviceLocal);
@@ -256,6 +251,7 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
 			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
 			.setArrayLayers(1)
+			.setMipLevels(1)
 			.setFormat(vk::Format::eR16G16B16A16Sfloat)
 			.setImageType(vk::ImageType::e2D)
 			.setSamples(vk::SampleCountFlagBits::e1)
@@ -264,6 +260,8 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 			.setInitialLayout(vk::ImageLayout::eUndefined);
 
 		image = engine->device().createImage(imageCreateInfo);
+
+		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eResult));
 
 		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
 			.setFormat(vk::Format::eR16G16B16A16Sfloat)
@@ -276,8 +274,6 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 			.setImage(image);
 
 		view = engine->device().createImageView(viewCreateInfo);
-
-		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eResult));
 	}
 
 	// アルベドバッファ作成
@@ -287,14 +283,17 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
 			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
 			.setArrayLayers(1)
+			.setMipLevels(1)
 			.setFormat(vk::Format::eR16G16B16A16Sfloat)
 			.setImageType(vk::ImageType::e2D)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
+			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment)
 			.setInitialLayout(vk::ImageLayout::eUndefined);
 
 		image = engine->device().createImage(imageCreateInfo);
+
+		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eAlbedo));
 
 		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
 			.setFormat(vk::Format::eR16G16B16A16Sfloat)
@@ -307,8 +306,6 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 			.setImage(image);
 
 		view = engine->device().createImageView(viewCreateInfo);
-
-		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eAlbedo));
 	}
 
 	// 法線深度バッファ作成
@@ -318,14 +315,17 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
 			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
 			.setArrayLayers(1)
+			.setMipLevels(1)
 			.setFormat(vk::Format::eR16G16B16A16Sfloat)
 			.setImageType(vk::ImageType::e2D)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
+			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment)
 			.setInitialLayout(vk::ImageLayout::eUndefined);
 
 		image = engine->device().createImage(imageCreateInfo);
+
+		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eNormalDepth));
 
 		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
 			.setFormat(vk::Format::eR16G16B16A16Sfloat)
@@ -338,8 +338,6 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 			.setImage(image);
 
 		view = engine->device().createImageView(viewCreateInfo);
-
-		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eNormalDepth));
 	}
 
 	// RoughMetalVelocityバッファ作成
@@ -349,14 +347,17 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
 			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
 			.setArrayLayers(1)
+			.setMipLevels(1)
 			.setFormat(vk::Format::eR16G16B16A16Sfloat)
 			.setImageType(vk::ImageType::e2D)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
+			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment)
 			.setInitialLayout(vk::ImageLayout::eUndefined);
 
 		image = engine->device().createImage(imageCreateInfo);
+
+		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eRoughMetalVelocity));
 
 		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
 			.setFormat(vk::Format::eR16G16B16A16Sfloat)
@@ -369,8 +370,6 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 			.setImage(image);
 
 		view = engine->device().createImageView(viewCreateInfo);
-
-		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eRoughMetalVelocity));
 	}
 
 	// 不透明ライティング結果バッファ作成
@@ -380,6 +379,7 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
 			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
 			.setArrayLayers(1)
+			.setMipLevels(1)
 			.setFormat(vk::Format::eR16G16B16A16Sfloat)
 			.setImageType(vk::ImageType::e2D)
 			.setSamples(vk::SampleCountFlagBits::e1)
@@ -388,6 +388,8 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 			.setInitialLayout(vk::ImageLayout::eUndefined);
 
 		image = engine->device().createImage(imageCreateInfo);
+
+		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eTemporary));
 
 		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
 			.setFormat(vk::Format::eR16G16B16A16Sfloat)
@@ -400,8 +402,6 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 			.setImage(image);
 
 		view = engine->device().createImageView(viewCreateInfo);
-
-		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eTemporary));
 	}
 
 	// 深度ステンシルバッファ作成
@@ -411,14 +411,17 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
 			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
 			.setArrayLayers(1)
+			.setMipLevels(1)
 			.setFormat(vk::Format::eD32SfloatS8Uint)
 			.setImageType(vk::ImageType::e2D)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled)
+			.setUsage(vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eInputAttachment)
 			.setInitialLayout(vk::ImageLayout::eUndefined);
 
 		image = engine->device().createImage(imageCreateInfo);
+
+		memories_[1].bind(engine->device(), image, 0);
 
 		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
 			.setFormat(vk::Format::eD32SfloatS8Uint)
@@ -431,8 +434,6 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 			.setImage(image);
 
 		view = engine->device().createImageView(viewCreateInfo);
-
-		memories_[1].bind(engine->device(), image, 0);
 	}
 
 	{
@@ -442,14 +443,14 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 			imageViews_[ETextureType::eAlbedo],
 			imageViews_[ETextureType::eNormalDepth],
 			imageViews_[ETextureType::eRoughMetalVelocity],
-			imageViews_[ETextureType::eTemporary],
 			imageViews_[ETextureType::eDepth],
+			imageViews_[ETextureType::eTemporary],
 		};
 		vk::FramebufferCreateInfo framebufferCreateInfo = vk::FramebufferCreateInfo()
 			.setWidth(kScreenWidth)
 			.setHeight(kScreenHeight)
 			.setRenderPass(renderPass_)
-			.setLayers(0)
+			.setLayers(1)
 			.setAttachments(attachments);
 
 		framebuffer_ = engine->device().createFramebuffer(framebufferCreateInfo);

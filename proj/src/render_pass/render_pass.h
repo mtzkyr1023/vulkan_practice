@@ -23,6 +23,8 @@ public:
 
 	const vk::Framebuffer& framebuffer() { return framebuffer_; }
 
+	const vk::DescriptorSet& descriptorSet(uint32_t index) { return descriptorSets_[index]; }
+
 private:
 	virtual void setupInternal(class RenderEngine* engine) = 0;
 
@@ -32,6 +34,8 @@ protected:
 	std::vector<Memory> memories_;
 	std::vector<vk::Image> images_;
 	std::vector<vk::ImageView> imageViews_;
+
+	std::vector<vk::DescriptorSet> descriptorSets_;
 
 	vk::Framebuffer framebuffer_;
 };

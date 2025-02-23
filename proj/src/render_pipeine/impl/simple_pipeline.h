@@ -4,6 +4,7 @@
 
 #include <vulkan/vulkan.h>
 #include "../render_pipeline.h"
+#include "../../util/mesh.h"
 
 class SimplePipeline : public RenderPipeline {
 public:
@@ -30,9 +31,9 @@ protected:
 	std::vector<vk::Buffer> viewProjBuffer_;
 	Memory ubMemory_;
 	std::vector<vk::DescriptorSet> sets_;
-	Memory vertexMemory_;
-	Memory indexMemory_;
-	Memory tempMemory_;
+	Mesh mesh_;
+
+	vk::Sampler sampler_;
 
 	uint8_t* mappedViewProjMemory_ = nullptr;
 };
