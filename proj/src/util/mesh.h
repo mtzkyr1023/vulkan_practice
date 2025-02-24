@@ -5,13 +5,14 @@
 #include "vector"
 #include "vulkan/vulkan.hpp"
 
+
 class Mesh
 {
 public:
 	Mesh();
 	~Mesh();
 
-	void loadMesh(class RenderEngine* engine, const char* filename);
+	void loadMesh(class RenderEngine* engine, const char* foldername, const char* filename);
 	void release(class RenderEngine* engine);
 
 	const vk::Buffer& vertexBuffer() { return vertexBuffer_; }
@@ -19,6 +20,9 @@ public:
 
 	const vk::BufferView& vertexBufferView() { return vertexBufferView_; }
 	const vk::BufferView& indexBufferView() { return indexBufferView_; }
+
+	uint32_t materialCount() { return (uint32_t)materials_.size(); }
+	std::shared_ptr<class Material> material(uint32_t index) { return materials_[index]; }
 
 	uint32_t allIndexCount() { return indexCount_; }
 
@@ -33,6 +37,8 @@ protected:
 
 	std::vector<uint32_t> vertexCounts_;
 	std::vector<uint32_t> indexCounts_;
+
+	std::vector<std::shared_ptr<class Material>> materials_;
 
 	uint32_t indexCount_;
 };

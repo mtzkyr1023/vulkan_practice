@@ -51,6 +51,7 @@ void Memory::allocateForImage(
 		.setMemoryTypeIndex(getMemoryTypeIndex(physicalDevice, memReqs.memoryTypeBits, propFlag));
 
 	alignment_ = memReqs.alignment;
+	size_ = memReqs.size;
 
 	device.destroyImage(image);
 #endif

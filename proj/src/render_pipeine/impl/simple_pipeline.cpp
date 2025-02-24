@@ -9,7 +9,8 @@
 #undef MemoryBarrier
 
 SimplePipeline::SimplePipeline() :
-	mappedViewProjMemory_(nullptr)
+	mappedViewProjMemory_(nullptr),
+	camera_(Transform(), glm::pi<float>() * 0.5f, (float)kScreenWidth / (float)kScreenHeight, 0.1f, 1000.0f)
 {
 }
 
@@ -84,35 +85,23 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 			vk::VertexInputAttributeDescription()
 			.setLocation(1)
 			.setFormat(vk::Format::eR32G32B32Sfloat)
-			.setOffset(sizeof(float) * 4),
+			.setOffset(sizeof(glm::vec4)),
 			vk::VertexInputAttributeDescription()
 			.setLocation(2)
 			.setFormat(vk::Format::eR32G32B32Sfloat)
-			.setOffset(sizeof(float) * 4 + sizeof(float) * 3),
+			.setOffset(sizeof(glm::vec4) + sizeof(glm::vec3)),
 			vk::VertexInputAttributeDescription()
 			.setLocation(3)
 			.setFormat(vk::Format::eR32G32Sfloat)
-			.setOffset(sizeof(float) * 4 + sizeof(float) * 3 + sizeof(float) * 3),
+			.setOffset(sizeof(glm::vec4) + sizeof(glm::vec3) + sizeof(glm::vec3)),
 		};
 
-		std::array<vk::VertexInputBindingDescription, 4> bindAttributes =
+		std::array<vk::VertexInputBindingDescription, 1> bindAttributes =
 		{
 			vk::VertexInputBindingDescription()
 			.setBinding(0)
 			.setInputRate(vk::VertexInputRate::eVertex)
-			.setStride(sizeof(float) * 4),
-			vk::VertexInputBindingDescription()
-			.setBinding(1)
-			.setInputRate(vk::VertexInputRate::eVertex)
-			.setStride(sizeof(float) * 3),
-			vk::VertexInputBindingDescription()
-			.setBinding(2)
-			.setInputRate(vk::VertexInputRate::eVertex)
-			.setStride(sizeof(float) * 2),
-			vk::VertexInputBindingDescription()
-			.setBinding(3)
-			.setInputRate(vk::VertexInputRate::eVertex)
-			.setStride(sizeof(float) * 2),
+			.setStride(sizeof(glm::vec4) + sizeof(glm::vec3) + sizeof(glm::vec3) + sizeof(glm::vec2)),
 		};
 
 		vk::PipelineVertexInputStateCreateInfo vertexInputState = vk::PipelineVertexInputStateCreateInfo()
@@ -128,12 +117,12 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 			.setDepthBiasClamp(0.0f)
 			.setDepthBiasConstantFactor(0.0f)
 			.setDepthBiasEnable(vk::False)
-				.setDepthBiasSlopeFactor(0.0f)
-				.setDepthClampEnable(vk::False)
-				.setFrontFace(vk::FrontFace::eCounterClockwise)
-				.setLineWidth(1.0f)
-				.setPolygonMode(vk::PolygonMode::eFill)
-				.setRasterizerDiscardEnable(vk::False);
+			.setDepthBiasSlopeFactor(0.0f)
+			.setDepthClampEnable(vk::False)
+			.setFrontFace(vk::FrontFace::eClockwise)
+			.setLineWidth(1.0f)
+			.setPolygonMode(vk::PolygonMode::eFill)
+			.setRasterizerDiscardEnable(vk::False);
 
 		vk::PipelineMultisampleStateCreateInfo multiSampleState = vk::PipelineMultisampleStateCreateInfo()
 			.setAlphaToCoverageEnable(vk::False)
@@ -241,35 +230,23 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 			vk::VertexInputAttributeDescription()
 			.setLocation(1)
 			.setFormat(vk::Format::eR32G32B32Sfloat)
-			.setOffset(sizeof(float) * 4),
+			.setOffset(sizeof(glm::vec4)),
 			vk::VertexInputAttributeDescription()
 			.setLocation(2)
 			.setFormat(vk::Format::eR32G32B32Sfloat)
-			.setOffset(sizeof(float) * 4 + sizeof(float) * 3),
+			.setOffset(sizeof(glm::vec4) + sizeof(glm::vec3)),
 			vk::VertexInputAttributeDescription()
 			.setLocation(3)
 			.setFormat(vk::Format::eR32G32Sfloat)
-			.setOffset(sizeof(float) * 4 + sizeof(float) * 3 + sizeof(float) * 3),
+			.setOffset(sizeof(glm::vec4) + sizeof(glm::vec3) + sizeof(glm::vec3)),
 		};
 
-		std::array<vk::VertexInputBindingDescription, 4> bindAttributes =
+		std::array<vk::VertexInputBindingDescription, 1> bindAttributes =
 		{
 			vk::VertexInputBindingDescription()
 			.setBinding(0)
 			.setInputRate(vk::VertexInputRate::eVertex)
-			.setStride(sizeof(float) * 4),
-			vk::VertexInputBindingDescription()
-			.setBinding(1)
-			.setInputRate(vk::VertexInputRate::eVertex)
-			.setStride(sizeof(float) * 3),
-			vk::VertexInputBindingDescription()
-			.setBinding(2)
-			.setInputRate(vk::VertexInputRate::eVertex)
-			.setStride(sizeof(float) * 2),
-			vk::VertexInputBindingDescription()
-			.setBinding(3)
-			.setInputRate(vk::VertexInputRate::eVertex)
-			.setStride(sizeof(float) * 2),
+			.setStride(sizeof(glm::vec4) + sizeof(glm::vec3) + sizeof(glm::vec3) + sizeof(glm::vec2)),
 		};
 
 		vk::PipelineVertexInputStateCreateInfo vertexInputState = vk::PipelineVertexInputStateCreateInfo()
@@ -287,7 +264,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 			.setDepthBiasEnable(vk::False)
 			.setDepthBiasSlopeFactor(0.0f)
 			.setDepthClampEnable(vk::False)
-			.setFrontFace(vk::FrontFace::eCounterClockwise)
+			.setFrontFace(vk::FrontFace::eClockwise)
 			.setLineWidth(1.0f)
 			.setPolygonMode(vk::PolygonMode::eFill)
 			.setRasterizerDiscardEnable(vk::False);
@@ -660,7 +637,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 		engine->device().updateDescriptorSets(writes, {});
 	}
 
-	mesh_.loadMesh(engine, "models/sponza/gltf/sponza.gltf");
+	mesh_.loadMesh(engine, "models/sponza/gltf/", "sponza.gltf");
 }
 
 void SimplePipeline::cleanup(RenderEngine* engine) {
@@ -788,9 +765,6 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 	cb.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_[ESubpassType::eDepthPrePass]);
 
 	cb.bindVertexBuffers(0, { mesh_.vertexBuffer() }, { 0 });
-	cb.bindVertexBuffers(1, { mesh_.vertexBuffer() }, { 0 });
-	cb.bindVertexBuffers(2, { mesh_.vertexBuffer() }, { 0 });
-	cb.bindVertexBuffers(3, { mesh_.vertexBuffer() }, { 0 });
 	cb.bindIndexBuffer(mesh_.indexBuffer(), 0, vk::IndexType::eUint32);
 
 	cb.bindDescriptorSets(
@@ -836,23 +810,52 @@ void SimplePipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
 	
 	ViewProj vp;
 
-	static float rot = 0.0f;
+	float deltaTime = Timer::instance().deltaTime();
 
-	rot += glm::radians<float>(Timer::instance().deltaTime() * 360.0f);
+	if (GetAsyncKeyState('W'))
+	{
+		camera_.transform().position() += camera_.transform().forward() * deltaTime;
+	}
+	if (GetAsyncKeyState('S'))
+	{
+		camera_.transform().position() -= camera_.transform().forward() * deltaTime;
+	}
+	if (GetAsyncKeyState('A'))
+	{
+		camera_.transform().position() -= camera_.transform().right() * deltaTime;
+	}
+	if (GetAsyncKeyState('D'))
+	{
+		camera_.transform().position() += camera_.transform().right() * deltaTime;
+	}
+	if (GetAsyncKeyState('E'))
+	{
+		camera_.transform().position() += camera_.transform().up() * deltaTime;
+	}
+	if (GetAsyncKeyState('Q'))
+	{
+		camera_.transform().position() -= camera_.transform().up() * deltaTime;
+	}
+
+	//if (GetAsyncKeyState(VK_LEFT))
+	//{
+	//	camera_.transform().rotation() *= glm::rotate(glm::identity<glm::quat>(), deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+	//}
+
+	//if (GetAsyncKeyState(VK_RIGHT))
+	//{
+	//	camera_.transform().rotation() *= glm::rotate(glm::identity<glm::quat>(), -deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+	//}
+
+	camera_.update(Timer::instance().deltaTime());
+
+	static float rot = 0.0f;
 
 	vp.world =
 		glm::mat4(glm::rotate(glm::identity<glm::quat>(), rot, glm::vec3(0.0f, 1.0f, 0.0f))) *
-		glm::scale(glm::identity<glm::mat4>(), glm::vec3(2.1f, 2.1f, 2.1f));
-	vp.view = glm::lookAt(
-		glm::vec3(0.0f, 0.0f, -5.0f),
-		glm::vec3(0.0f, 0.0f, 0.0f),
-		glm::vec3(0.0f, 1.0f, 0.0f));
-	vp.proj = glm::perspectiveFov(
-		glm::pi<float>() * 0.5f,
-		(float)kScreenWidth,
-		(float)kScreenHeight,
-		0.1f,
-		1000.0f);
+		glm::scale(glm::identity<glm::mat4>(), glm::vec3(0.25f, 0.25f, 0.25f));
+	vp.view = camera_.viewMatrix();
+	vp.proj = camera_.projMatrix();
 
 	memcpy_s(
 		&mappedViewProjMemory_[sizeof(glm::mat4) * 4 * currentImageIndex],

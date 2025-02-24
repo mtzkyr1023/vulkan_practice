@@ -11,6 +11,6 @@ layout(location=2) out vec4 outRoughMetalVelocity;
 
 void main() {
 	outAlbedo = vec4(inNormal, 1.0f);
-	outNormalDepth = vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	outRoughMetalVelocity = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+	outNormalDepth = vec4(inNormal, 1.0f);
+	outRoughMetalVelocity = vec4(inNormal, 0.0f);
 }

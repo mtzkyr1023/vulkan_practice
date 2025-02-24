@@ -33,6 +33,7 @@ public:
 	vk::DeviceMemory memory() { return memory_; }
 
 	vk::DeviceSize alignment() { return alignment_; }
+	vk::DeviceSize size() { return size_; }
 
 private:
 	uint32_t getMemoryTypeIndex(
@@ -44,6 +45,7 @@ private:
 	vk::DeviceMemory memory_;
 
 	vk::DeviceSize alignment_;
+	vk::DeviceSize size_;
 };
 
 #endif

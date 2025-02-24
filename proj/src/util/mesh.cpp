@@ -10,6 +10,8 @@
 #include "../render_pipeine/resource.h"
 
 
+#include "material.h"
+
 Mesh::Mesh() :
 	indexCount_(0)
 {
@@ -22,14 +24,17 @@ Mesh::~Mesh()
 }
 
 
-void Mesh::loadMesh(RenderEngine* engine, const char* filename)
+void Mesh::loadMesh(RenderEngine* engine, const char* foldername, const char* filename)
 {
 	Assimp::Importer* importer = new Assimp::Importer();
 	uint32_t flags =
 		aiProcess_CalcTangentSpace |
 		aiProcess_Triangulate;
 
-	const aiScene* scene = importer->ReadFile(filename, flags);
+	std::string path = foldername;
+	path += filename;
+
+	const aiScene* scene = importer->ReadFile(path.c_str(), flags);
 
 	struct Vertex
 	{
@@ -44,6 +49,42 @@ void Mesh::loadMesh(RenderEngine* engine, const char* filename)
 
 	vertexMemory_ = std::make_shared<Memory>();
 	indexMemory_ = std::make_shared<Memory>();
+
+	for (uint32_t i = 0; i < scene->mNumMaterials; i++)
+	{
+		aiMaterial* material = scene->mMaterials[i];
+		
+		bool isTransparent = true;
+		aiString output;
+		material->Get(AI_MATKEY_GLTF_ALPHAMODE, output);
+
+		aiString albedoPath, normalPath, pbrPath;
+		material->GetTexture(aiTextureType_BASE_COLOR, 0, &albedoPath);
+		material->GetTexture(aiTextureType_NORMALS, 0, &normalPath);
+		material->GetTexture(aiTextureType_METALNESS, 0, &pbrPath);
+
+		std::string albedoFullPath = foldername;
+		std::string normalFullPath = foldername;
+		std::string pbrFullPath = foldername;
+
+		albedoFullPath += albedoPath.C_Str();
+		normalFullPath += normalPath.C_Str();
+		pbrFullPath += pbrPath.C_Str();
+
+		std::shared_ptr<Material> mat;
+		if (output == aiString("OPAQUE"))
+		{
+			mat = std::make_shared<Material>(false);
+		}
+		else
+		{
+			mat = std::make_shared<Material>(true);
+		}
+
+		//mat->loadImage(engine, albedoFullPath.c_str(), normalFullPath.c_str(), pbrFullPath.c_str(), false);
+
+		materials_.push_back(mat);
+	}
 
 	uint32_t vertexOffset = 0;
 	for (uint32_t i = 0; i < scene->mNumMeshes; i++)
@@ -70,6 +111,8 @@ void Mesh::loadMesh(RenderEngine* engine, const char* filename)
 		}
 
 		indexCounts_.push_back(mesh->mNumFaces * 3);
+
+		materials_[mesh->mMaterialIndex]->AddDrawInfo(indexCount_, mesh->mNumFaces * 3);
 
 		indexCount_ += mesh->mNumFaces * 3;
 		vertexOffset += mesh->mNumVertices;
@@ -139,4 +182,9 @@ void Mesh::release(RenderEngine* engine)
 	engine->device().destroyBuffer(indexBuffer_);
 	vertexMemory_->free(engine->device());
 	indexMemory_->free(engine->device());
+
+	for (const auto& ite : materials_)
+	{
+		ite->release(engine);
+	}
 }

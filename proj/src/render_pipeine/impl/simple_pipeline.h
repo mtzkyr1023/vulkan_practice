@@ -6,6 +6,8 @@
 #include "../render_pipeline.h"
 #include "../../util/mesh.h"
 
+#include "../../gameobject/camera.h"
+
 class SimplePipeline : public RenderPipeline {
 public:
 	enum ESubpassType : uint32_t
@@ -36,6 +38,8 @@ protected:
 	vk::Sampler sampler_;
 
 	uint8_t* mappedViewProjMemory_ = nullptr;
+
+	Camera camera_;
 };
 
 #endif
