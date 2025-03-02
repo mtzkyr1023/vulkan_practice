@@ -7,6 +7,8 @@
 #include "../render_engine.h"
 #include "../render_pipeine/resource.h"
 
+#include "../defines.h"
+
 #include "stb_image.h"
 
 
@@ -34,6 +36,11 @@ void Material::loadImage(
 	unsigned char* pbr = nullptr;
 	int width, height, bpp;
 	albedo = stbi_load(albedoFilename, &width, &height, &bpp, 4);
+	normal = stbi_load(normalFilename, &width, &height, &bpp, 4);
+	pbr = stbi_load(pbrFilename, &width, &height, &bpp, 4);
+
+	Memory tempMemory;
+	vk::Buffer buffer;
 
 	vk::DeviceSize alignment = 0;
 	{
@@ -57,6 +64,32 @@ void Material::loadImage(
 	}
 
 	{
+		vk::BufferCreateInfo bufferCreateInfo = vk::BufferCreateInfo()
+			.setSize(width * height * sizeof(uint32_t) * 3)
+			.setUsage(vk::BufferUsageFlagBits::eTransferSrc);
+
+		tempMemory.allocateForBuffer(engine->physicalDevice(), engine->device(), bufferCreateInfo, vk::MemoryPropertyFlagBits::eHostVisible);
+
+		uint8_t* mappedMemory = tempMemory.map(engine->device(), 0, (vk::DeviceSize)(width * height));
+		if (albedo != nullptr)
+		{
+			memcpy_s(mappedMemory + (size_t)(width * height) * 0, (size_t)(width * height), albedo, (size_t)(width * height));
+		}
+		if (normal != nullptr)
+		{
+			memcpy_s(mappedMemory + (size_t)(width * height) * 1, (size_t)(width * height), normal, (size_t)(width * height));
+		}
+		if (pbr != nullptr)
+		{
+			memcpy_s(mappedMemory + (size_t)(width * height) * 2, (size_t)(width * height), pbr, (size_t)(width * height));
+		}
+
+		buffer = engine->device().createBuffer(bufferCreateInfo);
+
+		tempMemory.bind(engine->device(), buffer, 0);
+	}
+
+	{
 		uint32_t type = (uint32_t)ETextureType::eAlbedo;
 		vk::Image& image = images_[type];
 		vk::ImageView& view = imageViews_[type];
@@ -70,7 +103,7 @@ void Material::loadImage(
 			.setMipLevels(1)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eSampled);
+			.setUsage(vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst);
 
 		image = engine->device().createImage(imageCreateInfo);
 
@@ -103,7 +136,7 @@ void Material::loadImage(
 			.setMipLevels(1)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eSampled);
+			.setUsage(vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst);
 
 		image = engine->device().createImage(imageCreateInfo);
 
@@ -136,7 +169,7 @@ void Material::loadImage(
 			.setMipLevels(1)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eSampled);
+			.setUsage(vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst);
 
 		image = engine->device().createImage(imageCreateInfo);
 
@@ -155,35 +188,162 @@ void Material::loadImage(
 		view = engine->device().createImageView(viewCreateInfo);
 	}
 
-	//if (albedo != nullptr)
-	//{
-	//	uint32_t type = (uint32_t)ETextureType::eAlbedo;
-	//	uint8_t* mappedMemory = memory_->map(engine->device(), (vk::DeviceSize)(alignment * type), alignment);
+	std::vector<vk::CommandBuffer> cbs = engine->allocateCommandBuffer(1);
 
-	//	memcpy_s(mappedMemory, alignment, albedo, alignment);
+	cbs[0].begin(vk::CommandBufferBeginInfo());
 
-	//	memory_->unmap(engine->device());
-	//}
+	{
+		vk::ImageSubresourceRange colorSubresourceRange = vk::ImageSubresourceRange()
+			.setAspectMask(vk::ImageAspectFlagBits::eColor)
+			.setBaseArrayLayer(0)
+			.setBaseMipLevel(0)
+			.setLayerCount(1)
+			.setLevelCount(1);
 
-	//if (normal != nullptr)
-	//{
-	//	uint32_t type = (uint32_t)ETextureType::eNormal;
-	//	uint8_t* mappedMemory = memory_->map(engine->device(), (vk::DeviceSize)(alignment * type), alignment);
+		std::array<vk::ImageMemoryBarrier, 3> barriers;
+		barriers[0].setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+		barriers[0].setDstAccessMask(vk::AccessFlagBits::eTransferWrite);
+		barriers[0].setImage(images_[(uint32_t)ETextureType::eAlbedo]);
+		barriers[0].setOldLayout(vk::ImageLayout::eUndefined);
+		barriers[0].setNewLayout(vk::ImageLayout::eTransferDstOptimal);
+		barriers[0].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[0].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[0].setSubresourceRange(colorSubresourceRange);
 
-	//	memcpy_s(mappedMemory, alignment, normal, alignment);
+		barriers[1].setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+		barriers[1].setDstAccessMask(vk::AccessFlagBits::eTransferWrite);
+		barriers[1].setImage(images_[(uint32_t)ETextureType::eNormal]);
+		barriers[1].setOldLayout(vk::ImageLayout::eUndefined);
+		barriers[1].setNewLayout(vk::ImageLayout::eTransferDstOptimal);
+		barriers[1].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[1].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[1].setSubresourceRange(colorSubresourceRange);
 
-	//	memory_->unmap(engine->device());
-	//}
+		barriers[2].setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+		barriers[2].setDstAccessMask(vk::AccessFlagBits::eTransferWrite);
+		barriers[2].setImage(images_[(uint32_t)ETextureType::ePBR]);
+		barriers[2].setOldLayout(vk::ImageLayout::eUndefined);
+		barriers[2].setNewLayout(vk::ImageLayout::eTransferDstOptimal);
+		barriers[2].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[2].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[2].setSubresourceRange(colorSubresourceRange);
 
-	//if (pbr != nullptr)
-	//{
-	//	uint32_t type = (uint32_t)ETextureType::ePBR;
-	//	uint8_t* mappedMemory = memory_->map(engine->device(), (vk::DeviceSize)(alignment * type), alignment);
+		cbs[0].pipelineBarrier(
+			vk::PipelineStageFlagBits::eAllGraphics,
+			vk::PipelineStageFlagBits::eAllGraphics,
+			vk::DependencyFlagBits::eDeviceGroup,
+			nullptr,
+			nullptr,
+			barriers);
+	}
 
-	//	memcpy_s(mappedMemory, alignment, pbr, alignment);
+	{
+		vk::BufferImageCopy copyInfo = vk::BufferImageCopy()
+			.setBufferOffset(width * height * 0)
+			.setBufferImageHeight(height)
+			.setBufferRowLength(width)
+			.setImageExtent(vk::Extent3D(width, height, 1))
+			.setImageOffset(0)
+			.setImageSubresource(
+				vk::ImageSubresourceLayers()
+				.setMipLevel(0)
+				.setLayerCount(1)
+				.setAspectMask(vk::ImageAspectFlagBits::eColor)
+				.setBaseArrayLayer(0));
+		cbs[0].copyBufferToImage(buffer, images_[(uint32_t)ETextureType::eAlbedo], vk::ImageLayout::eTransferDstOptimal, { copyInfo });
+	}
+	{
+		vk::BufferImageCopy copyInfo = vk::BufferImageCopy()
+			.setBufferOffset(width * height * 1)
+			.setBufferImageHeight(height)
+			.setBufferRowLength(width)
+			.setImageExtent(vk::Extent3D(width, height, 1))
+			.setImageOffset(0)
+			.setImageSubresource(
+				vk::ImageSubresourceLayers()
+				.setMipLevel(0)
+				.setLayerCount(1)
+				.setAspectMask(vk::ImageAspectFlagBits::eColor)
+				.setBaseArrayLayer(0));
+		cbs[0].copyBufferToImage(buffer, images_[(uint32_t)ETextureType::eNormal], vk::ImageLayout::eTransferDstOptimal, { copyInfo });
+	}
+	{
+		vk::BufferImageCopy copyInfo = vk::BufferImageCopy()
+			.setBufferOffset(width * height * 2)
+			.setBufferImageHeight(height)
+			.setBufferRowLength(width)
+			.setImageExtent(vk::Extent3D(width, height, 1))
+			.setImageOffset(0)
+			.setImageSubresource(
+				vk::ImageSubresourceLayers()
+				.setMipLevel(0)
+				.setLayerCount(1)
+				.setAspectMask(vk::ImageAspectFlagBits::eColor)
+				.setBaseArrayLayer(0));
+		cbs[0].copyBufferToImage(buffer, images_[(uint32_t)ETextureType::ePBR], vk::ImageLayout::eTransferDstOptimal, { copyInfo });
+	}
 
-	//	memory_->unmap(engine->device());
-	//}
+	{
+		vk::ImageSubresourceRange colorSubresourceRange = vk::ImageSubresourceRange()
+			.setAspectMask(vk::ImageAspectFlagBits::eColor)
+			.setBaseArrayLayer(0)
+			.setBaseMipLevel(0)
+			.setLayerCount(1)
+			.setLevelCount(1);
+
+		std::array<vk::ImageMemoryBarrier, 3> barriers;
+		barriers[0].setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+		barriers[0].setDstAccessMask(vk::AccessFlagBits::eShaderRead);
+		barriers[0].setImage(images_[(uint32_t)ETextureType::eAlbedo]);
+		barriers[0].setOldLayout(vk::ImageLayout::eTransferDstOptimal);
+		barriers[0].setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+		barriers[0].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[0].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[0].setSubresourceRange(colorSubresourceRange);
+
+		barriers[1].setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+		barriers[1].setDstAccessMask(vk::AccessFlagBits::eShaderRead);
+		barriers[1].setImage(images_[(uint32_t)ETextureType::eNormal]);
+		barriers[1].setOldLayout(vk::ImageLayout::eTransferDstOptimal);
+		barriers[1].setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+		barriers[1].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[1].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[1].setSubresourceRange(colorSubresourceRange);
+
+		barriers[2].setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+		barriers[2].setDstAccessMask(vk::AccessFlagBits::eShaderRead);
+		barriers[2].setImage(images_[(uint32_t)ETextureType::ePBR]);
+		barriers[2].setOldLayout(vk::ImageLayout::eTransferDstOptimal);
+		barriers[2].setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+		barriers[2].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[2].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[2].setSubresourceRange(colorSubresourceRange);
+
+		cbs[0].pipelineBarrier(
+			vk::PipelineStageFlagBits::eAllGraphics,
+			vk::PipelineStageFlagBits::eAllGraphics,
+			vk::DependencyFlagBits::eDeviceGroup,
+			nullptr,
+			nullptr,
+			barriers);
+	}
+
+	cbs[0].end();
+
+	vk::SubmitInfo submitInfo = vk::SubmitInfo()
+		.setCommandBuffers(cbs);
+	
+	vk::Fence fence = engine->device().createFence(vk::FenceCreateInfo());
+
+	engine->graphicsQueue().submit(submitInfo, fence);
+
+	engine->device().waitForFences({ fence }, vk::True, kTimeOut);
+
+	tempMemory.free(engine->device());
+
+	engine->device().freeCommandBuffers(engine->commandPool(), cbs);
+	engine->device().destroyFence(fence);
+	engine->device().destroyBuffer(buffer);
 
 	stbi_image_free(albedo);
 	stbi_image_free(normal);

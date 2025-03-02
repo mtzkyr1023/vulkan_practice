@@ -20,39 +20,92 @@ SimplePipeline::~SimplePipeline() {
 
 void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 	{
-		vk::DescriptorSetLayoutBinding binding = vk::DescriptorSetLayoutBinding()
+		std::array<vk::DescriptorSetLayoutBinding, 1> binding =
+		{
+			vk::DescriptorSetLayoutBinding()
 			.setBinding(0)
 			.setDescriptorCount(1)
 			.setDescriptorType(vk::DescriptorType::eUniformBuffer)
-			.setStageFlags(vk::ShaderStageFlagBits::eVertex);
+			.setStageFlags(vk::ShaderStageFlagBits::eVertex),
+		};
 
 		vk::DescriptorSetLayoutCreateInfo layoutCreateInfo = vk::DescriptorSetLayoutCreateInfo()
-			.setBindings({ binding });
+			.setBindings(binding);
 
 		descriptorLayouts_[ESubpassType::eDepthPrePass].push_back(engine->device().createDescriptorSetLayout(layoutCreateInfo));
 	}
 	{
-		vk::DescriptorSetLayoutBinding binding = vk::DescriptorSetLayoutBinding()
-			.setBinding(0)
-			.setDescriptorCount(1)
-			.setDescriptorType(vk::DescriptorType::eUniformBuffer)
-			.setStageFlags(vk::ShaderStageFlagBits::eVertex);
+		{
+			std::array<vk::DescriptorSetLayoutBinding, 1> binding =
+			{
+				vk::DescriptorSetLayoutBinding()
+				.setBinding(0)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+				.setStageFlags(vk::ShaderStageFlagBits::eVertex),
+			};
 
-		vk::DescriptorSetLayoutCreateInfo layoutCreateInfo = vk::DescriptorSetLayoutCreateInfo()
-			.setBindings({ binding });
+			vk::DescriptorSetLayoutCreateInfo layoutCreateInfo = vk::DescriptorSetLayoutCreateInfo()
+				.setBindings(binding);
 
-		descriptorLayouts_[ESubpassType::eGBuffer].push_back(engine->device().createDescriptorSetLayout(layoutCreateInfo));
+			descriptorLayouts_[ESubpassType::eGBuffer].push_back(engine->device().createDescriptorSetLayout(layoutCreateInfo));
+		}
+
+		{
+			std::array<vk::DescriptorSetLayoutBinding, 3> binding =
+			{
+				vk::DescriptorSetLayoutBinding()
+				.setBinding(0)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eSampledImage)
+				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
+				vk::DescriptorSetLayoutBinding()
+				.setBinding(1)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eSampledImage)
+				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
+				vk::DescriptorSetLayoutBinding()
+				.setBinding(2)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eSampledImage)
+				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
+			};
+
+			vk::DescriptorSetLayoutCreateInfo layoutCreateInfo = vk::DescriptorSetLayoutCreateInfo()
+				.setBindings(binding);
+
+			descriptorLayouts_[ESubpassType::eGBuffer].push_back(engine->device().createDescriptorSetLayout(layoutCreateInfo));
+		}
+
+		{
+			std::array<vk::DescriptorSetLayoutBinding, 1> binding =
+			{
+				vk::DescriptorSetLayoutBinding()
+				.setBinding(0)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eSampler)
+				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
+			};
+
+			vk::DescriptorSetLayoutCreateInfo layoutCreateInfo = vk::DescriptorSetLayoutCreateInfo()
+				.setBindings(binding);
+
+			descriptorLayouts_[ESubpassType::eGBuffer].push_back(engine->device().createDescriptorSetLayout(layoutCreateInfo));
+		}
 	}
 
 	{
-		vk::DescriptorSetLayoutBinding binding = vk::DescriptorSetLayoutBinding()
+		std::array<vk::DescriptorSetLayoutBinding, 1> binding =
+		{
+			vk::DescriptorSetLayoutBinding()
 			.setBinding(0)
 			.setDescriptorCount(1)
 			.setDescriptorType(vk::DescriptorType::eInputAttachment)
-			.setStageFlags(vk::ShaderStageFlagBits::eFragment);
+			.setStageFlags(vk::ShaderStageFlagBits::eFragment),
+		};
 
 		vk::DescriptorSetLayoutCreateInfo layoutCreateInfo = vk::DescriptorSetLayoutCreateInfo()
-			.setBindings({ binding });
+			.setBindings(binding);
 
 		descriptorLayouts_[ESubpassType::eComposition].push_back(engine->device().createDescriptorSetLayout(layoutCreateInfo));
 	}
@@ -527,70 +580,6 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 
 	mappedViewProjMemory_ = ubMemory_.map(engine->device(), 0, sizeof(glm::mat4) * 4 * engine->swapchainImageCount());
 
-	uint32_t descIndex = 0;
-	{
-		vk::DescriptorSetAllocateInfo allocInfo = vk::DescriptorSetAllocateInfo()
-			.setDescriptorPool(engine->descriptorPool())
-			.setSetLayouts(descriptorLayouts_[ESubpassType::eDepthPrePass]);
-
-		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
-		{
-			sets_.push_back(engine->device().allocateDescriptorSets(allocInfo)[0]);
-		}
-
-		std::vector<vk::WriteDescriptorSet> writes;
-
-		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
-		{
-			vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
-				.setBuffer(viewProjBuffer_[i])
-				.setOffset(0)
-				.setRange(sizeof(glm::mat4) * 4);
-
-			writes.push_back(vk::WriteDescriptorSet()
-				.setBufferInfo(bufferInfo)
-				.setDescriptorCount(1)
-				.setDescriptorType(vk::DescriptorType::eUniformBuffer)
-				.setDstArrayElement(0)
-				.setDstBinding(0)
-				.setDstSet(sets_[descIndex]));
-			descIndex++;
-		}
-
-		engine->device().updateDescriptorSets(writes, {});
-	}
-
-	{
-		vk::DescriptorSetAllocateInfo allocInfo = vk::DescriptorSetAllocateInfo()
-			.setDescriptorPool(engine->descriptorPool())
-			.setSetLayouts(descriptorLayouts_[ESubpassType::eGBuffer]);
-
-		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
-		{
-			sets_.push_back(engine->device().allocateDescriptorSets(allocInfo)[0]);
-		}
-
-		std::vector<vk::WriteDescriptorSet> writes;
-
-		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
-		{
-			vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
-				.setBuffer(viewProjBuffer_[i])
-				.setOffset(0)
-				.setRange(sizeof(glm::mat4) * 4);
-
-			writes.push_back(vk::WriteDescriptorSet()
-				.setBufferInfo(bufferInfo)
-				.setDescriptorCount(1)
-				.setDescriptorType(vk::DescriptorType::eUniformBuffer)
-				.setDstArrayElement(0)
-				.setDstBinding(0)
-				.setDstSet(sets_[descIndex]));
-			descIndex++;
-		}
-
-		engine->device().updateDescriptorSets(writes, {});
-	}
 
 	{
 		vk::SamplerCreateInfo samplerCreateInfo = vk::SamplerCreateInfo()
@@ -610,12 +599,84 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 			.setMipmapMode(vk::SamplerMipmapMode::eLinear);
 
 		sampler_ = engine->device().createSampler(samplerCreateInfo);
+	}
 
+	{
+		vk::DescriptorSetAllocateInfo allocInfo = vk::DescriptorSetAllocateInfo()
+			.setDescriptorPool(engine->descriptorPool())
+			.setSetLayouts(descriptorLayouts_[ESubpassType::eDepthPrePass]);
+
+		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
+		{
+			sets_[ESubpassType::eDepthPrePass].push_back(engine->device().allocateDescriptorSets(allocInfo)[0]);
+		}
+
+		std::vector<vk::WriteDescriptorSet> writes;
+
+		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
+		{
+			vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
+				.setBuffer(viewProjBuffer_[i])
+				.setOffset(0)
+				.setRange(sizeof(glm::mat4) * 4);
+
+			writes.push_back(vk::WriteDescriptorSet()
+				.setBufferInfo(bufferInfo)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+				.setDstArrayElement(0)
+				.setDstBinding(0)
+				.setDstSet(sets_[ESubpassType::eDepthPrePass][i]));
+		}
+
+		engine->device().updateDescriptorSets(writes, {});
+	}
+
+	{
+		vk::DescriptorSetAllocateInfo allocInfo = vk::DescriptorSetAllocateInfo()
+			.setDescriptorPool(engine->descriptorPool())
+			.setSetLayouts(descriptorLayouts_[ESubpassType::eGBuffer]);
+
+		std::vector<vk::DescriptorSet> sets;
+
+		for (uint32_t i = 0; i < mesh_.materialCount(); i++)
+		{
+
+		}
+
+		sets = (engine->device().allocateDescriptorSets(allocInfo));
+		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
+		{
+			sets = (engine->device().allocateDescriptorSets(allocInfo));
+		}
+
+		std::vector<vk::WriteDescriptorSet> writes;
+
+		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
+		{
+			vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
+				.setBuffer(viewProjBuffer_[i])
+				.setOffset(0)
+				.setRange(sizeof(glm::mat4) * 4);
+
+			writes.push_back(vk::WriteDescriptorSet()
+				.setBufferInfo(bufferInfo)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+				.setDstArrayElement(0)
+				.setDstBinding(0)
+				.setDstSet(sets_[ESubpassType::eGBuffer][i]));
+		}
+
+		engine->device().updateDescriptorSets(writes, {});
+	}
+
+	{
 		vk::DescriptorSetAllocateInfo allocInfo = vk::DescriptorSetAllocateInfo()
 			.setDescriptorPool(engine->descriptorPool())
 			.setSetLayouts(descriptorLayouts_[ESubpassType::eComposition]);
 
-		sets_.push_back(engine->device().allocateDescriptorSets(allocInfo)[0]);
+		sets_[ESubpassType::eComposition].push_back(engine->device().allocateDescriptorSets(allocInfo)[0]);
 
 		std::vector<vk::WriteDescriptorSet> writes;
 
@@ -630,9 +691,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 			.setDescriptorType(vk::DescriptorType::eInputAttachment)
 			.setDstArrayElement(0)
 			.setDstBinding(0)
-			.setDstSet(sets_[descIndex]));
-
-		descIndex++;
+			.setDstSet(sets_[ESubpassType::eComposition][0]));
 
 		engine->device().updateDescriptorSets(writes, {});
 	}
@@ -653,7 +712,11 @@ void SimplePipeline::cleanup(RenderEngine* engine) {
 
 	mesh_.release(engine);
 
-	engine->device().freeDescriptorSets(engine->descriptorPool(), sets_);
+	for (auto& ite : sets_)
+	{
+		engine->device().freeDescriptorSets(engine->descriptorPool(), ite.second);
+	}
+	
 	for (uint32_t i = 0; i < ESubpassType::eNum; i++)
 	{
 		for (const auto& layout : descriptorLayouts_[i])
@@ -771,7 +834,7 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 		vk::PipelineBindPoint::eGraphics,
 		pipelineLayout_[ESubpassType::eDepthPrePass],
 		0,
-		{ sets_[currentImageIndex] },
+		{ sets_[ESubpassType::eDepthPrePass]},
 		{});
 
 	cb.drawIndexed(mesh_.allIndexCount(), 1, 0, 0, 0);
@@ -779,6 +842,13 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 	cb.nextSubpass(vk::SubpassContents::eInline);
 
 	cb.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_[ESubpassType::eGBuffer]);
+
+	cb.bindDescriptorSets(
+		vk::PipelineBindPoint::eGraphics,
+		pipelineLayout_[ESubpassType::eDepthPrePass],
+		0,
+		{ sets_[ESubpassType::eGBuffer] },
+		{});
 
 	cb.drawIndexed(mesh_.allIndexCount(), 1, 0, 0, 0);
 
@@ -788,7 +858,7 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 		vk::PipelineBindPoint::eGraphics,
 		pipelineLayout_[ESubpassType::eComposition],
 		0,
-		{ sets_[6] },
+		{ sets_[ESubpassType::eComposition]},
 		{});
 	cb.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_[ESubpassType::eComposition]);
 

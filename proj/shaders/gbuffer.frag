@@ -1,5 +1,10 @@
 #version 450
 
+layout(set=1,binding=0) uniform texture2D albedoTex;
+layout(set=1,binding=1) uniform texture2D normalTex;
+layout(set=1,binding=2) uniform texture2D pbrTex;
+layout(set=2,binding=0) uniform sampler wrapSampler;
+
 layout(location=0) in vec3 inNormal;
 layout(location=1) in vec3 inTangent;
 layout(location=2) in vec3 inBinormal;
@@ -10,7 +15,7 @@ layout(location=1) out vec4 outNormalDepth;
 layout(location=2) out vec4 outRoughMetalVelocity;
 
 void main() {
-	outAlbedo = vec4(inNormal, 1.0f);
-	outNormalDepth = vec4(inNormal, 1.0f);
-	outRoughMetalVelocity = vec4(inNormal, 0.0f);
+	outAlbedo = texture(sampler2D(albedoTex, wrapSampler), inTexcoord);
+	outNormalDepth = vec4(texture(sampler2D(normalTex, wrapSampler), inTexcoord).xyz, 1.0f);
+	outRoughMetalVelocity = vec4(texture(sampler2D(pbrTex, wrapSampler), inTexcoord).yz, 0.0f, 0.0f);
 }

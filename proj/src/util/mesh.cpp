@@ -81,7 +81,7 @@ void Mesh::loadMesh(RenderEngine* engine, const char* foldername, const char* fi
 			mat = std::make_shared<Material>(true);
 		}
 
-		//mat->loadImage(engine, albedoFullPath.c_str(), normalFullPath.c_str(), pbrFullPath.c_str(), false);
+		mat->loadImage(engine, albedoFullPath.c_str(), normalFullPath.c_str(), pbrFullPath.c_str(), false);
 
 		materials_.push_back(mat);
 	}

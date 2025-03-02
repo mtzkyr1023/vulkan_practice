@@ -32,7 +32,6 @@ public:
 protected:
 	std::vector<vk::Buffer> viewProjBuffer_;
 	Memory ubMemory_;
-	std::vector<vk::DescriptorSet> sets_;
 	Mesh mesh_;
 
 	vk::Sampler sampler_;
