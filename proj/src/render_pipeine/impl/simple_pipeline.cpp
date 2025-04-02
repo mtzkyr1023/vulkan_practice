@@ -4,6 +4,8 @@
 #include "../../defines.h"
 #include "../../gameobject/camera.h"
 #include "../../util/timer.h"
+#include "../../util/material.h"
+#include "../../util/input.h"
 #include "../../render_pass/impl/deferred_pass.h"
 
 #undef MemoryBarrier
@@ -580,6 +582,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 
 	mappedViewProjMemory_ = ubMemory_.map(engine->device(), 0, sizeof(glm::mat4) * 4 * engine->swapchainImageCount());
 
+	mesh_.loadMesh(engine, "models/sponza/gltf/", "sponza.gltf");
 
 	{
 		vk::SamplerCreateInfo samplerCreateInfo = vk::SamplerCreateInfo()
@@ -608,7 +611,9 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 
 		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
 		{
-			sets_[ESubpassType::eDepthPrePass].push_back(engine->device().allocateDescriptorSets(allocInfo)[0]);
+			std::vector<vk::DescriptorSet> sets = engine->device().allocateDescriptorSets(allocInfo);
+
+			sets_[ESubpassType::eDepthPrePass].push_back(sets);
 		}
 
 		std::vector<vk::WriteDescriptorSet> writes;
@@ -626,7 +631,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 				.setDescriptorType(vk::DescriptorType::eUniformBuffer)
 				.setDstArrayElement(0)
 				.setDstBinding(0)
-				.setDstSet(sets_[ESubpassType::eDepthPrePass][i]));
+				.setDstSet(sets_[ESubpassType::eDepthPrePass][i][0]));
 		}
 
 		engine->device().updateDescriptorSets(writes, {});
@@ -635,37 +640,68 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 	{
 		vk::DescriptorSetAllocateInfo allocInfo = vk::DescriptorSetAllocateInfo()
 			.setDescriptorPool(engine->descriptorPool())
+			.setDescriptorSetCount(5)
 			.setSetLayouts(descriptorLayouts_[ESubpassType::eGBuffer]);
 
 		std::vector<vk::DescriptorSet> sets;
 
-		for (uint32_t i = 0; i < mesh_.materialCount(); i++)
-		{
-
-		}
-
-		sets = (engine->device().allocateDescriptorSets(allocInfo));
 		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
 		{
-			sets = (engine->device().allocateDescriptorSets(allocInfo));
+			for (uint32_t j = 0; j < mesh_.materialCount(); j++)
+			{
+				sets = (engine->device().allocateDescriptorSets(allocInfo));
+
+				sets_[ESubpassType::eGBuffer].push_back(sets);
+			}
 		}
 
 		std::vector<vk::WriteDescriptorSet> writes;
-
 		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
 		{
-			vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
-				.setBuffer(viewProjBuffer_[i])
-				.setOffset(0)
-				.setRange(sizeof(glm::mat4) * 4);
+			for (uint32_t j = 0; j < mesh_.materialCount(); j++)
+			{
+				vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
+					.setBuffer(viewProjBuffer_[i])
+					.setOffset(0)
+					.setRange(sizeof(glm::mat4) * 4);
 
-			writes.push_back(vk::WriteDescriptorSet()
-				.setBufferInfo(bufferInfo)
-				.setDescriptorCount(1)
-				.setDescriptorType(vk::DescriptorType::eUniformBuffer)
-				.setDstArrayElement(0)
-				.setDstBinding(0)
-				.setDstSet(sets_[ESubpassType::eGBuffer][i]));
+				writes.push_back(vk::WriteDescriptorSet()
+					.setBufferInfo(bufferInfo)
+					.setDescriptorCount(1)
+					.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+					.setDstArrayElement(0)
+					.setDstBinding(0)
+					.setDstSet(sets_[ESubpassType::eGBuffer][i * mesh_.materialCount() + j][0]));
+
+				for (uint32_t k = 0; k < (uint32_t)Material::ETextureType::eNum; k++)
+				{
+					vk::DescriptorImageInfo imageInfo = vk::DescriptorImageInfo()
+						.setImageView(mesh_.material(j)->imageViews(k))
+						.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+						.setSampler(VK_NULL_HANDLE);
+
+					writes.push_back(vk::WriteDescriptorSet()
+						.setImageInfo(imageInfo)
+						.setDescriptorCount(1)
+						.setDescriptorType(vk::DescriptorType::eSampledImage)
+						.setDstArrayElement(0)
+						.setDstBinding(k)
+						.setDstSet(sets_[ESubpassType::eGBuffer][i * mesh_.materialCount() + j][1]));
+				}
+
+				vk::DescriptorImageInfo samplerInfo = vk::DescriptorImageInfo()
+					.setImageView(VK_NULL_HANDLE)
+					.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+					.setSampler(sampler_);
+
+				writes.push_back(vk::WriteDescriptorSet()
+					.setImageInfo(samplerInfo)
+					.setDescriptorCount(1)
+					.setDescriptorType(vk::DescriptorType::eSampler)
+					.setDstArrayElement(0)
+					.setDstBinding(0)
+					.setDstSet(sets_[ESubpassType::eGBuffer][i * mesh_.materialCount() + j][2]));
+			}
 		}
 
 		engine->device().updateDescriptorSets(writes, {});
@@ -676,7 +712,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 			.setDescriptorPool(engine->descriptorPool())
 			.setSetLayouts(descriptorLayouts_[ESubpassType::eComposition]);
 
-		sets_[ESubpassType::eComposition].push_back(engine->device().allocateDescriptorSets(allocInfo)[0]);
+		sets_[ESubpassType::eComposition].push_back(engine->device().allocateDescriptorSets(allocInfo));
 
 		std::vector<vk::WriteDescriptorSet> writes;
 
@@ -691,12 +727,10 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 			.setDescriptorType(vk::DescriptorType::eInputAttachment)
 			.setDstArrayElement(0)
 			.setDstBinding(0)
-			.setDstSet(sets_[ESubpassType::eComposition][0]));
+			.setDstSet(sets_[ESubpassType::eComposition][0][0]));
 
 		engine->device().updateDescriptorSets(writes, {});
 	}
-
-	mesh_.loadMesh(engine, "models/sponza/gltf/", "sponza.gltf");
 }
 
 void SimplePipeline::cleanup(RenderEngine* engine) {
@@ -711,11 +745,6 @@ void SimplePipeline::cleanup(RenderEngine* engine) {
 	ubMemory_.free(engine->device());
 
 	mesh_.release(engine);
-
-	for (auto& ite : sets_)
-	{
-		engine->device().freeDescriptorSets(engine->descriptorPool(), ite.second);
-	}
 	
 	for (uint32_t i = 0; i < ESubpassType::eNum; i++)
 	{
@@ -834,7 +863,7 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 		vk::PipelineBindPoint::eGraphics,
 		pipelineLayout_[ESubpassType::eDepthPrePass],
 		0,
-		{ sets_[ESubpassType::eDepthPrePass]},
+		sets_[ESubpassType::eDepthPrePass][currentImageIndex],
 		{});
 
 	cb.drawIndexed(mesh_.allIndexCount(), 1, 0, 0, 0);
@@ -843,14 +872,22 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 
 	cb.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_[ESubpassType::eGBuffer]);
 
-	cb.bindDescriptorSets(
-		vk::PipelineBindPoint::eGraphics,
-		pipelineLayout_[ESubpassType::eDepthPrePass],
-		0,
-		{ sets_[ESubpassType::eGBuffer] },
-		{});
+	uint32_t indexOffset = 0;
+	for (uint32_t i = 0; i < mesh_.materialCount(); i++)
+	{
+		cb.bindDescriptorSets(
+			vk::PipelineBindPoint::eGraphics,
+			pipelineLayout_[ESubpassType::eGBuffer],
+			0,
+			sets_[ESubpassType::eGBuffer][currentImageIndex * mesh_.materialCount() + i],
+			{});
 
-	cb.drawIndexed(mesh_.allIndexCount(), 1, 0, 0, 0);
+		for (uint32_t j = 0; j < mesh_.material(i)->drawInfoCount(); j++)
+		{
+			cb.drawIndexed(mesh_.material(i)->indexCount(j), 1, indexOffset, 0, 0);
+			indexOffset += mesh_.material(i)->indexCount(j);
+		}
+	}
 
 	cb.nextSubpass(vk::SubpassContents::eInline);
 
@@ -858,7 +895,7 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 		vk::PipelineBindPoint::eGraphics,
 		pipelineLayout_[ESubpassType::eComposition],
 		0,
-		{ sets_[ESubpassType::eComposition]},
+		sets_[ESubpassType::eComposition][0],
 		{});
 	cb.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_[ESubpassType::eComposition]);
 
@@ -877,32 +914,32 @@ void SimplePipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
 		glm::mat4 proj;
 		glm::mat4 world;
 	};
-	
+
 	ViewProj vp;
 
 	float deltaTime = Timer::instance().deltaTime();
 
-	if (GetAsyncKeyState('W'))
+	if (Input::Instance().Push(DIK_W))
 	{
 		camera_.transform().position() += camera_.transform().forward() * deltaTime;
 	}
-	if (GetAsyncKeyState('S'))
+	if (Input::Instance().Push(DIK_S))
 	{
 		camera_.transform().position() -= camera_.transform().forward() * deltaTime;
 	}
-	if (GetAsyncKeyState('A'))
+	if (Input::Instance().Push(DIK_A))
 	{
 		camera_.transform().position() -= camera_.transform().right() * deltaTime;
 	}
-	if (GetAsyncKeyState('D'))
+	if (Input::Instance().Push(DIK_D))
 	{
 		camera_.transform().position() += camera_.transform().right() * deltaTime;
 	}
-	if (GetAsyncKeyState('E'))
+	if (Input::Instance().Push(DIK_E))
 	{
 		camera_.transform().position() += camera_.transform().up() * deltaTime;
 	}
-	if (GetAsyncKeyState('Q'))
+	if (Input::Instance().Push(DIK_Q))
 	{
 		camera_.transform().position() -= camera_.transform().up() * deltaTime;
 	}
@@ -916,6 +953,10 @@ void SimplePipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
 	//{
 	//	camera_.transform().rotation() *= glm::rotate(glm::identity<glm::quat>(), -deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
 	//}
+
+	camera_.transform().rotation() *=
+		glm::rotate(glm::identity<glm::quat>(), Input::Instance().GetMoveXLeftPushed() * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f)) *
+		glm::rotate(glm::identity<glm::quat>(), Input::Instance().GetMoveYLeftPushed() * deltaTime, glm::vec3(1.0f, 0.0f, 0.0f));
 
 	camera_.update(Timer::instance().deltaTime());
 

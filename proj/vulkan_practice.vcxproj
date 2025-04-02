@@ -50,6 +50,7 @@
       <SubType>
       </SubType>
     </ClInclude>
+    <ClInclude Include="src\util\input.h" />
     <ClInclude Include="src\util\material.h">
       <SubType>
       </SubType>
@@ -92,6 +93,7 @@
       <SubType>
       </SubType>
     </ClCompile>
+    <ClCompile Include="src\util\input.cpp" />
     <ClCompile Include="src\util\material.cpp">
       <SubType>
       </SubType>

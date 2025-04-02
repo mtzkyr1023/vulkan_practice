@@ -223,12 +223,8 @@ void DeferredPass::setupInternal(RenderEngine* engine)
 
 		memories_[0].allocateForImage(engine->physicalDevice(), engine->device(), imageCreateInfo, vk::MemoryPropertyFlagBits::eDeviceLocal);
 
-		vk::DeviceSize a = ~(memories_[0].alignment() - 1);
-		vk::DeviceSize b = memories_[0].alignment() - 1;
-		vk::DeviceSize alignmentWidth = kScreenWidth + b & a;
-		vk::DeviceSize alignmentHeight = kScreenHeight + b & a;
+		alignment = (vk::DeviceSize)(kScreenWidth * kScreenHeight * sizeof(float) * 2) + (memories_[0].alignment() - 1) & ~(memories_[0].alignment() - 1);
 		alignment = memories_[0].size() / 5;
-		int d = 0;
 	}
 
 	{

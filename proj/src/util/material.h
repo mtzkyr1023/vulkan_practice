@@ -4,6 +4,16 @@
 
 #include "vulkan/vulkan.hpp"
 
+struct DrawInfo
+{
+	DrawInfo(uint32_t indexOffset, uint32_t indexCount)
+	{
+		this->indexOffset = indexOffset;
+		this->indexCount = indexCount;
+	}
+	uint32_t indexOffset;
+	uint32_t indexCount;
+};
 
 class Material
 {
@@ -32,28 +42,19 @@ public:
 	const vk::Image& image(uint32_t index) { return images_[index]; }
 	const vk::ImageView& imageViews(uint32_t index) { return imageViews_[index]; }
 
-	void AddDrawInfo(uint32_t indexOffset, uint32_t indexCount)
+	void addDrawInfo(uint32_t indexOffset, uint32_t indexCount)
 	{
 		drawInfos_.emplace_back(indexOffset, indexCount);
 	}
+	const DrawInfo& drawInfo(uint32_t index) { return drawInfos_[index]; }
 
 	uint32_t drawInfoCount() { return (uint32_t)drawInfos_.size(); }
+
 	uint32_t indexOffset(uint32_t index) { return drawInfos_[index].indexOffset; }
 	uint32_t indexCount(uint32_t index) { return drawInfos_[index].indexCount; }
 
 	bool isTransparent() { return isTransparent_; }
 
-protected:
-	struct DrawInfo
-	{
-		DrawInfo(uint32_t indexOffset, uint32_t indexCount)
-		{
-			this->indexOffset = indexOffset;
-			this->indexCount = indexCount;
-		}
-		uint32_t indexOffset;
-		uint32_t indexCount;
-	};
 
 protected:
 	std::shared_ptr<class Memory> memory_;

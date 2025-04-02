@@ -46,6 +46,10 @@ void Memory::allocateForImage(
 	vk::Image image = device.createImage(info);
 
 	vk::MemoryRequirements memReqs = device.getImageMemoryRequirements(image);
+	memReqs.size =
+		memReqs.size / info.arrayLayers <= memReqs.alignment * info.arrayLayers ?
+		memReqs.alignment * info.arrayLayers :
+		memReqs.size;
 	vk::MemoryAllocateInfo allocInfo = vk::MemoryAllocateInfo()
 		.setAllocationSize(memReqs.size)
 		.setMemoryTypeIndex(getMemoryTypeIndex(physicalDevice, memReqs.memoryTypeBits, propFlag));

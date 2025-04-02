@@ -34,14 +34,29 @@ void Material::loadImage(
 	unsigned char* albedo = nullptr;
 	unsigned char* normal = nullptr;
 	unsigned char* pbr = nullptr;
-	int width, height, bpp;
-	albedo = stbi_load(albedoFilename, &width, &height, &bpp, 4);
-	normal = stbi_load(normalFilename, &width, &height, &bpp, 4);
-	pbr = stbi_load(pbrFilename, &width, &height, &bpp, 4);
+	int bpp;
+	int albedoWidth, albedoHeight;
+	int normalWidth, normalHeight;
+	int pbrWidth, pbrHeight;
+	albedo = stbi_load(albedoFilename, &albedoWidth, &albedoHeight, &bpp, 4);
+	normal = stbi_load(normalFilename, &normalWidth, &normalHeight, &bpp, 4);
+	pbr = stbi_load(pbrFilename, &pbrWidth, &pbrHeight, &bpp, 4);
+
+	int width = std::max(albedoWidth, std::max(normalWidth, pbrWidth));
+	int height = std::max(albedoHeight, std::max(normalHeight, pbrHeight));
+
+	if (width < 0 || height < 0)
+	{
+		width = 4;
+		height = 4;
+	}
+
 
 	Memory tempMemory;
 	vk::Buffer buffer;
 
+
+	vk::DeviceSize size = 0;
 	vk::DeviceSize alignment = 0;
 	{
 		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
@@ -60,6 +75,8 @@ void Material::loadImage(
 
 		memory_->allocateForImage(engine->physicalDevice(), engine->device(), imageCreateInfo, vk::MemoryPropertyFlagBits::eDeviceLocal);
 
+		vk::DeviceSize a = memory_->alignment();
+		size = memory_->size();
 		alignment = width * height * sizeof(float) + (memory_->alignment() - 1) & ~(memory_->alignment() - 1);
 	}
 

@@ -25,6 +25,8 @@ public:
 	std::shared_ptr<class Material> material(uint32_t index) { return materials_[index]; }
 
 	uint32_t allIndexCount() { return indexCount_; }
+	uint32_t vertexCount(uint32_t index) { return vertexCounts_[index]; }
+	uint32_t indexCount(uint32_t index) { return indexCounts_[index]; }
 
 protected:
 	std::shared_ptr<class Memory> vertexMemory_;

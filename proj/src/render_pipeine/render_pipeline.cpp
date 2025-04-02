@@ -20,6 +20,14 @@ void RenderPipeline::cleanup(RenderEngine* engine) {
 	for (vk::Semaphore& semaphore : renderCompletedSemaphores_) {
 		engine->device().destroySemaphore(semaphore);
 	}
+
+	for (auto& ite : sets_)
+	{
+		for (auto& set : ite.second)
+		{
+			engine->device().freeDescriptorSets(engine->descriptorPool(), set);
+		}
+	}
 }
 
 

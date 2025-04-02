@@ -30,7 +30,7 @@ protected:
 
 protected:
 	std::unordered_map<uint32_t, std::vector<vk::DescriptorSetLayout>> descriptorLayouts_;
-	std::unordered_map<uint32_t, std::vector<vk::DescriptorSet>> sets_;
+	std::unordered_map<uint32_t, std::vector<std::vector<vk::DescriptorSet>>> sets_;
 	std::unordered_map<uint32_t, vk::PipelineLayout> pipelineLayout_;
 	std::unordered_map<uint32_t, vk::Pipeline> pipeline_;
 	vk::Viewport viewport_;

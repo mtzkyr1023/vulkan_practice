@@ -112,7 +112,7 @@ void Mesh::loadMesh(RenderEngine* engine, const char* foldername, const char* fi
 
 		indexCounts_.push_back(mesh->mNumFaces * 3);
 
-		materials_[mesh->mMaterialIndex]->AddDrawInfo(indexCount_, mesh->mNumFaces * 3);
+		materials_[mesh->mMaterialIndex]->addDrawInfo(indexCount_, mesh->mNumFaces * 3);
 
 		indexCount_ += mesh->mNumFaces * 3;
 		vertexOffset += mesh->mNumVertices;
