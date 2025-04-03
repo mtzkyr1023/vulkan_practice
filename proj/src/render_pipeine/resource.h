@@ -7,7 +7,8 @@
 class Memory {
 public:
 	Memory() :
-		alignment_(0)
+		alignment_(0),
+		size_(0)
 	{}
 	~Memory() {}
 

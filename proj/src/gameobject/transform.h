@@ -33,19 +33,19 @@ public:
 		glm::mat4 world = glm::translate(glm::identity<glm::mat4>(), position_) *
 			glm::mat4(rotation_) *
 			glm::scale(glm::identity<glm::mat4>(), scale_);
-		return glm::vec3(world[0][0], world[1][0], world[2][0]);
+		return glm::vec3(world[0][2], world[1][2], world[2][2]);
 	}
 	glm::vec3 right() {
 		glm::mat4 world = glm::translate(glm::identity<glm::mat4>(), position_) *
 			glm::mat4(rotation_) *
 			glm::scale(glm::identity<glm::mat4>(), scale_);
-		return glm::vec3(world[0][1], world[1][1], world[2][1]);
+		return glm::vec3(world[0][0], world[1][0], world[2][0]);
 	}
 	glm::vec3 up() {
 		glm::mat4 world = glm::translate(glm::identity<glm::mat4>(), position_) *
 			glm::mat4(rotation_) *
 			glm::scale(glm::identity<glm::mat4>(), scale_);
-		return glm::vec3(world[0][2], world[1][2], world[2][2]);
+		return glm::vec3(world[0][1], world[1][1], world[2][1]);
 	}
 
 protected:

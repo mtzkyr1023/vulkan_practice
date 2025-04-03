@@ -884,7 +884,7 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 
 		for (uint32_t j = 0; j < mesh_.material(i)->drawInfoCount(); j++)
 		{
-			cb.drawIndexed(mesh_.material(i)->indexCount(j), 1, indexOffset, 0, 0);
+			cb.drawIndexed(mesh_.material(i)->indexCount(j), 1, mesh_.material(i)->indexOffset(j), 0, 0);
 			indexOffset += mesh_.material(i)->indexCount(j);
 		}
 	}
@@ -917,53 +917,49 @@ void SimplePipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
 
 	ViewProj vp;
 
+	const float speed = 100.0f;
+	static float rotX = 0.0f, rotY = 0.0f;
+
 	float deltaTime = Timer::instance().deltaTime();
 
 	if (Input::Instance().Push(DIK_W))
 	{
-		camera_.transform().position() += camera_.transform().forward() * deltaTime;
+		camera_.transform().position() += camera_.transform().forward() * speed * deltaTime;
 	}
 	if (Input::Instance().Push(DIK_S))
 	{
-		camera_.transform().position() -= camera_.transform().forward() * deltaTime;
+		camera_.transform().position() -= camera_.transform().forward() * speed * deltaTime;
 	}
 	if (Input::Instance().Push(DIK_A))
 	{
-		camera_.transform().position() -= camera_.transform().right() * deltaTime;
+		camera_.transform().position() += camera_.transform().right() * speed * deltaTime;
 	}
 	if (Input::Instance().Push(DIK_D))
 	{
-		camera_.transform().position() += camera_.transform().right() * deltaTime;
+		camera_.transform().position() -= camera_.transform().right() * speed * deltaTime;
 	}
 	if (Input::Instance().Push(DIK_E))
 	{
-		camera_.transform().position() += camera_.transform().up() * deltaTime;
+		camera_.transform().position() -= camera_.transform().up() * speed * deltaTime;
 	}
 	if (Input::Instance().Push(DIK_Q))
 	{
-		camera_.transform().position() -= camera_.transform().up() * deltaTime;
+		camera_.transform().position() += camera_.transform().up() * speed * deltaTime;
 	}
 
-	//if (GetAsyncKeyState(VK_LEFT))
-	//{
-	//	camera_.transform().rotation() *= glm::rotate(glm::identity<glm::quat>(), deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
-	//}
+	rotX += Input::Instance().GetMoveYRightPushed() * deltaTime;
+	rotY += Input::Instance().GetMoveXRightPushed() * deltaTime;
 
-	//if (GetAsyncKeyState(VK_RIGHT))
-	//{
-	//	camera_.transform().rotation() *= glm::rotate(glm::identity<glm::quat>(), -deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
-	//}
 
 	camera_.transform().rotation() *=
-		glm::rotate(glm::identity<glm::quat>(), Input::Instance().GetMoveXLeftPushed() * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f)) *
-		glm::rotate(glm::identity<glm::quat>(), Input::Instance().GetMoveYLeftPushed() * deltaTime, glm::vec3(1.0f, 0.0f, 0.0f));
+		glm::rotate(glm::identity<glm::quat>(), Input::Instance().GetMoveYRightPushed() * deltaTime, camera_.transform().right()) *
+		glm::rotate(glm::identity<glm::quat>(), Input::Instance().GetMoveXRightPushed() * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
 
 	camera_.update(Timer::instance().deltaTime());
 
 	static float rot = 0.0f;
 
 	vp.world =
-		glm::mat4(glm::rotate(glm::identity<glm::quat>(), rot, glm::vec3(0.0f, 1.0f, 0.0f))) *
 		glm::scale(glm::identity<glm::mat4>(), glm::vec3(0.25f, 0.25f, 0.25f));
 	vp.view = camera_.viewMatrix();
 	vp.proj = camera_.projMatrix();

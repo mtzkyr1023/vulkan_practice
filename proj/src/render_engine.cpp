@@ -359,6 +359,11 @@ void RenderEngine::cleanupRenderSettings() {
 	device_.waitIdle();
 	device_.destroySemaphore(presentCompleteSemaphore_);
 	device_.destroyDescriptorPool(descriptorPool_);
+	device_.destroyRenderPass(renderPass_);
+	for (auto& framebuffer : framebuffers_)
+	{
+		device_.destroyFramebuffer(framebuffer);
+	}
 }
 
 uint32_t RenderEngine::acquireNextImage() {

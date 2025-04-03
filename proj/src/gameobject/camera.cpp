@@ -5,7 +5,7 @@
 void Camera::update(float deltaTime) {
 	viewMatrix_ = glm::lookAt(
 		transform_.position(),
-		transform_.forward(),
+		transform_.position() + transform_.forward(),
 		transform_.up());
 	projMatrix_ = glm::perspective(
 		fov_,
