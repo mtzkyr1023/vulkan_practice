@@ -7,6 +7,7 @@
 #include "../../util/material.h"
 #include "../../util/input.h"
 #include "../../render_pass/impl/deferred_pass.h"
+#include "../../imgui/backends/imgui_impl_vulkan.h"
 
 #undef MemoryBarrier
 
@@ -643,36 +644,35 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 			.setDescriptorSetCount(5)
 			.setSetLayouts(descriptorLayouts_[ESubpassType::eGBuffer]);
 
-		std::vector<vk::DescriptorSet> sets;
-
 		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
 		{
 			for (uint32_t j = 0; j < mesh_.materialCount(); j++)
 			{
-				sets = (engine->device().allocateDescriptorSets(allocInfo));
-
-				sets_[ESubpassType::eGBuffer].push_back(sets);
+				sets_[ESubpassType::eGBuffer].push_back(engine->device().allocateDescriptorSets(allocInfo));
 			}
 		}
 
-		std::vector<vk::WriteDescriptorSet> writes;
 		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
 		{
 			for (uint32_t j = 0; j < mesh_.materialCount(); j++)
 			{
+				vk::WriteDescriptorSet write;
+
 				vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
 					.setBuffer(viewProjBuffer_[i])
 					.setOffset(0)
 					.setRange(sizeof(glm::mat4) * 4);
 
-				writes.push_back(vk::WriteDescriptorSet()
+				write = vk::WriteDescriptorSet()
 					.setBufferInfo(bufferInfo)
 					.setDescriptorCount(1)
 					.setDescriptorType(vk::DescriptorType::eUniformBuffer)
 					.setDstArrayElement(0)
 					.setDstBinding(0)
-					.setDstSet(sets_[ESubpassType::eGBuffer][i * mesh_.materialCount() + j][0]));
+					.setDstSet(sets_[ESubpassType::eGBuffer][i * mesh_.materialCount() + j][0]);
 
+				engine->device().updateDescriptorSets(write, {});
+				
 				for (uint32_t k = 0; k < (uint32_t)Material::ETextureType::eNum; k++)
 				{
 					vk::DescriptorImageInfo imageInfo = vk::DescriptorImageInfo()
@@ -680,13 +680,15 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 						.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 						.setSampler(VK_NULL_HANDLE);
 
-					writes.push_back(vk::WriteDescriptorSet()
+					write = vk::WriteDescriptorSet()
 						.setImageInfo(imageInfo)
 						.setDescriptorCount(1)
 						.setDescriptorType(vk::DescriptorType::eSampledImage)
 						.setDstArrayElement(0)
 						.setDstBinding(k)
-						.setDstSet(sets_[ESubpassType::eGBuffer][i * mesh_.materialCount() + j][1]));
+						.setDstSet(sets_[ESubpassType::eGBuffer][i * mesh_.materialCount() + j][1]);
+
+					engine->device().updateDescriptorSets(write, {});
 				}
 
 				vk::DescriptorImageInfo samplerInfo = vk::DescriptorImageInfo()
@@ -694,17 +696,17 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 					.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 					.setSampler(sampler_);
 
-				writes.push_back(vk::WriteDescriptorSet()
+				write = vk::WriteDescriptorSet()
 					.setImageInfo(samplerInfo)
 					.setDescriptorCount(1)
 					.setDescriptorType(vk::DescriptorType::eSampler)
 					.setDstArrayElement(0)
 					.setDstBinding(0)
-					.setDstSet(sets_[ESubpassType::eGBuffer][i * mesh_.materialCount() + j][2]));
+					.setDstSet(sets_[ESubpassType::eGBuffer][i * mesh_.materialCount() + j][2]);
+
+				engine->device().updateDescriptorSets(write, {});
 			}
 		}
-
-		engine->device().updateDescriptorSets(writes, {});
 	}
 
 	{
@@ -731,6 +733,8 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 
 		engine->device().updateDescriptorSets(writes, {});
 	}
+
+	albedoTex_ = ImGui_ImplVulkan_AddTexture(sampler_, mesh_.material(0)->imageViews(0), VkImageLayout::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 void SimplePipeline::cleanup(RenderEngine* engine) {
@@ -969,4 +973,6 @@ void SimplePipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
 		sizeof(ViewProj),
 		&vp,
 		sizeof(ViewProj));
+
+	ImGui::Image((ImTextureID)albedoTex_, ImVec2(512, 512));
 }

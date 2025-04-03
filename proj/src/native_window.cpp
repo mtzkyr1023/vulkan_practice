@@ -3,7 +3,6 @@
 #include "mk_exception.h"
 
 #include "imgui/backends/imgui_impl_win32.h"
-#include "util/input.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -57,8 +56,6 @@ void NativeWindow::initializeWindow() {
 	engine_.initializeRenderSettings();
 
 	application_.initialize(&engine_, hwnd_);
-
-	Input::Instance().Initialize(hwnd_);
 }
 
 void NativeWindow::cleanupWindow() {
@@ -76,12 +73,10 @@ bool NativeWindow::pollEvents() {
 	MSG msg;
 
 	if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-		if (msg.message == WM_QUIT || Input::Instance().Trigger(DIK_ESCAPE)) {
+		if (msg.message == WM_QUIT) {
 			return false;
 		}
 		else {
-			Input::Instance().Updata();
-
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
@@ -90,8 +85,8 @@ bool NativeWindow::pollEvents() {
 	return true;
 }
 
-void NativeWindow::render() {
-	application_.render(&engine_);
+bool NativeWindow::render() {
+	return application_.render(&engine_);
 }
 
 static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)

@@ -4,6 +4,7 @@
 #include "defines.h"
 #include "imgui/imgui.h"
 #include "imgui/backends/imgui_impl_vulkan.h"
+#include "util/input.h"
 
 Application::Application() {
 
@@ -39,6 +40,8 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 		sampler_ = engine->device().createSampler(samplerCreateInfo);
 
 		depthBuffer_ = ImGui_ImplVulkan_AddTexture(sampler_, deferredPass_.imageView((uint32_t)DeferredPass::eTemporary), VkImageLayout::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+		Input::Instance().Initialize(hwnd);
 	}
 	catch (std::exception& e) {
 		wchar_t buf[8192];
@@ -60,7 +63,7 @@ void Application::cleanup(RenderEngine* engine) {
 	imgui_.cleanup(engine);
 }
 
-void Application::render(RenderEngine* engine) {
+bool Application::render(RenderEngine* engine) {
 	try
 	{
 		uint32_t currentFrameIndex = engine->acquireNextImage();
@@ -126,7 +129,10 @@ void Application::render(RenderEngine* engine) {
 
 		engine->device().destroyFence(submitFence);
 
+		if (Input::Instance().Trigger(DIK_ESCAPE)) return false;
+
 		Timer::instance().update();
+		Input::Instance().Updata();
 	}
 	catch (std::exception& e) {
 		wchar_t buf[8192];
@@ -134,6 +140,8 @@ void Application::render(RenderEngine* engine) {
 		mbstowcs_s(&size, buf, e.what(), 8192);
 		OutputDebugString(buf);
 	}
+
+	return true;
 }
 
 void Application::update(RenderEngine* engine, uint32_t currentFrameIndex)
@@ -146,8 +154,8 @@ void Application::update(RenderEngine* engine, uint32_t currentFrameIndex)
 
 	ImGui::Image((ImTextureID)depthBuffer_, ImVec2(512, 512));
 
-	ImGui::End();
-
 
 	simplePipeline_.update(engine, currentFrameIndex);
+
+	ImGui::End();
 }

@@ -77,29 +77,31 @@ void Material::loadImage(
 
 		vk::DeviceSize a = memory_->alignment();
 		size = memory_->size();
-		alignment = width * height * sizeof(float) + (memory_->alignment() - 1) & ~(memory_->alignment() - 1);
+		alignment = width * height * sizeof(uint32_t) + (memory_->alignment() - 1) & ~(memory_->alignment() - 1);
 	}
 
 	{
 		vk::BufferCreateInfo bufferCreateInfo = vk::BufferCreateInfo()
-			.setSize(width * height * sizeof(uint32_t) * 3)
+			.setSize(alignment * (vk::DeviceSize)ETextureType::eNum)
 			.setUsage(vk::BufferUsageFlagBits::eTransferSrc);
 
 		tempMemory.allocateForBuffer(engine->physicalDevice(), engine->device(), bufferCreateInfo, vk::MemoryPropertyFlagBits::eHostVisible);
 
-		uint8_t* mappedMemory = tempMemory.map(engine->device(), 0, (vk::DeviceSize)(width * height));
+		uint8_t* mappedMemory = tempMemory.map(engine->device(), 0, alignment);
 		if (albedo != nullptr)
 		{
-			memcpy_s(mappedMemory + (size_t)(width * height) * 0, (size_t)(width * height), albedo, (size_t)(width * height));
+			memcpy_s(mappedMemory + alignment * (size_t)ETextureType::eAlbedo, alignment, albedo, alignment);
 		}
 		if (normal != nullptr)
 		{
-			memcpy_s(mappedMemory + (size_t)(width * height) * 1, (size_t)(width * height), normal, (size_t)(width * height));
+			memcpy_s(mappedMemory + alignment * (size_t)ETextureType::eNormal, alignment, normal, alignment);
 		}
 		if (pbr != nullptr)
 		{
-			memcpy_s(mappedMemory + (size_t)(width * height) * 2, (size_t)(width * height), pbr, (size_t)(width * height));
+			memcpy_s(mappedMemory + alignment * (size_t)ETextureType::ePBR, alignment, pbr, alignment);
 		}
+
+		tempMemory.unmap(engine->device());
 
 		buffer = engine->device().createBuffer(bufferCreateInfo);
 
@@ -130,6 +132,7 @@ void Material::loadImage(
 			.setFormat(vk::Format::eR8G8B8A8Unorm)
 			.setSubresourceRange(
 				vk::ImageSubresourceRange()
+				.setBaseMipLevel(0)
 				.setLevelCount(1)
 				.setLayerCount(1)
 				.setAspectMask(vk::ImageAspectFlagBits::eColor))
@@ -163,6 +166,7 @@ void Material::loadImage(
 			.setFormat(vk::Format::eR8G8B8A8Unorm)
 			.setSubresourceRange(
 				vk::ImageSubresourceRange()
+				.setBaseMipLevel(0)
 				.setLevelCount(1)
 				.setLayerCount(1)
 				.setAspectMask(vk::ImageAspectFlagBits::eColor))
@@ -196,6 +200,7 @@ void Material::loadImage(
 			.setFormat(vk::Format::eR8G8B8A8Unorm)
 			.setSubresourceRange(
 				vk::ImageSubresourceRange()
+				.setBaseMipLevel(0)
 				.setLevelCount(1)
 				.setLayerCount(1)
 				.setAspectMask(vk::ImageAspectFlagBits::eColor))
@@ -256,8 +261,8 @@ void Material::loadImage(
 
 	{
 		vk::BufferImageCopy copyInfo = vk::BufferImageCopy()
-			.setBufferOffset(width * height * 0)
-			.setBufferImageHeight(height)
+			.setBufferOffset(alignment * (size_t)ETextureType::eAlbedo)
+			.setBufferImageHeight(height * sizeof(uint32_t))
 			.setBufferRowLength(width)
 			.setImageExtent(vk::Extent3D(width, height, 1))
 			.setImageOffset(0)
@@ -271,8 +276,8 @@ void Material::loadImage(
 	}
 	{
 		vk::BufferImageCopy copyInfo = vk::BufferImageCopy()
-			.setBufferOffset(width * height * 1)
-			.setBufferImageHeight(height)
+			.setBufferOffset(alignment * (size_t)ETextureType::eNormal)
+			.setBufferImageHeight(height * sizeof(uint32_t))
 			.setBufferRowLength(width)
 			.setImageExtent(vk::Extent3D(width, height, 1))
 			.setImageOffset(0)
@@ -286,8 +291,8 @@ void Material::loadImage(
 	}
 	{
 		vk::BufferImageCopy copyInfo = vk::BufferImageCopy()
-			.setBufferOffset(width * height * 2)
-			.setBufferImageHeight(height)
+			.setBufferOffset(alignment * (size_t)ETextureType::ePBR)
+			.setBufferImageHeight(height * sizeof(uint32_t))
 			.setBufferRowLength(width)
 			.setImageExtent(vk::Extent3D(width, height, 1))
 			.setImageOffset(0)

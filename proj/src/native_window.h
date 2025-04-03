@@ -17,7 +17,7 @@ public:
 	void cleanupWindow();
 
 	bool pollEvents();
-	void render();
+	bool render();
 
 private:
 	HWND hwnd_;

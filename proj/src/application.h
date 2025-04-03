@@ -14,7 +14,7 @@ public:
 	void initialize(class RenderEngine* engine, HWND hwnd);
 	void cleanup(class RenderEngine* engine);
 
-	void render(class RenderEngine* engine);
+	bool render(class RenderEngine* engine);
 
 
 private:

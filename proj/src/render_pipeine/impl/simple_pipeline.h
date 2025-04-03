@@ -39,6 +39,8 @@ protected:
 	uint8_t* mappedViewProjMemory_ = nullptr;
 
 	Camera camera_;
+
+	VkDescriptorSet albedoTex_;
 };
 
 #endif

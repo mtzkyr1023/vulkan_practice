@@ -16,8 +16,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 
 	window.initializeWindow();
 
-	while (window.pollEvents()) {
-		window.render();
+	while (window.pollEvents())
+	{
+		if (!window.render())
+		{
+			break;
+		}
 	}
 
 
