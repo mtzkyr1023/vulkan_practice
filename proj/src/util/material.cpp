@@ -82,7 +82,7 @@ void Material::loadImage(
 
 	{
 		vk::BufferCreateInfo bufferCreateInfo = vk::BufferCreateInfo()
-			.setSize(alignment * (vk::DeviceSize)ETextureType::eNum)
+			.setSize(size)
 			.setUsage(vk::BufferUsageFlagBits::eTransferSrc);
 
 		tempMemory.allocateForBuffer(engine->physicalDevice(), engine->device(), bufferCreateInfo, vk::MemoryPropertyFlagBits::eHostVisible);

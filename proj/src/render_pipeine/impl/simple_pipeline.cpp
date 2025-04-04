@@ -583,7 +583,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass) {
 
 	mappedViewProjMemory_ = ubMemory_.map(engine->device(), 0, sizeof(glm::mat4) * 4 * engine->swapchainImageCount());
 
-	mesh_.loadMesh(engine, "models/sponza/gltf/", "sponza.gltf");
+	mesh_.loadMesh(engine, "models/Sponza/gltf/", "sponza.gltf");
 
 	{
 		vk::SamplerCreateInfo samplerCreateInfo = vk::SamplerCreateInfo()
@@ -883,7 +883,7 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 			vk::PipelineBindPoint::eGraphics,
 			pipelineLayout_[ESubpassType::eGBuffer],
 			0,
-			sets_[ESubpassType::eGBuffer][currentImageIndex * mesh_.materialCount() + i],
+			sets_[ESubpassType::eGBuffer][currentImageIndex * mesh_.materialCount() + 2],
 			{});
 
 		for (uint32_t j = 0; j < mesh_.material(i)->drawInfoCount(); j++)
