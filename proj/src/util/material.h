@@ -63,7 +63,7 @@ public:
 	EMaterialType materialType() { return materialType_; }
 
 protected:
-	std::shared_ptr<class Memory> memory_;
+	std::vector<std::shared_ptr<class Memory>> memory_;
 
 	vk::Image images_[(uint32_t)ETextureType::eNum];
 	vk::ImageView imageViews_[(uint32_t)ETextureType::eNum];

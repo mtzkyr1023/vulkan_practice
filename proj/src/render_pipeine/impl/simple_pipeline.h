@@ -31,6 +31,8 @@ public:
 
 protected:
 	std::vector<vk::Buffer> viewProjBuffer_;
+	std::vector<vk::Buffer> invViewProjBuffer_;
+	std::vector<vk::Buffer> sceneInfoBuffer_;
 	Memory ubMemory_;
 	Mesh mesh_;
 

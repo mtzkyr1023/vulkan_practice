@@ -129,19 +129,52 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 	}
 
 	{
-		std::array<vk::DescriptorSetLayoutBinding, 1> binding =
 		{
-			vk::DescriptorSetLayoutBinding()
-			.setBinding(0)
-			.setDescriptorCount(1)
-			.setDescriptorType(vk::DescriptorType::eInputAttachment)
-			.setStageFlags(vk::ShaderStageFlagBits::eFragment),
-		};
+			std::array<vk::DescriptorSetLayoutBinding, 3> binding =
+			{
+				vk::DescriptorSetLayoutBinding()
+				.setBinding(0)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eInputAttachment)
+				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
+				vk::DescriptorSetLayoutBinding()
+				.setBinding(1)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eInputAttachment)
+				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
+				vk::DescriptorSetLayoutBinding()
+				.setBinding(2)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eInputAttachment)
+				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
+			};
 
-		vk::DescriptorSetLayoutCreateInfo layoutCreateInfo = vk::DescriptorSetLayoutCreateInfo()
-			.setBindings(binding);
+			vk::DescriptorSetLayoutCreateInfo layoutCreateInfo = vk::DescriptorSetLayoutCreateInfo()
+				.setBindings(binding);
 
-		descriptorLayouts_[ESubpassType::eComposition].push_back(engine->device().createDescriptorSetLayout(layoutCreateInfo));
+			descriptorLayouts_[ESubpassType::eComposition].push_back(engine->device().createDescriptorSetLayout(layoutCreateInfo));
+		}
+
+		{
+			std::array<vk::DescriptorSetLayoutBinding, 2> binding =
+			{
+				vk::DescriptorSetLayoutBinding()
+				.setBinding(0)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
+				vk::DescriptorSetLayoutBinding()
+				.setBinding(1)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
+			};
+
+			vk::DescriptorSetLayoutCreateInfo layoutCreateInfo = vk::DescriptorSetLayoutCreateInfo()
+				.setBindings(binding);
+
+			descriptorLayouts_[ESubpassType::eComposition].push_back(engine->device().createDescriptorSetLayout(layoutCreateInfo));
+		}
 	}
 
 	{
@@ -545,7 +578,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 			.setFront(frontState)
 			.setDepthBoundsTestEnable(false)
 			.setDepthCompareOp(vk::CompareOp::eLessOrEqual)
-			.setDepthTestEnable(true)
+			.setDepthTestEnable(false)
 			.setDepthWriteEnable(true)
 			.setMaxDepthBounds(1.0f)
 			.setMinDepthBounds(0.0f)
@@ -595,7 +628,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 		engine->physicalDevice(),
 		engine->device(),
 		vk::BufferCreateInfo()
-		.setSize(sizeof(glm::mat4) * 4 * engine->swapchainImageCount())
+		.setSize(sizeof(glm::mat4) * 12 * engine->swapchainImageCount())
 		.setUsage(vk::BufferUsageFlagBits::eUniformBuffer),
 		vk::MemoryPropertyFlagBits::eHostVisible);
 	for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
@@ -605,11 +638,15 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 			.setUsage(vk::BufferUsageFlagBits::eUniformBuffer);
 
 		viewProjBuffer_.push_back(engine->device().createBuffer(bufferCreateInfo));
+		invViewProjBuffer_.push_back(engine->device().createBuffer(bufferCreateInfo));
+		sceneInfoBuffer_.push_back(engine->device().createBuffer(bufferCreateInfo));
 	}
 
 	for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
 	{
-		ubMemory_.bind(engine->device(), viewProjBuffer_[i], sizeof(glm::mat4) * 4 * i);	
+		ubMemory_.bind(engine->device(), viewProjBuffer_[i], sizeof(glm::mat4) * 4 * i + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 0);
+		ubMemory_.bind(engine->device(), invViewProjBuffer_[i], sizeof(glm::mat4) * 4 * i + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 1);
+		ubMemory_.bind(engine->device(), sceneInfoBuffer_[i], sizeof(glm::mat4) * 4 * i + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 2);
 	}
 
 	mappedViewProjMemory_ = ubMemory_.map(engine->device(), 0, sizeof(glm::mat4) * 4 * engine->swapchainImageCount());
@@ -777,29 +814,114 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 		}
 	}
 
+	
 	{
 		vk::DescriptorSetAllocateInfo allocInfo = vk::DescriptorSetAllocateInfo()
 			.setDescriptorPool(engine->descriptorPool())
 			.setSetLayouts(descriptorLayouts_[ESubpassType::eComposition]);
 
-		sets_[ESubpassType::eComposition].push_back(engine->device().allocateDescriptorSets(allocInfo));
+		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
+		{
+			sets_[ESubpassType::eComposition].push_back(engine->device().allocateDescriptorSets(allocInfo));
+		}
 
-		vk::WriteDescriptorSet write;
+		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
+		{
+			{
+				vk::WriteDescriptorSet write;
 
-		vk::DescriptorImageInfo imageInfo = vk::DescriptorImageInfo()
-			.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-			.setImageView(pass->imageView((uint32_t)DeferredPass::eAlbedo))
-			.setSampler(sampler_);
+				vk::DescriptorImageInfo imageInfo = vk::DescriptorImageInfo()
+					.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+					.setImageView(pass->imageView((uint32_t)DeferredPass::eAlbedo))
+					.setSampler(sampler_);
 
-		write = vk::WriteDescriptorSet()
-			.setImageInfo(imageInfo)
-			.setDescriptorCount(1)
-			.setDescriptorType(vk::DescriptorType::eInputAttachment)
-			.setDstArrayElement(0)
-			.setDstBinding(0)
-			.setDstSet(sets_[ESubpassType::eComposition][0][0]);
+				write = vk::WriteDescriptorSet()
+					.setImageInfo(imageInfo)
+					.setDescriptorCount(1)
+					.setDescriptorType(vk::DescriptorType::eInputAttachment)
+					.setDstArrayElement(0)
+					.setDstBinding(0)
+					.setDstSet(sets_[ESubpassType::eComposition][i][0]);
 
-		engine->device().updateDescriptorSets({ write }, {});
+				engine->device().updateDescriptorSets({ write }, {});
+			}
+
+			{
+				vk::WriteDescriptorSet write;
+
+				vk::DescriptorImageInfo imageInfo = vk::DescriptorImageInfo()
+					.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+					.setImageView(pass->imageView((uint32_t)DeferredPass::eNormalDepth))
+					.setSampler(sampler_);
+
+				write = vk::WriteDescriptorSet()
+					.setImageInfo(imageInfo)
+					.setDescriptorCount(1)
+					.setDescriptorType(vk::DescriptorType::eInputAttachment)
+					.setDstArrayElement(0)
+					.setDstBinding(1)
+					.setDstSet(sets_[ESubpassType::eComposition][i][0]);
+
+				engine->device().updateDescriptorSets({ write }, {});
+			}
+
+			{
+				vk::WriteDescriptorSet write;
+
+				vk::DescriptorImageInfo imageInfo = vk::DescriptorImageInfo()
+					.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+					.setImageView(pass->imageView((uint32_t)DeferredPass::eRoughMetalVelocity))
+					.setSampler(sampler_);
+
+				write = vk::WriteDescriptorSet()
+					.setImageInfo(imageInfo)
+					.setDescriptorCount(1)
+					.setDescriptorType(vk::DescriptorType::eInputAttachment)
+					.setDstArrayElement(0)
+					.setDstBinding(2)
+					.setDstSet(sets_[ESubpassType::eComposition][i][0]);
+
+				engine->device().updateDescriptorSets({ write }, {});
+			}
+
+			{
+				vk::WriteDescriptorSet write;
+
+				vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
+					.setBuffer(invViewProjBuffer_[i])
+					.setOffset(0)
+					.setRange(sizeof(glm::mat4) * 4);
+
+				write = vk::WriteDescriptorSet()
+					.setBufferInfo(bufferInfo)
+					.setDescriptorCount(1)
+					.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+					.setDstArrayElement(0)
+					.setDstBinding(0)
+					.setDstSet(sets_[ESubpassType::eComposition][i][1]);
+
+				engine->device().updateDescriptorSets(write, {});
+			}
+
+			{
+				vk::WriteDescriptorSet write;
+
+				vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
+					.setBuffer(sceneInfoBuffer_[i])
+					.setOffset(0)
+					.setRange(sizeof(glm::mat4) * 4);
+
+				write = vk::WriteDescriptorSet()
+					.setBufferInfo(bufferInfo)
+					.setDescriptorCount(1)
+					.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+					.setDstArrayElement(0)
+					.setDstBinding(1)
+					.setDstSet(sets_[ESubpassType::eComposition][i][1]);
+
+				engine->device().updateDescriptorSets(write, {});
+			}
+		}
 	}
 }
 
@@ -809,6 +931,8 @@ void SimplePipeline::cleanup(RenderEngine* engine) {
 	for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
 	{
 		engine->device().destroyBuffer(viewProjBuffer_[i]);
+		engine->device().destroyBuffer(invViewProjBuffer_[i]);
+		engine->device().destroyBuffer(sceneInfoBuffer_[i]);
 	}
 
 	engine->device().destroySampler(sampler_);
@@ -969,13 +1093,14 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 
 	cb.nextSubpass(vk::SubpassContents::eInline);
 
+	cb.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_[ESubpassType::eComposition]);
+
 	cb.bindDescriptorSets(
 		vk::PipelineBindPoint::eGraphics,
 		pipelineLayout_[ESubpassType::eComposition],
 		0,
-		sets_[ESubpassType::eComposition][0],
+		sets_[ESubpassType::eComposition][currentImageIndex],
 		{});
-	cb.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_[ESubpassType::eComposition]);
 
 	cb.draw(3, 1, 0, 0);
 
@@ -993,7 +1118,21 @@ void SimplePipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
 		glm::mat4 world;
 	};
 
+	struct InvViewProj
+	{
+		glm::mat4 invView;
+		glm::mat4 invProj;
+	};
+
+	struct SceneInfo
+	{
+		glm::vec4 lightVector;
+		glm::vec4 cameraPosition;
+	};
+
 	ViewProj vp;
+	InvViewProj invVP;
+	SceneInfo info;
 
 	const float speed = 100.0f;
 
@@ -1038,9 +1177,27 @@ void SimplePipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
 	vp.view = camera_.viewMatrix();
 	vp.proj = camera_.projMatrix();
 
+	invVP.invView = glm::inverse(vp.view);
+	invVP.invProj = glm::inverse(vp.proj);
+
+	info.lightVector = glm::vec4(-1.0f, 1.0f, -1.0f, 0.0f);
+	info.cameraPosition = glm::vec4(camera_.transform().position(), 0.0f);
+
 	memcpy_s(
-		&mappedViewProjMemory_[sizeof(glm::mat4) * 4 * currentImageIndex],
+		&mappedViewProjMemory_[sizeof(glm::mat4) * 4 * currentImageIndex + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 0],
 		sizeof(ViewProj),
 		&vp,
 		sizeof(ViewProj));
+
+	memcpy_s(
+		&mappedViewProjMemory_[sizeof(glm::mat4) * 4 * currentImageIndex + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 1],
+		sizeof(invVP),
+		&invVP,
+		sizeof(invVP));
+
+	memcpy_s(
+		&mappedViewProjMemory_[sizeof(glm::mat4) * 4 * currentImageIndex + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 2],
+		sizeof(info),
+		&info,
+		sizeof(info));
 }

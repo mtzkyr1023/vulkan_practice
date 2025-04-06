@@ -54,16 +54,17 @@ void Material::loadImage(
 
 	int mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
 
-	Memory tempMemory;
-	vk::Buffer buffer;
+	std::array<Memory, (uint32_t)ETextureType::eNum> tempMemory;
+	std::array<vk::Buffer, (uint32_t)ETextureType::eNum> buffer;
 
 
 	vk::DeviceSize size = 0;
 	vk::DeviceSize alignment = 0;
+	for (uint32_t i = 0; i < (uint32_t)ETextureType::eNum; i++)
 	{
 		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
 			.setExtent(vk::Extent3D(width, height, 1))
-			.setArrayLayers(3)
+			.setArrayLayers(1)
 			.setFormat(vk::Format::eR8G8B8A8Unorm)
 			.setImageType(vk::ImageType::e2D)
 			.setInitialLayout(vk::ImageLayout::eUndefined)
@@ -73,13 +74,13 @@ void Material::loadImage(
 			.setSharingMode(vk::SharingMode::eExclusive)
 			.setUsage(vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst);
 
-		memory_ = std::make_shared<Memory>();
+		memory_.push_back(std::make_shared<Memory>());
 
-		memory_->allocateForImage(engine->physicalDevice(), engine->device(), imageCreateInfo, vk::MemoryPropertyFlagBits::eDeviceLocal);
+		memory_[i]->allocateForImage(engine->physicalDevice(), engine->device(), imageCreateInfo, vk::MemoryPropertyFlagBits::eDeviceLocal);
 
-		vk::DeviceSize a = memory_->alignment();
-		size = memory_->size();
-		alignment = width * height * sizeof(uint32_t) + (memory_->alignment() - 1) & ~(memory_->alignment() - 1);
+		vk::DeviceSize a = memory_[i]->alignment();
+		size = memory_[i]->size();
+		alignment = width * height * sizeof(uint32_t) + (memory_[i]->alignment() - 1) & ~(memory_[i]->alignment() - 1);
 	}
 
 	{
@@ -87,27 +88,43 @@ void Material::loadImage(
 			.setSize(size)
 			.setUsage(vk::BufferUsageFlagBits::eTransferSrc);
 
-		tempMemory.allocateForBuffer(engine->physicalDevice(), engine->device(), bufferCreateInfo, vk::MemoryPropertyFlagBits::eHostVisible);
+		tempMemory[0].allocateForBuffer(engine->physicalDevice(), engine->device(), bufferCreateInfo, vk::MemoryPropertyFlagBits::eHostVisible);
+		tempMemory[1].allocateForBuffer(engine->physicalDevice(), engine->device(), bufferCreateInfo, vk::MemoryPropertyFlagBits::eHostVisible);
+		tempMemory[2].allocateForBuffer(engine->physicalDevice(), engine->device(), bufferCreateInfo, vk::MemoryPropertyFlagBits::eHostVisible);
 
-		uint8_t* mappedMemory = tempMemory.map(engine->device(), 0, alignment);
-		if (albedo != nullptr)
 		{
-			memcpy_s(mappedMemory + alignment * (size_t)ETextureType::eAlbedo, alignment, albedo, alignment);
+			uint8_t* mappedMemory = tempMemory[0].map(engine->device(), 0, alignment);
+			if (albedo != nullptr)
+			{
+				memcpy_s(mappedMemory, alignment, albedo, alignment);
+			}
 		}
-		if (normal != nullptr)
 		{
-			memcpy_s(mappedMemory + alignment * (size_t)ETextureType::eNormal, alignment, normal, alignment);
+			uint8_t* mappedMemory = tempMemory[1].map(engine->device(), 0, alignment);
+			if (normal != nullptr)
+			{
+				memcpy_s(mappedMemory, alignment, normal, alignment);
+			}
 		}
-		if (pbr != nullptr)
 		{
-			memcpy_s(mappedMemory + alignment * (size_t)ETextureType::ePBR, alignment, pbr, alignment);
+			uint8_t* mappedMemory = tempMemory[2].map(engine->device(), 0, alignment);
+			if (pbr != nullptr)
+			{
+				memcpy_s(mappedMemory, alignment, pbr, alignment);
+			}
 		}
 
-		tempMemory.unmap(engine->device());
+		tempMemory[0].unmap(engine->device());
+		tempMemory[1].unmap(engine->device());
+		tempMemory[2].unmap(engine->device());
 
-		buffer = engine->device().createBuffer(bufferCreateInfo);
+		buffer[0] = engine->device().createBuffer(bufferCreateInfo);
+		buffer[1] = engine->device().createBuffer(bufferCreateInfo);
+		buffer[2] = engine->device().createBuffer(bufferCreateInfo);
 
-		tempMemory.bind(engine->device(), buffer, 0);
+		tempMemory[0].bind(engine->device(), buffer[0], 0);
+		tempMemory[1].bind(engine->device(), buffer[1], 0);
+		tempMemory[2].bind(engine->device(), buffer[2], 0);
 	}
 
 	{
@@ -128,7 +145,7 @@ void Material::loadImage(
 
 		image = engine->device().createImage(imageCreateInfo);
 
-		memory_->bind(engine->device(), image, alignment * (vk::DeviceSize)type);
+		memory_[type]->bind(engine->device(), image, 0);
 
 		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
 			.setFormat(vk::Format::eR8G8B8A8Unorm)
@@ -162,7 +179,7 @@ void Material::loadImage(
 
 		image = engine->device().createImage(imageCreateInfo);
 
-		memory_->bind(engine->device(), image, alignment * (vk::DeviceSize)type);
+		memory_[type]->bind(engine->device(), image, 0);
 
 		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
 			.setFormat(vk::Format::eR8G8B8A8Unorm)
@@ -196,7 +213,7 @@ void Material::loadImage(
 
 		image = engine->device().createImage(imageCreateInfo);
 
-		memory_->bind(engine->device(), image, alignment * (vk::DeviceSize)type);
+		memory_[type]->bind(engine->device(), image, 0);
 
 		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
 			.setFormat(vk::Format::eR8G8B8A8Unorm)
@@ -263,7 +280,7 @@ void Material::loadImage(
 
 	{
 		vk::BufferImageCopy copyInfo = vk::BufferImageCopy()
-			.setBufferOffset(alignment * (size_t)ETextureType::eAlbedo)
+			.setBufferOffset(0)
 			.setBufferImageHeight(height * sizeof(uint32_t))
 			.setBufferRowLength(width)
 			.setImageExtent(vk::Extent3D(width, height, 1))
@@ -274,11 +291,11 @@ void Material::loadImage(
 				.setLayerCount(1)
 				.setAspectMask(vk::ImageAspectFlagBits::eColor)
 				.setBaseArrayLayer(0));
-		cbs[0].copyBufferToImage(buffer, images_[(uint32_t)ETextureType::eAlbedo], vk::ImageLayout::eTransferDstOptimal, { copyInfo });
+		cbs[0].copyBufferToImage(buffer[0], images_[(uint32_t)ETextureType::eAlbedo], vk::ImageLayout::eTransferDstOptimal, {copyInfo});
 	}
 	{
 		vk::BufferImageCopy copyInfo = vk::BufferImageCopy()
-			.setBufferOffset(alignment * (size_t)ETextureType::eNormal)
+			.setBufferOffset(0)
 			.setBufferImageHeight(height * sizeof(uint32_t))
 			.setBufferRowLength(width)
 			.setImageExtent(vk::Extent3D(width, height, 1))
@@ -289,11 +306,11 @@ void Material::loadImage(
 				.setLayerCount(1)
 				.setAspectMask(vk::ImageAspectFlagBits::eColor)
 				.setBaseArrayLayer(0));
-		cbs[0].copyBufferToImage(buffer, images_[(uint32_t)ETextureType::eNormal], vk::ImageLayout::eTransferDstOptimal, { copyInfo });
+		cbs[0].copyBufferToImage(buffer[1], images_[(uint32_t)ETextureType::eNormal], vk::ImageLayout::eTransferDstOptimal, {copyInfo});
 	}
 	{
 		vk::BufferImageCopy copyInfo = vk::BufferImageCopy()
-			.setBufferOffset(alignment * (size_t)ETextureType::ePBR)
+			.setBufferOffset(0)
 			.setBufferImageHeight(height * sizeof(uint32_t))
 			.setBufferRowLength(width)
 			.setImageExtent(vk::Extent3D(width, height, 1))
@@ -304,7 +321,7 @@ void Material::loadImage(
 				.setLayerCount(1)
 				.setAspectMask(vk::ImageAspectFlagBits::eColor)
 				.setBaseArrayLayer(0));
-		cbs[0].copyBufferToImage(buffer, images_[(uint32_t)ETextureType::ePBR], vk::ImageLayout::eTransferDstOptimal, { copyInfo });
+		cbs[0].copyBufferToImage(buffer[2], images_[(uint32_t)ETextureType::ePBR], vk::ImageLayout::eTransferDstOptimal, {copyInfo});
 	}
 
 	{
@@ -539,11 +556,15 @@ void Material::loadImage(
 
 	engine->device().waitForFences({ fence }, vk::True, kTimeOut);
 
-	tempMemory.free(engine->device());
+	tempMemory[0].free(engine->device());
+	tempMemory[1].free(engine->device());
+	tempMemory[2].free(engine->device());
 
 	engine->device().freeCommandBuffers(engine->commandPool(), cbs);
 	engine->device().destroyFence(fence);
-	engine->device().destroyBuffer(buffer);
+	engine->device().destroyBuffer(buffer[0]);
+	engine->device().destroyBuffer(buffer[1]);
+	engine->device().destroyBuffer(buffer[2]);
 
 	stbi_image_free(albedo);
 	stbi_image_free(normal);
@@ -562,5 +583,8 @@ void Material::release(RenderEngine* engine)
 		engine->device().destroyImageView(ite);
 	}
 
-	memory_->free(engine->device());
+	for (auto& ite : memory_)
+	{
+		ite->free(engine->device());
+	}
 }

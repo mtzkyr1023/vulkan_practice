@@ -17,7 +17,9 @@ layout(location=2) out vec4 outRoughMetalVelocity;
 void main()
 {
 	outAlbedo = texture(sampler2D(albedoTex, wrapSampler), inTexcoord);
-	outNormalDepth = vec4(texture(sampler2D(normalTex, wrapSampler), inTexcoord).xyz, 1.0f);
+	vec3 normal = texture(sampler2D(normalTex, wrapSampler), inTexcoord).xyz * 2.0f - vec3(1.0f);
+	normal = normalize(inTangent * normal.x + inBinormal * normal.y + inNormal * normal.z);
+	outNormalDepth = vec4(normal, gl_FragCoord.z);
 	outRoughMetalVelocity = vec4(texture(sampler2D(pbrTex, wrapSampler), inTexcoord).yz, 0.0f, 0.0f);
 	
 	
