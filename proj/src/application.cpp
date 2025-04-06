@@ -19,7 +19,8 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 	{
 		imgui_.setup(engine, hwnd);
 		deferredPass_.setup(engine);
-		simplePipeline_.initialize(engine, &deferredPass_);
+		simplePipeline_.initialize(engine, &deferredPass_, nullptr);
+		fbPipeline_.initialize(engine, nullptr, &deferredPass_);
 
 		vk::SamplerCreateInfo samplerCreateInfo = vk::SamplerCreateInfo()
 			.setAddressModeU(vk::SamplerAddressMode::eRepeat)
@@ -76,6 +77,7 @@ bool Application::render(RenderEngine* engine) {
 
 		simplePipeline_.render(engine, &deferredPass_, currentFrameIndex);
 
+
 		std::array<vk::ClearValue, 1> clearValues = {
 		vk::ClearValue()
 		};
@@ -83,10 +85,12 @@ bool Application::render(RenderEngine* engine) {
 			.setRenderPass(engine->renderPass())
 			.setFramebuffer(engine->framebuffer(currentFrameIndex))
 			.setRenderArea(vk::Rect2D({ 0, 0 }, { kScreenWidth, kScreenHeight }))
-			.setClearValueCount(1)
-			.setPClearValues(clearValues.data());
+			.setClearValues(clearValues);
 
 		cb.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
+
+		fbPipeline_.render(engine, nullptr, currentFrameIndex);
+
 
 		imgui_.render(engine, cb);
 
@@ -151,9 +155,6 @@ void Application::update(RenderEngine* engine, uint32_t currentFrameIndex)
 	ImGui::Begin("Hello world!");
 
 	ImGui::Text("FPS:%1f, DeltaTime:%1f", Timer::instance().fps(), Timer::instance().deltaTime());
-
-	ImGui::Image((ImTextureID)depthBuffer_, ImVec2(512, 512));
-
 
 	simplePipeline_.update(engine, currentFrameIndex);
 

@@ -11,7 +11,7 @@ class RenderPipeline {
 public:
 	virtual ~RenderPipeline() {}
 
-	virtual void initialize(class RenderEngine* engine, class RenderPass* pass) = 0;
+	virtual void initialize(class RenderEngine* engine, class RenderPass* pass, class RenderPass* prePass) = 0;
 	virtual void cleanup(class RenderEngine* engine);
 	
 	virtual void render(class RenderEngine* engine, class RenderPass* pass, uint32_t currentImageIndex) = 0;

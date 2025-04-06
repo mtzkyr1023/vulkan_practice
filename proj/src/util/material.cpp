@@ -13,8 +13,8 @@
 
 
 
-Material::Material(bool isTransparent) :
-	isTransparent_(isTransparent)
+Material::Material(EMaterialType type) :
+	materialType_(type)
 {
 
 }
@@ -52,6 +52,8 @@ void Material::loadImage(
 	}
 
 
+	int mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
+
 	Memory tempMemory;
 	vk::Buffer buffer;
 
@@ -65,7 +67,7 @@ void Material::loadImage(
 			.setFormat(vk::Format::eR8G8B8A8Unorm)
 			.setImageType(vk::ImageType::e2D)
 			.setInitialLayout(vk::ImageLayout::eUndefined)
-			.setMipLevels(1)
+			.setMipLevels(mipLevels)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
 			.setSharingMode(vk::SharingMode::eExclusive)
@@ -119,10 +121,10 @@ void Material::loadImage(
 			.setFormat(vk::Format::eR8G8B8A8Unorm)
 			.setImageType(vk::ImageType::e2D)
 			.setInitialLayout(vk::ImageLayout::eUndefined)
-			.setMipLevels(1)
+			.setMipLevels(mipLevels)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst);
+			.setUsage(vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eTransferSrc);
 
 		image = engine->device().createImage(imageCreateInfo);
 
@@ -133,7 +135,7 @@ void Material::loadImage(
 			.setSubresourceRange(
 				vk::ImageSubresourceRange()
 				.setBaseMipLevel(0)
-				.setLevelCount(1)
+				.setLevelCount(mipLevels)
 				.setLayerCount(1)
 				.setAspectMask(vk::ImageAspectFlagBits::eColor))
 			.setViewType(vk::ImageViewType::e2D)
@@ -153,10 +155,10 @@ void Material::loadImage(
 			.setFormat(vk::Format::eR8G8B8A8Unorm)
 			.setImageType(vk::ImageType::e2D)
 			.setInitialLayout(vk::ImageLayout::eUndefined)
-			.setMipLevels(1)
+			.setMipLevels(mipLevels)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst);
+			.setUsage(vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eTransferSrc);
 
 		image = engine->device().createImage(imageCreateInfo);
 
@@ -167,7 +169,7 @@ void Material::loadImage(
 			.setSubresourceRange(
 				vk::ImageSubresourceRange()
 				.setBaseMipLevel(0)
-				.setLevelCount(1)
+				.setLevelCount(mipLevels)
 				.setLayerCount(1)
 				.setAspectMask(vk::ImageAspectFlagBits::eColor))
 			.setViewType(vk::ImageViewType::e2D)
@@ -187,10 +189,10 @@ void Material::loadImage(
 			.setFormat(vk::Format::eR8G8B8A8Unorm)
 			.setImageType(vk::ImageType::e2D)
 			.setInitialLayout(vk::ImageLayout::eUndefined)
-			.setMipLevels(1)
+			.setMipLevels(mipLevels)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst);
+			.setUsage(vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eTransferSrc);
 
 		image = engine->device().createImage(imageCreateInfo);
 
@@ -201,7 +203,7 @@ void Material::loadImage(
 			.setSubresourceRange(
 				vk::ImageSubresourceRange()
 				.setBaseMipLevel(0)
-				.setLevelCount(1)
+				.setLevelCount(mipLevels)
 				.setLayerCount(1)
 				.setAspectMask(vk::ImageAspectFlagBits::eColor))
 			.setViewType(vk::ImageViewType::e2D)
@@ -315,27 +317,203 @@ void Material::loadImage(
 
 		std::array<vk::ImageMemoryBarrier, 3> barriers;
 		barriers[0].setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
-		barriers[0].setDstAccessMask(vk::AccessFlagBits::eShaderRead);
+		barriers[0].setDstAccessMask(vk::AccessFlagBits::eTransferRead);
 		barriers[0].setImage(images_[(uint32_t)ETextureType::eAlbedo]);
 		barriers[0].setOldLayout(vk::ImageLayout::eTransferDstOptimal);
-		barriers[0].setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+		barriers[0].setNewLayout(vk::ImageLayout::eTransferSrcOptimal);
 		barriers[0].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
 		barriers[0].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
 		barriers[0].setSubresourceRange(colorSubresourceRange);
 
 		barriers[1].setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
-		barriers[1].setDstAccessMask(vk::AccessFlagBits::eShaderRead);
+		barriers[1].setDstAccessMask(vk::AccessFlagBits::eTransferRead);
 		barriers[1].setImage(images_[(uint32_t)ETextureType::eNormal]);
 		barriers[1].setOldLayout(vk::ImageLayout::eTransferDstOptimal);
-		barriers[1].setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+		barriers[1].setNewLayout(vk::ImageLayout::eTransferSrcOptimal);
 		barriers[1].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
 		barriers[1].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
 		barriers[1].setSubresourceRange(colorSubresourceRange);
 
 		barriers[2].setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
-		barriers[2].setDstAccessMask(vk::AccessFlagBits::eShaderRead);
+		barriers[2].setDstAccessMask(vk::AccessFlagBits::eTransferRead);
 		barriers[2].setImage(images_[(uint32_t)ETextureType::ePBR]);
 		barriers[2].setOldLayout(vk::ImageLayout::eTransferDstOptimal);
+		barriers[2].setNewLayout(vk::ImageLayout::eTransferSrcOptimal);
+		barriers[2].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[2].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[2].setSubresourceRange(colorSubresourceRange);
+
+		cbs[0].pipelineBarrier(
+			vk::PipelineStageFlagBits::eAllGraphics,
+			vk::PipelineStageFlagBits::eAllGraphics,
+			vk::DependencyFlagBits::eDeviceGroup,
+			nullptr,
+			nullptr,
+			barriers);
+	}
+
+	int mipWidth = width;
+	int mipHeight = height;
+
+	for (int i = 1; i < mipLevels; i++)
+	{
+		{
+
+			vk::ImageSubresourceRange colorSubresourceRange = vk::ImageSubresourceRange()
+				.setAspectMask(vk::ImageAspectFlagBits::eColor)
+				.setBaseArrayLayer(0)
+				.setBaseMipLevel(i)
+				.setLayerCount(1)
+				.setLevelCount(1);
+
+			std::array<vk::ImageMemoryBarrier, 3> barriers;
+			barriers[0].setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+			barriers[0].setDstAccessMask(vk::AccessFlagBits::eTransferWrite);
+			barriers[0].setImage(images_[(uint32_t)ETextureType::eAlbedo]);
+			barriers[0].setOldLayout(vk::ImageLayout::eUndefined);
+			barriers[0].setNewLayout(vk::ImageLayout::eTransferDstOptimal);
+			barriers[0].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+			barriers[0].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+			barriers[0].setSubresourceRange(colorSubresourceRange);
+
+			barriers[1].setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+			barriers[1].setDstAccessMask(vk::AccessFlagBits::eTransferWrite);
+			barriers[1].setImage(images_[(uint32_t)ETextureType::eNormal]);
+			barriers[1].setOldLayout(vk::ImageLayout::eUndefined);
+			barriers[1].setNewLayout(vk::ImageLayout::eTransferDstOptimal);
+			barriers[1].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+			barriers[1].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+			barriers[1].setSubresourceRange(colorSubresourceRange);
+
+			barriers[2].setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+			barriers[2].setDstAccessMask(vk::AccessFlagBits::eTransferWrite);
+			barriers[2].setImage(images_[(uint32_t)ETextureType::ePBR]);
+			barriers[2].setOldLayout(vk::ImageLayout::eUndefined);
+			barriers[2].setNewLayout(vk::ImageLayout::eTransferDstOptimal);
+			barriers[2].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+			barriers[2].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+			barriers[2].setSubresourceRange(colorSubresourceRange);
+
+			cbs[0].pipelineBarrier(
+				vk::PipelineStageFlagBits::eAllGraphics,
+				vk::PipelineStageFlagBits::eAllGraphics,
+				vk::DependencyFlagBits::eDeviceGroup,
+				nullptr,
+				nullptr,
+				barriers);
+		}
+
+		for (uint32_t j = 0; j < (uint32_t)ETextureType::eNum; j++)
+		{
+			int dstMipWidth = mipWidth > 1 ? mipWidth / 2 : 1;
+			int dstMipHeight = mipHeight > 1 ? mipHeight / 2 : 1;
+			vk::ImageBlit blit = vk::ImageBlit()
+				.setSrcOffsets({ vk::Offset3D(0, 0, 0), vk::Offset3D(mipWidth, mipHeight, 1) })
+				.setSrcSubresource(
+					vk::ImageSubresourceLayers()
+					.setAspectMask(vk::ImageAspectFlagBits::eColor)
+					.setMipLevel(i - 1)
+					.setBaseArrayLayer(0)
+					.setLayerCount(1))
+				.setDstOffsets({
+					vk::Offset3D(0, 0, 0),
+					vk::Offset3D(dstMipWidth, dstMipHeight, 1)})
+				.setDstSubresource(
+					vk::ImageSubresourceLayers()
+					.setAspectMask(vk::ImageAspectFlagBits::eColor)
+					.setMipLevel(i)
+					.setBaseArrayLayer(0)
+					.setLayerCount(1));
+
+			cbs[0].blitImage(
+				images_[j],
+				vk::ImageLayout::eTransferSrcOptimal,
+				images_[j],
+				vk::ImageLayout::eTransferDstOptimal,
+				1, &blit, vk::Filter::eLinear);
+		}
+
+
+		vk::ImageSubresourceRange colorSubresourceRange = vk::ImageSubresourceRange()
+			.setAspectMask(vk::ImageAspectFlagBits::eColor)
+			.setBaseArrayLayer(0)
+			.setBaseMipLevel(i)
+			.setLayerCount(1)
+			.setLevelCount(1);
+
+		std::array<vk::ImageMemoryBarrier, 3> barriers;
+		barriers[0].setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+		barriers[0].setDstAccessMask(vk::AccessFlagBits::eTransferRead);
+		barriers[0].setImage(images_[(uint32_t)ETextureType::eAlbedo]);
+		barriers[0].setOldLayout(vk::ImageLayout::eTransferDstOptimal);
+		barriers[0].setNewLayout(vk::ImageLayout::eTransferSrcOptimal);
+		barriers[0].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[0].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[0].setSubresourceRange(colorSubresourceRange);
+
+		barriers[1].setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+		barriers[1].setDstAccessMask(vk::AccessFlagBits::eTransferRead);
+		barriers[1].setImage(images_[(uint32_t)ETextureType::eNormal]);
+		barriers[1].setOldLayout(vk::ImageLayout::eTransferDstOptimal);
+		barriers[1].setNewLayout(vk::ImageLayout::eTransferSrcOptimal);
+		barriers[1].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[1].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[1].setSubresourceRange(colorSubresourceRange);
+
+		barriers[2].setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+		barriers[2].setDstAccessMask(vk::AccessFlagBits::eTransferRead);
+		barriers[2].setImage(images_[(uint32_t)ETextureType::ePBR]);
+		barriers[2].setOldLayout(vk::ImageLayout::eTransferDstOptimal);
+		barriers[2].setNewLayout(vk::ImageLayout::eTransferSrcOptimal);
+		barriers[2].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[2].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[2].setSubresourceRange(colorSubresourceRange);
+
+		cbs[0].pipelineBarrier(
+			vk::PipelineStageFlagBits::eAllGraphics,
+			vk::PipelineStageFlagBits::eAllGraphics,
+			vk::DependencyFlagBits::eDeviceGroup,
+			nullptr,
+			nullptr,
+			barriers);
+
+		mipWidth >>= 1;
+		mipHeight >>= 1;
+	}
+
+	for (int i = 0; i < mipLevels; i++)
+	{
+
+		vk::ImageSubresourceRange colorSubresourceRange = vk::ImageSubresourceRange()
+			.setAspectMask(vk::ImageAspectFlagBits::eColor)
+			.setBaseArrayLayer(0)
+			.setBaseMipLevel(i)
+			.setLayerCount(1)
+			.setLevelCount(1);
+
+		std::array<vk::ImageMemoryBarrier, 3> barriers;
+		barriers[0].setSrcAccessMask(vk::AccessFlagBits::eTransferRead);
+		barriers[0].setDstAccessMask(vk::AccessFlagBits::eShaderRead);
+		barriers[0].setImage(images_[(uint32_t)ETextureType::eAlbedo]);
+		barriers[0].setOldLayout(vk::ImageLayout::eTransferSrcOptimal);
+		barriers[0].setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+		barriers[0].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[0].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[0].setSubresourceRange(colorSubresourceRange);
+
+		barriers[1].setSrcAccessMask(vk::AccessFlagBits::eTransferRead);
+		barriers[1].setDstAccessMask(vk::AccessFlagBits::eShaderRead);
+		barriers[1].setImage(images_[(uint32_t)ETextureType::eNormal]);
+		barriers[1].setOldLayout(vk::ImageLayout::eTransferSrcOptimal);
+		barriers[1].setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+		barriers[1].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[1].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
+		barriers[1].setSubresourceRange(colorSubresourceRange);
+
+		barriers[2].setSrcAccessMask(vk::AccessFlagBits::eTransferRead);
+		barriers[2].setDstAccessMask(vk::AccessFlagBits::eShaderRead);
+		barriers[2].setImage(images_[(uint32_t)ETextureType::ePBR]);
+		barriers[2].setOldLayout(vk::ImageLayout::eTransferSrcOptimal);
 		barriers[2].setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
 		barriers[2].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
 		barriers[2].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());

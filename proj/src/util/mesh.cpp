@@ -74,11 +74,15 @@ void Mesh::loadMesh(RenderEngine* engine, const char* foldername, const char* fi
 		std::shared_ptr<Material> mat;
 		if (output == aiString("OPAQUE"))
 		{
-			mat = std::make_shared<Material>(false);
+			mat = std::make_shared<Material>(EMaterialType::eOpaque);
+		}
+		else if (output == aiString("MASK"))
+		{
+			mat = std::make_shared<Material>(EMaterialType::eMask);
 		}
 		else
 		{
-			mat = std::make_shared<Material>(true);
+			mat = std::make_shared<Material>(EMaterialType::eTransparent);
 		}
 
 		mat->loadImage(engine, albedoFullPath.c_str(), normalFullPath.c_str(), pbrFullPath.c_str(), false);
@@ -97,7 +101,7 @@ void Mesh::loadMesh(RenderEngine* engine, const char* foldername, const char* fi
 			vertex.pos = glm::vec4(mesh->mVertices[j].x, mesh->mVertices[j].y, mesh->mVertices[j].z, 1.0f);
 			vertex.nor = glm::vec3(mesh->mNormals[j].x, mesh->mNormals[j].y, mesh->mNormals[j].z);
 			vertex.tan = glm::vec3(mesh->mBitangents[j].x, mesh->mBitangents[j].y, mesh->mBitangents[j].z);
-			vertex.tex = glm::vec2(mesh->mTextureCoords[0][j].x, mesh->mTextureCoords[0][j].y);
+			vertex.tex = glm::vec2(mesh->mTextureCoords[0][j].x, 1.0f - mesh->mTextureCoords[0][j].y);
 			verticies.push_back(vertex);
 		}
 

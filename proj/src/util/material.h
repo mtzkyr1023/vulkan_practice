@@ -4,6 +4,13 @@
 
 #include "vulkan/vulkan.hpp"
 
+enum class EMaterialType : uint32_t
+{
+	eOpaque = 0,
+	eMask,
+	eTransparent,
+};
+
 struct DrawInfo
 {
 	DrawInfo(uint32_t indexOffset, uint32_t indexCount)
@@ -18,7 +25,7 @@ struct DrawInfo
 class Material
 {
 public:
-	Material(bool isTransparent);
+	Material(EMaterialType type);
 	~Material();
 
 
@@ -53,8 +60,7 @@ public:
 	uint32_t indexOffset(uint32_t index) { return drawInfos_[index].indexOffset; }
 	uint32_t indexCount(uint32_t index) { return drawInfos_[index].indexCount; }
 
-	bool isTransparent() { return isTransparent_; }
-
+	EMaterialType materialType() { return materialType_; }
 
 protected:
 	std::shared_ptr<class Memory> memory_;
@@ -64,7 +70,7 @@ protected:
 
 	std::vector<DrawInfo> drawInfos_;
 	
-	bool isTransparent_;
+	EMaterialType materialType_;
 };
 
 #endif

@@ -19,4 +19,8 @@ void main()
 	outAlbedo = texture(sampler2D(albedoTex, wrapSampler), inTexcoord);
 	outNormalDepth = vec4(texture(sampler2D(normalTex, wrapSampler), inTexcoord).xyz, 1.0f);
 	outRoughMetalVelocity = vec4(texture(sampler2D(pbrTex, wrapSampler), inTexcoord).yz, 0.0f, 0.0f);
+	
+	
+	if (outAlbedo.a - 0.5f < 0.0f)
+		discard;
 }

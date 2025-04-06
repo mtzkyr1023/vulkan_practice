@@ -23,7 +23,7 @@ public:
 	SimplePipeline();
 	~SimplePipeline();
 
-	virtual void initialize(class RenderEngine* engine, class RenderPass* pass) override;
+	virtual void initialize(class RenderEngine* engine, class RenderPass* pass, class RenderPass* prePass) override;
 	virtual void cleanup(class RenderEngine* engine) override;
 
 	virtual void render(class RenderEngine* engine, class RenderPass* pass, uint32_t currentImageIndex) override;
@@ -39,8 +39,6 @@ protected:
 	uint8_t* mappedViewProjMemory_ = nullptr;
 
 	Camera camera_;
-
-	VkDescriptorSet albedoTex_;
 };
 
 #endif

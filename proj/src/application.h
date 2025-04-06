@@ -3,6 +3,7 @@
 
 
 #include "render_pipeine/impl/simple_pipeline.h"
+#include "render_pipeine/impl/fb_pipeline.h"
 #include "render_pass/impl/deferred_pass.h"
 #include "util/imgui_wrapper.h"
 
@@ -22,6 +23,7 @@ private:
 
 private:
 	SimplePipeline simplePipeline_;
+	FbPipeline fbPipeline_;
 	DeferredPass deferredPass_;
 	ImGuiWrapper imgui_;
 	vk::Sampler sampler_;
