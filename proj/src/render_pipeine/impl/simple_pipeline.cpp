@@ -452,7 +452,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 			.setDepthBoundsTestEnable(false)
 			.setDepthCompareOp(vk::CompareOp::eLessOrEqual)
 			.setDepthTestEnable(true)
-			.setDepthWriteEnable(false)
+			.setDepthWriteEnable(true)
 			.setMaxDepthBounds(1.0f)
 			.setMinDepthBounds(0.0f)
 			.setStencilTestEnable(false);
@@ -1053,21 +1053,21 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 	cb.bindVertexBuffers(0, { mesh_.vertexBuffer() }, { 0 });
 	cb.bindIndexBuffer(mesh_.indexBuffer(), 0, vk::IndexType::eUint32);
 	
-	for (uint32_t i = 0; i < mesh_.materialCount(); i++)
-	{
-		//if (mesh_.material(i)->isTransparent()) continue;
-		cb.bindDescriptorSets(
-			vk::PipelineBindPoint::eGraphics,
-			pipelineLayout_[ESubpassType::eDepthPrePass],
-			0,
-			sets_[ESubpassType::eDepthPrePass][currentImageIndex * mesh_.materialCount() + i],
-			{});
+	//for (uint32_t i = 0; i < mesh_.materialCount(); i++)
+	//{
+	//	//if (mesh_.material(i)->isTransparent()) continue;
+	//	cb.bindDescriptorSets(
+	//		vk::PipelineBindPoint::eGraphics,
+	//		pipelineLayout_[ESubpassType::eDepthPrePass],
+	//		0,
+	//		sets_[ESubpassType::eDepthPrePass][currentImageIndex * mesh_.materialCount() + i],
+	//		{});
 
-		for (uint32_t j = 0; j < mesh_.material(i)->drawInfoCount(); j++)
-		{
-			cb.drawIndexed(mesh_.material(i)->indexCount(j), 1, mesh_.material(i)->indexOffset(j), 0, 0);
-		}
-	}
+	//	for (uint32_t j = 0; j < mesh_.material(i)->drawInfoCount(); j++)
+	//	{
+	//		cb.drawIndexed(mesh_.material(i)->indexCount(j), 1, mesh_.material(i)->indexOffset(j), 0, 0);
+	//	}
+	//}
 
 
 	cb.nextSubpass(vk::SubpassContents::eInline);

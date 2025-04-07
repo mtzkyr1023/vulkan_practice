@@ -39,11 +39,19 @@
       <SubType>
       </SubType>
     </ClInclude>
+    <ClInclude Include="src\render_pass\impl\shadow_pass.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
     <ClInclude Include="src\render_pass\render_pass.h">
       <SubType>
       </SubType>
     </ClInclude>
     <ClInclude Include="src\render_pipeine\impl\fb_pipeline.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="src\render_pipeine\impl\shadow_pipeline.h">
       <SubType>
       </SubType>
     </ClInclude>
@@ -86,11 +94,19 @@
       <SubType>
       </SubType>
     </ClCompile>
+    <ClCompile Include="src\render_pass\impl\shadow_pass.cpp">
+      <SubType>
+      </SubType>
+    </ClCompile>
     <ClCompile Include="src\render_pass\render_pass.cpp">
       <SubType>
       </SubType>
     </ClCompile>
     <ClCompile Include="src\render_pipeine\impl\fb_pipeline.cpp">
+      <SubType>
+      </SubType>
+    </ClCompile>
+    <ClCompile Include="src\render_pipeine\impl\shadow_pipeline.cpp">
       <SubType>
       </SubType>
     </ClCompile>
