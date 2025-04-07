@@ -60,6 +60,7 @@ void Application::cleanup(RenderEngine* engine) {
 	engine->device().destroySampler(sampler_);
 
 	simplePipeline_.cleanup(engine);
+	fbPipeline_.cleanup(engine);
 	deferredPass_.cleanup(engine);
 	imgui_.cleanup(engine);
 }

@@ -11,6 +11,7 @@ layout(set=1, binding=0) uniform InvViewProjMatrix {
 layout(set=1, binding=1) uniform SceneInfo {
 	vec4 lightVector;
 	vec4 cameraPosition;
+	vec4 screenInfo;
 } ub1;
 
 layout(location=0) out vec4 outResult;
@@ -64,9 +65,9 @@ void main()
 	vec4 normalDepth = subpassLoad(index1);
 	vec4 roughMetalVelocity = subpassLoad(index2);
 	
-	float depth = normalDepth.w * -2.0f + 1.0f;
+	float depth = normalDepth.w;
 	
-	vec4 screenCoord = vec4(gl_FragCoord.xy, depth, 1.0f);
+	vec4 screenCoord = vec4(gl_FragCoord.xy / ub1.screenInfo.xy * 2.0f - 1.0f, depth, 1.0f);
 	
 	vec4 viewPosition = ub0.invProj * screenCoord;
 	vec4 worldPosition = ub0.invView * viewPosition;
@@ -97,7 +98,13 @@ void main()
 	vec3 specular = numerator / denominator;
 	
 	float NdotL = max(dot(N, L), 0.0f);
-	vec3 color = (kD * albedo.rgb / PI + specular) * NdotL;
+	vec3 color = (kD * albedo.rgb / PI + specular) * vec3(4.0f) * NdotL;
+    vec3 ambient = vec3(0.05f) * albedo.rgb;
 	
-	outResult = vec4(color, 0.0f);
+	color = color + ambient;
+	
+	color = color / (color + vec3(1.0f));
+	color = pow(color, vec3(1.0f / 2.2f));
+	
+	outResult = vec4(color, 1.0f);
 }

@@ -628,7 +628,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 		engine->physicalDevice(),
 		engine->device(),
 		vk::BufferCreateInfo()
-		.setSize(sizeof(glm::mat4) * 12 * engine->swapchainImageCount())
+		.setSize(sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 3)
 		.setUsage(vk::BufferUsageFlagBits::eUniformBuffer),
 		vk::MemoryPropertyFlagBits::eHostVisible);
 	for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
@@ -1128,6 +1128,7 @@ void SimplePipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
 	{
 		glm::vec4 lightVector;
 		glm::vec4 cameraPosition;
+		glm::vec4 screenInfo;
 	};
 
 	ViewProj vp;
@@ -1180,8 +1181,9 @@ void SimplePipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
 	invVP.invView = glm::inverse(vp.view);
 	invVP.invProj = glm::inverse(vp.proj);
 
-	info.lightVector = glm::vec4(-1.0f, 1.0f, -1.0f, 0.0f);
+	info.lightVector = glm::vec4(1.0f, 1.0f, 1.0f, 0.0f);
 	info.cameraPosition = glm::vec4(camera_.transform().position(), 0.0f);
+	info.screenInfo = glm::vec4((float)kScreenWidth, (float)kScreenHeight, 0.0f, 0.0f);
 
 	memcpy_s(
 		&mappedViewProjMemory_[sizeof(glm::mat4) * 4 * currentImageIndex + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 0],
