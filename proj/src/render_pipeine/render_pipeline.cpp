@@ -16,9 +16,22 @@ void RenderPipeline::cleanup(RenderEngine* engine) {
 	{
 		engine->device().destroyPipelineLayout(it.second);
 	}
-	engine->device().freeCommandBuffers(engine->commandPool(), commandBuffers_);
+	if (!commandBuffers_.empty())
+	{
+		engine->device().freeCommandBuffers(engine->commandPool(), commandBuffers_);
+	}
+
 	for (vk::Semaphore& semaphore : renderCompletedSemaphores_) {
 		engine->device().destroySemaphore(semaphore);
+	}
+
+
+	for (auto& ite : descriptorLayouts_)
+	{
+		for (auto& layout : ite.second)
+		{
+			engine->device().destroyDescriptorSetLayout(layout);
+		}
 	}
 
 	for (auto& ite : sets_)

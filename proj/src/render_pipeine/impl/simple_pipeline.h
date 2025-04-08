@@ -23,10 +23,10 @@ public:
 	SimplePipeline();
 	~SimplePipeline();
 
-	virtual void initialize(class RenderEngine* engine, class RenderPass* pass, class RenderPass* prePass) override;
+	virtual void initialize(class RenderEngine* engine, class RenderPass* pass, class RenderPass* prePass, class Scene* scene) override;
 	virtual void cleanup(class RenderEngine* engine) override;
 
-	virtual void render(class RenderEngine* engine, class RenderPass* pass, uint32_t currentImageIndex) override;
+	virtual void render(class RenderEngine* engine, class RenderPass* pass, class Scene* scene, uint32_t currentImageIndex) override;
 	virtual void update(class RenderEngine* engine, uint32_t currentImageIndex) override;
 
 protected:
@@ -34,7 +34,6 @@ protected:
 	std::vector<vk::Buffer> invViewProjBuffer_;
 	std::vector<vk::Buffer> sceneInfoBuffer_;
 	Memory ubMemory_;
-	Mesh mesh_;
 
 	vk::Sampler sampler_;
 

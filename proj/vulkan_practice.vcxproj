@@ -23,6 +23,18 @@
     <ClInclude Include="src\defines.h" />
     <ClInclude Include="src\gameobject\camera.h" />
     <ClInclude Include="src\gameobject\gameobject.h" />
+    <ClInclude Include="src\gameobject\meshobject.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="src\gameobject\scene.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="src\gameobject\test_scene.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
     <ClInclude Include="src\gameobject\transform.h" />
     <ClInclude Include="src\imgui\backends\imgui_impl_vulkan.h" />
     <ClInclude Include="src\imgui\backends\imgui_impl_win32.h" />
@@ -80,6 +92,18 @@
     <ClCompile Include="src\application.cpp" />
     <ClCompile Include="src\gameobject\camera.cpp" />
     <ClCompile Include="src\gameobject\gameobject.cpp" />
+    <ClCompile Include="src\gameobject\meshobject.cpp">
+      <SubType>
+      </SubType>
+    </ClCompile>
+    <ClCompile Include="src\gameobject\scene.cpp">
+      <SubType>
+      </SubType>
+    </ClCompile>
+    <ClCompile Include="src\gameobject\test_scene.cpp">
+      <SubType>
+      </SubType>
+    </ClCompile>
     <ClCompile Include="src\imgui\backends\imgui_impl_vulkan.cpp" />
     <ClCompile Include="src\imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="src\imgui\imgui.cpp" />

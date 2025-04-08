@@ -17,10 +17,15 @@ Application::~Application() {
 void Application::initialize(RenderEngine* engine, HWND hwnd) {
 	try
 	{
+		testscene_.initialize(engine);
+
 		imgui_.setup(engine, hwnd);
+		shadowPass_.setup(engine);
 		deferredPass_.setup(engine);
-		simplePipeline_.initialize(engine, &deferredPass_, nullptr);
-		fbPipeline_.initialize(engine, nullptr, &deferredPass_);
+
+		shadowPipeline_.initialize(engine, &shadowPass_, nullptr, &testscene_);
+		simplePipeline_.initialize(engine, &deferredPass_, &shadowPass_, &testscene_);
+		fbPipeline_.initialize(engine, nullptr, &deferredPass_, &testscene_);
 
 		vk::SamplerCreateInfo samplerCreateInfo = vk::SamplerCreateInfo()
 			.setAddressModeU(vk::SamplerAddressMode::eRepeat)
@@ -40,7 +45,7 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 
 		sampler_ = engine->device().createSampler(samplerCreateInfo);
 
-		depthBuffer_ = ImGui_ImplVulkan_AddTexture(sampler_, deferredPass_.imageView((uint32_t)DeferredPass::eTemporary), VkImageLayout::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		depthBuffer_ = ImGui_ImplVulkan_AddTexture(sampler_, shadowPass_.imageView((uint32_t)ShadowPass::eRaw), VkImageLayout::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 		Input::Instance().Initialize(hwnd);
 	}
@@ -59,8 +64,11 @@ void Application::cleanup(RenderEngine* engine) {
 
 	engine->device().destroySampler(sampler_);
 
+	testscene_.cleanup(engine);
+	shadowPipeline_.cleanup(engine);
 	simplePipeline_.cleanup(engine);
 	fbPipeline_.cleanup(engine);
+	shadowPass_.cleanup(engine);
 	deferredPass_.cleanup(engine);
 	imgui_.cleanup(engine);
 }
@@ -75,6 +83,8 @@ bool Application::render(RenderEngine* engine) {
 		vk::CommandBuffer cb = engine->commandBuffer(currentFrameIndex);
 
 		cb.begin(vk::CommandBufferBeginInfo());
+
+		shadowPipeline_.render(engine, &shadowPass_, currentFrameIndex);
 
 		simplePipeline_.render(engine, &deferredPass_, currentFrameIndex);
 
@@ -157,6 +167,9 @@ void Application::update(RenderEngine* engine, uint32_t currentFrameIndex)
 
 	ImGui::Text("FPS:%1f, DeltaTime:%1f", Timer::instance().fps(), Timer::instance().deltaTime());
 
+	ImGui::Image((ImTextureID)depthBuffer_, ImVec2(512, 512));
+
+	shadowPipeline_.update(engine, currentFrameIndex);
 	simplePipeline_.update(engine, currentFrameIndex);
 
 	ImGui::End();

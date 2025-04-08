@@ -3,6 +3,7 @@
 #include "../../render_pass/render_pass.h"
 #include "../../defines.h"
 #include "../../gameobject/camera.h"
+#include "../../gameobject/scene.h"
 #include "../../util/timer.h"
 #include "../../util/material.h"
 #include "../../util/input.h"
@@ -21,7 +22,7 @@ SimplePipeline::~SimplePipeline() {
 
 }
 
-void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPass* prePass) {
+void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPass* prePass, Scene* scene) {
 	{
 		{
 			std::array<vk::DescriptorSetLayoutBinding, 1> binding =
@@ -156,7 +157,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 		}
 
 		{
-			std::array<vk::DescriptorSetLayoutBinding, 2> binding =
+			std::array<vk::DescriptorSetLayoutBinding, 3> binding =
 			{
 				vk::DescriptorSetLayoutBinding()
 				.setBinding(0)
@@ -167,6 +168,43 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 				.setBinding(1)
 				.setDescriptorCount(1)
 				.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
+				vk::DescriptorSetLayoutBinding()
+				.setBinding(2)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
+			};
+
+			vk::DescriptorSetLayoutCreateInfo layoutCreateInfo = vk::DescriptorSetLayoutCreateInfo()
+				.setBindings(binding);
+
+			descriptorLayouts_[ESubpassType::eComposition].push_back(engine->device().createDescriptorSetLayout(layoutCreateInfo));
+		}
+
+		{
+			std::array<vk::DescriptorSetLayoutBinding, 1> binding =
+			{
+				vk::DescriptorSetLayoutBinding()
+				.setBinding(0)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eSampledImage)
+				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
+			};
+
+			vk::DescriptorSetLayoutCreateInfo layoutCreateInfo = vk::DescriptorSetLayoutCreateInfo()
+				.setBindings(binding);
+
+			descriptorLayouts_[ESubpassType::eComposition].push_back(engine->device().createDescriptorSetLayout(layoutCreateInfo));
+		}
+
+		{
+			std::array<vk::DescriptorSetLayoutBinding, 1> binding =
+			{
+				vk::DescriptorSetLayoutBinding()
+				.setBinding(0)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eSampler)
 				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
 			};
 
@@ -651,8 +689,6 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 
 	mappedViewProjMemory_ = ubMemory_.map(engine->device(), 0, sizeof(glm::mat4) * 4 * engine->swapchainImageCount());
 
-	mesh_.loadMesh(engine, "models/Sponza/gltf/", "sponza.gltf");
-
 	{
 		vk::SamplerCreateInfo samplerCreateInfo = vk::SamplerCreateInfo()
 			.setAddressModeU(vk::SamplerAddressMode::eRepeat)
@@ -681,7 +717,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 
 		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
 		{
-			for (uint32_t j = 0; j < mesh_.materialCount(); j++)
+			for (uint32_t j = 0; j < scene->bgMesh()->mesh().materialCount(); j++)
 			{
 				sets_[ESubpassType::eDepthPrePass].push_back(engine->device().allocateDescriptorSets(allocInfo));
 			}
@@ -689,7 +725,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 
 		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
 		{
-			for (uint32_t j = 0; j < mesh_.materialCount(); j++)
+			for (uint32_t j = 0; j < scene->bgMesh()->mesh().materialCount(); j++)
 			{
 				vk::WriteDescriptorSet write;
 
@@ -704,13 +740,13 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 					.setDescriptorType(vk::DescriptorType::eUniformBuffer)
 					.setDstArrayElement(0)
 					.setDstBinding(0)
-					.setDstSet(sets_[ESubpassType::eDepthPrePass][i * mesh_.materialCount() + j][0]);
+					.setDstSet(sets_[ESubpassType::eDepthPrePass][i * scene->bgMesh()->mesh().materialCount() + j][0]);
 
 				engine->device().updateDescriptorSets(write, {});
 
 				{
 					vk::DescriptorImageInfo imageInfo = vk::DescriptorImageInfo()
-						.setImageView(mesh_.material(j)->imageViews(0))
+						.setImageView(scene->bgMesh()->mesh().material(j)->imageViews(0))
 						.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 						.setSampler(VK_NULL_HANDLE);
 
@@ -720,7 +756,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 						.setDescriptorType(vk::DescriptorType::eSampledImage)
 						.setDstArrayElement(0)
 						.setDstBinding(0)
-						.setDstSet(sets_[ESubpassType::eDepthPrePass][i * mesh_.materialCount() + j][1]);
+						.setDstSet(sets_[ESubpassType::eDepthPrePass][i * scene->bgMesh()->mesh().materialCount() + j][1]);
 
 					engine->device().updateDescriptorSets(write, {});
 				}
@@ -736,7 +772,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 					.setDescriptorType(vk::DescriptorType::eSampler)
 					.setDstArrayElement(0)
 					.setDstBinding(0)
-					.setDstSet(sets_[ESubpassType::eDepthPrePass][i * mesh_.materialCount() + j][2]);
+					.setDstSet(sets_[ESubpassType::eDepthPrePass][i * scene->bgMesh()->mesh().materialCount() + j][2]);
 
 				engine->device().updateDescriptorSets(write, {});
 			}
@@ -751,7 +787,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 
 		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
 		{
-			for (uint32_t j = 0; j < mesh_.materialCount(); j++)
+			for (uint32_t j = 0; j < scene->bgMesh()->mesh().materialCount(); j++)
 			{
 				sets_[ESubpassType::eGBuffer].push_back(engine->device().allocateDescriptorSets(allocInfo));
 			}
@@ -759,7 +795,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 
 		for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
 		{
-			for (uint32_t j = 0; j < mesh_.materialCount(); j++)
+			for (uint32_t j = 0; j < scene->bgMesh()->mesh().materialCount(); j++)
 			{
 				vk::WriteDescriptorSet write;
 
@@ -774,14 +810,14 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 					.setDescriptorType(vk::DescriptorType::eUniformBuffer)
 					.setDstArrayElement(0)
 					.setDstBinding(0)
-					.setDstSet(sets_[ESubpassType::eGBuffer][i * mesh_.materialCount() + j][0]);
+					.setDstSet(sets_[ESubpassType::eGBuffer][i * scene->bgMesh()->mesh().materialCount() + j][0]);
 
 				engine->device().updateDescriptorSets(write, {});
 				
 				for (uint32_t k = 0; k < (uint32_t)Material::ETextureType::eNum; k++)
 				{
 					vk::DescriptorImageInfo imageInfo = vk::DescriptorImageInfo()
-						.setImageView(mesh_.material(j)->imageViews(k))
+						.setImageView(scene->bgMesh()->mesh().material(j)->imageViews(k))
 						.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 						.setSampler(VK_NULL_HANDLE);
 
@@ -791,7 +827,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 						.setDescriptorType(vk::DescriptorType::eSampledImage)
 						.setDstArrayElement(0)
 						.setDstBinding(k)
-						.setDstSet(sets_[ESubpassType::eGBuffer][i * mesh_.materialCount() + j][1]);
+						.setDstSet(sets_[ESubpassType::eGBuffer][i * scene->bgMesh()->mesh().materialCount() + j][1]);
 
 					engine->device().updateDescriptorSets(write, {});
 				}
@@ -807,7 +843,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 					.setDescriptorType(vk::DescriptorType::eSampler)
 					.setDstArrayElement(0)
 					.setDstBinding(0)
-					.setDstSet(sets_[ESubpassType::eGBuffer][i * mesh_.materialCount() + j][2]);
+					.setDstSet(sets_[ESubpassType::eGBuffer][i * scene->bgMesh()->mesh().materialCount() + j][2]);
 
 				engine->device().updateDescriptorSets(write, {});
 			}
@@ -937,19 +973,9 @@ void SimplePipeline::cleanup(RenderEngine* engine) {
 
 	engine->device().destroySampler(sampler_);
 	ubMemory_.free(engine->device());
-
-	mesh_.release(engine);
-	
-	for (uint32_t i = 0; i < ESubpassType::eNum; i++)
-	{
-		for (const auto& layout : descriptorLayouts_[i])
-		{
-			engine->device().destroyDescriptorSetLayout(layout);
-		}
-	}
 }
 
-void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t currentImageIndex) {
+void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, Scene* scene, uint32_t currentImageIndex) {
 	vk::CommandBuffer cb = engine->commandBuffer(currentImageIndex);
 
 	vk::ClearValue clearValues[DeferredPass::ETextureType::eStencil] = {
@@ -1050,8 +1076,8 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 
 	cb.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_[ESubpassType::eDepthPrePass]);
 
-	cb.bindVertexBuffers(0, { mesh_.vertexBuffer() }, { 0 });
-	cb.bindIndexBuffer(mesh_.indexBuffer(), 0, vk::IndexType::eUint32);
+	cb.bindVertexBuffers(0, { scene->bgMesh()->mesh().vertexBuffer() }, { 0 });
+	cb.bindIndexBuffer(scene->bgMesh()->mesh().indexBuffer(), 0, vk::IndexType::eUint32);
 	
 	//for (uint32_t i = 0; i < mesh_.materialCount(); i++)
 	//{
@@ -1074,7 +1100,7 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 
 	cb.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_[ESubpassType::eGBuffer]);
 
-	for (uint32_t i = 0; i < mesh_.materialCount(); i++)
+	for (uint32_t i = 0; i < scene->bgMesh()->mesh().materialCount(); i++)
 	{
 		//if (mesh_.material(i)->isTransparent()) continue;
 
@@ -1082,12 +1108,12 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 			vk::PipelineBindPoint::eGraphics,
 			pipelineLayout_[ESubpassType::eGBuffer],
 			0,
-			sets_[ESubpassType::eGBuffer][currentImageIndex * mesh_.materialCount() + i],
+			sets_[ESubpassType::eGBuffer][currentImageIndex * scene->bgMesh()->mesh().materialCount() + i],
 			{});
 
-		for (uint32_t j = 0; j < mesh_.material(i)->drawInfoCount(); j++)
+		for (uint32_t j = 0; j < scene->bgMesh()->mesh().material(i)->drawInfoCount(); j++)
 		{
-			cb.drawIndexed(mesh_.material(i)->indexCount(j), 1, mesh_.material(i)->indexOffset(j), 0, 0);
+			cb.drawIndexed(scene->bgMesh()->mesh().material(i)->indexCount(j), 1, scene->bgMesh()->mesh().material(i)->indexOffset(j), 0, 0);
 		}
 	}
 

@@ -4,6 +4,8 @@
 #include "../../render_pass/impl/deferred_pass.h"
 #include "../../defines.h"
 
+#include "../../gameobject/scene.h"
+
 FbPipeline::FbPipeline()
 {
 
@@ -14,7 +16,7 @@ FbPipeline::~FbPipeline()
 
 }
 
-void FbPipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPass* prePass)
+void FbPipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPass* prePass, Scene* scene)
 {
 	{
 		{

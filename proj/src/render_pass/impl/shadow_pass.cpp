@@ -7,23 +7,23 @@
 void ShadowPass::setupInternal(RenderEngine* engine)
 {
 	std::array<vk::AttachmentDescription, 5> attachmentDescs;
-	std::array<vk::SubpassDependency, 1> subpassDeps;
+	std::array<vk::SubpassDependency, 0> subpassDeps;
 	std::array<vk::SubpassDescription, 1> subpassDescs;
 
 	{
 		// 生のシャドウマップ
 		attachmentDescs[0] = vk::AttachmentDescription()
-			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setFormat(vk::Format::eR16G16Sfloat)
 			.setInitialLayout(vk::ImageLayout::eUndefined)
 			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 			.setLoadOp(vk::AttachmentLoadOp::eClear)
-			.setStoreOp(vk::AttachmentStoreOp::eDontCare)
+			.setStoreOp(vk::AttachmentStoreOp::eStore)
 			.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
 			.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
 
 		// X方向ブラー画像
 		attachmentDescs[1] = vk::AttachmentDescription()
-			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setFormat(vk::Format::eR16G16Sfloat)
 			.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal)
 			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 			.setLoadOp(vk::AttachmentLoadOp::eClear)
@@ -33,7 +33,7 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 
 		// Y方向ブラー画像
 		attachmentDescs[2] = vk::AttachmentDescription()
-			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setFormat(vk::Format::eR16G16Sfloat)
 			.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal)
 			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 			.setLoadOp(vk::AttachmentLoadOp::eClear)
@@ -43,7 +43,7 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 
 		// 最終出力バッファ
 		attachmentDescs[3] = vk::AttachmentDescription()
-			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setFormat(vk::Format::eR16G16Sfloat)
 			.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal)
 			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 			.setLoadOp(vk::AttachmentLoadOp::eClear)
@@ -82,6 +82,17 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 			.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
 	}
 
+	{
+		//subpassDeps[0] = vk::SubpassDependency()
+		//	.setDependencyFlags(vk::DependencyFlagBits::eByRegion)
+		//	.setSrcSubpass(0)
+		//	.setDstSubpass(1)
+		//	.setSrcStageMask(vk::PipelineStageFlagBits::eEarlyFragmentTests)
+		//	.setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
+		//	.setSrcAccessMask(vk::AccessFlagBits::eNone)
+		//	.setDstAccessMask(vk::AccessFlagBits::eNone);
+	}
+
 	vk::RenderPassCreateInfo renderPassCreateInfo = vk::RenderPassCreateInfo()
 		.setAttachments(attachmentDescs)
 		.setDependencies(subpassDeps)
@@ -104,7 +115,7 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 			.setImageType(vk::ImageType::e2D)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment)
+			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
 			.setInitialLayout(vk::ImageLayout::eUndefined);
 
 		memories_[0].allocateForImage(engine->physicalDevice(), engine->device(), imageCreateInfo, vk::MemoryPropertyFlagBits::eDeviceLocal);
@@ -131,37 +142,6 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 	images_.resize(ETextureType::eNum);
 	imageViews_.resize(ETextureType::eNum);
 
-	// 最終出力バッファ作成
-	{
-		auto& image = images_[ETextureType::eResult];
-		auto& view = imageViews_[ETextureType::eResult];
-		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
-			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
-			.setArrayLayers(1)
-			.setMipLevels(1)
-			.setFormat(vk::Format::eR16G16B16A16Sfloat)
-			.setImageType(vk::ImageType::e2D)
-			.setSamples(vk::SampleCountFlagBits::e1)
-			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
-			.setInitialLayout(vk::ImageLayout::eUndefined);
-
-		image = engine->device().createImage(imageCreateInfo);
-
-		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eResult));
-
-		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
-			.setFormat(vk::Format::eR16G16B16A16Sfloat)
-			.setSubresourceRange(
-				vk::ImageSubresourceRange()
-				.setLevelCount(1)
-				.setLayerCount(1)
-				.setAspectMask(vk::ImageAspectFlagBits::eColor))
-			.setViewType(vk::ImageViewType::e2D)
-			.setImage(image);
-
-		view = engine->device().createImageView(viewCreateInfo);
-	}
 
 	// 生シャドウマップ作成
 	{
@@ -171,11 +151,11 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
 			.setArrayLayers(1)
 			.setMipLevels(1)
-			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setFormat(vk::Format::eR16G16Sfloat)
 			.setImageType(vk::ImageType::e2D)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment)
+			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
 			.setInitialLayout(vk::ImageLayout::eUndefined);
 
 		image = engine->device().createImage(imageCreateInfo);
@@ -183,7 +163,7 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eRaw));
 
 		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
-			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setFormat(vk::Format::eR16G16Sfloat)
 			.setSubresourceRange(
 				vk::ImageSubresourceRange()
 				.setLevelCount(1)
@@ -203,11 +183,11 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
 			.setArrayLayers(1)
 			.setMipLevels(1)
-			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setFormat(vk::Format::eR16G16Sfloat)
 			.setImageType(vk::ImageType::e2D)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment)
+			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
 			.setInitialLayout(vk::ImageLayout::eUndefined);
 
 		image = engine->device().createImage(imageCreateInfo);
@@ -215,7 +195,7 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eBlurX));
 
 		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
-			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setFormat(vk::Format::eR16G16Sfloat)
 			.setSubresourceRange(
 				vk::ImageSubresourceRange()
 				.setLevelCount(1)
@@ -235,11 +215,11 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
 			.setArrayLayers(1)
 			.setMipLevels(1)
-			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setFormat(vk::Format::eR16G16Sfloat)
 			.setImageType(vk::ImageType::e2D)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment)
+			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
 			.setInitialLayout(vk::ImageLayout::eUndefined);
 
 		image = engine->device().createImage(imageCreateInfo);
@@ -247,7 +227,7 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eBlurY));
 
 		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
-			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setFormat(vk::Format::eR16G16Sfloat)
 			.setSubresourceRange(
 				vk::ImageSubresourceRange()
 				.setLevelCount(1)
@@ -267,7 +247,7 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
 			.setArrayLayers(1)
 			.setMipLevels(1)
-			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setFormat(vk::Format::eR16G16Sfloat)
 			.setImageType(vk::ImageType::e2D)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
@@ -279,7 +259,7 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eResult));
 
 		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
-			.setFormat(vk::Format::eR16G16B16A16Sfloat)
+			.setFormat(vk::Format::eR16G16Sfloat)
 			.setSubresourceRange(
 				vk::ImageSubresourceRange()
 				.setLevelCount(1)

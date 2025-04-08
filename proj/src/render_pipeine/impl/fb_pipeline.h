@@ -12,7 +12,7 @@ public:
 	FbPipeline();
 	~FbPipeline();
 
-	virtual void initialize(class RenderEngine* engine, class RenderPass* pass, class RenderPass* prePass) override;
+	virtual void initialize(class RenderEngine* engine, class RenderPass* pass, class RenderPass* prePass, class Scene* scene) override;
 	virtual void cleanup(class RenderEngine* engine) override;
 
 	virtual void render(class RenderEngine* engine, class RenderPass* pass, uint32_t currentImageIndex) override;

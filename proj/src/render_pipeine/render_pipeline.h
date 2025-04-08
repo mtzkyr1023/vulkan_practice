@@ -11,10 +11,10 @@ class RenderPipeline {
 public:
 	virtual ~RenderPipeline() {}
 
-	virtual void initialize(class RenderEngine* engine, class RenderPass* pass, class RenderPass* prePass) = 0;
+	virtual void initialize(class RenderEngine* engine, class RenderPass* pass, class RenderPass* prePass, class Scene* scene) = 0;
 	virtual void cleanup(class RenderEngine* engine);
 	
-	virtual void render(class RenderEngine* engine, class RenderPass* pass, uint32_t currentImageIndex) = 0;
+	virtual void render(class RenderEngine* engine, class RenderPass* pass, class Scene* scene, uint32_t currentImageIndex) = 0;
 	virtual void update(class RenderEngine* engine, uint32_t currentImageIndex) = 0;
 
 	vk::CommandBuffer commandBuffer(uint32_t currentFrameIndex) { return commandBuffers_[currentFrameIndex]; }
