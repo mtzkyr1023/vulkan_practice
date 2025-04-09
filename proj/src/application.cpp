@@ -84,9 +84,9 @@ bool Application::render(RenderEngine* engine) {
 
 		cb.begin(vk::CommandBufferBeginInfo());
 
-		shadowPipeline_.render(engine, &shadowPass_, currentFrameIndex);
+		shadowPipeline_.render(engine, &shadowPass_, &testscene_, currentFrameIndex);
 
-		simplePipeline_.render(engine, &deferredPass_, currentFrameIndex);
+		simplePipeline_.render(engine, &deferredPass_, &testscene_, currentFrameIndex);
 
 
 		std::array<vk::ClearValue, 1> clearValues = {
@@ -100,7 +100,7 @@ bool Application::render(RenderEngine* engine) {
 
 		cb.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
-		fbPipeline_.render(engine, nullptr, currentFrameIndex);
+		fbPipeline_.render(engine, nullptr, nullptr, currentFrameIndex);
 
 
 		imgui_.render(engine, cb);
@@ -169,8 +169,8 @@ void Application::update(RenderEngine* engine, uint32_t currentFrameIndex)
 
 	ImGui::Image((ImTextureID)depthBuffer_, ImVec2(512, 512));
 
-	shadowPipeline_.update(engine, currentFrameIndex);
-	simplePipeline_.update(engine, currentFrameIndex);
+	shadowPipeline_.update(engine, &testscene_, currentFrameIndex);
+	simplePipeline_.update(engine, &testscene_, currentFrameIndex);
 
 	ImGui::End();
 }

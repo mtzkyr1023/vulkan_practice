@@ -20,6 +20,9 @@ public:
 
 	std::shared_ptr<MeshObject>& bgMesh() { return bgMesh_; }
 
+	Camera& camera() { return camera_; }
+	Camera& shadowCaster() { return shadowCaster_; }
+
 protected:
 	std::vector<std::shared_ptr<MeshObject>> meshObjects_;
 

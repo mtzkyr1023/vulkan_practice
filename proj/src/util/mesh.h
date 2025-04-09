@@ -4,6 +4,7 @@
 #include "memory"
 #include "vector"
 #include "vulkan/vulkan.hpp"
+#include "glm/glm.hpp"
 
 
 class Mesh
@@ -28,6 +29,10 @@ public:
 	uint32_t vertexCount(uint32_t index) { return vertexCounts_[index]; }
 	uint32_t indexCount(uint32_t index) { return indexCounts_[index]; }
 
+	const glm::vec3& aabbMin() { return aabbMin_; }
+	const glm::vec3& aabbMax() { return aabbMax_; }
+	const glm::vec3& center() { return center_; }
+
 protected:
 	std::shared_ptr<class Memory> vertexMemory_;
 	std::shared_ptr<class Memory> indexMemory_;
@@ -41,6 +46,10 @@ protected:
 	std::vector<uint32_t> indexCounts_;
 
 	std::vector<std::shared_ptr<class Material>> materials_;
+
+	glm::vec3 aabbMin_;
+	glm::vec3 aabbMax_;
+	glm::vec3 center_;
 
 	uint32_t indexCount_;
 };

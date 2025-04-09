@@ -23,13 +23,18 @@ void ShadowPipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 {
 	{
 		{
-			std::array<vk::DescriptorSetLayoutBinding, 1> binding =
+			std::array<vk::DescriptorSetLayoutBinding, 2> binding =
 			{
 				vk::DescriptorSetLayoutBinding()
 				.setBinding(0)
 				.setDescriptorCount(1)
 				.setDescriptorType(vk::DescriptorType::eUniformBuffer)
-				.setStageFlags(vk::ShaderStageFlagBits::eVertex),
+				.setStageFlags(vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment),
+				vk::DescriptorSetLayoutBinding()
+				.setBinding(1)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+				.setStageFlags(vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment),
 			};
 
 			vk::DescriptorSetLayoutCreateInfo layoutCreateInfo = vk::DescriptorSetLayoutCreateInfo()
@@ -70,15 +75,15 @@ void ShadowPipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 
 	{
 		viewport_ = vk::Viewport()
-			.setWidth((float)kScreenWidth)
-			.setHeight((float)kScreenHeight)
+			.setWidth((float)kShadowMapWidth)
+			.setHeight((float)kShadowMapHeight)
 			.setMinDepth(0.0f)
 			.setMaxDepth(1.0f)
 			.setX(0.0f)
 			.setY(0.0f);
 
 		vk::Rect2D scissor = vk::Rect2D()
-			.setExtent(vk::Extent2D(kScreenWidth, kScreenHeight))
+			.setExtent(vk::Extent2D(kShadowMapWidth, kShadowMapHeight))
 			.setOffset(vk::Offset2D(0, 0));
 
 		vk::PipelineViewportStateCreateInfo viewportState = vk::PipelineViewportStateCreateInfo()
@@ -235,11 +240,13 @@ void ShadowPipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 			.setUsage(vk::BufferUsageFlagBits::eUniformBuffer);
 
 		viewProjBuffer_.push_back(engine->device().createBuffer(bufferCreateInfo));
+		cameraBuffer_.push_back(engine->device().createBuffer(bufferCreateInfo));
 	}
 
 	for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
 	{
 		ubMemory_.bind(engine->device(), viewProjBuffer_[i], sizeof(glm::mat4) * 4 * i + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 0);
+		ubMemory_.bind(engine->device(), cameraBuffer_[i], sizeof(glm::mat4) * 4 * i + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 1);
 	}
 
 	mappedViewProjMemory_ = ubMemory_.map(engine->device(), 0, sizeof(glm::mat4) * 4 * engine->swapchainImageCount());
@@ -284,20 +291,39 @@ void ShadowPipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 			{
 				vk::WriteDescriptorSet write;
 
-				vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
-					.setBuffer(viewProjBuffer_[i])
-					.setOffset(0)
-					.setRange(sizeof(glm::mat4) * 4);
+				{
+					vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
+						.setBuffer(viewProjBuffer_[i])
+						.setOffset(0)
+						.setRange(sizeof(glm::mat4) * 4);
 
-				write = vk::WriteDescriptorSet()
-					.setBufferInfo(bufferInfo)
-					.setDescriptorCount(1)
-					.setDescriptorType(vk::DescriptorType::eUniformBuffer)
-					.setDstArrayElement(0)
-					.setDstBinding(0)
-					.setDstSet(sets_[ESubpassType::eRaw][i * scene->bgMesh()->mesh().materialCount() + j][0]);
+					write = vk::WriteDescriptorSet()
+						.setBufferInfo(bufferInfo)
+						.setDescriptorCount(1)
+						.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+						.setDstArrayElement(0)
+						.setDstBinding(0)
+						.setDstSet(sets_[ESubpassType::eRaw][i * scene->bgMesh()->mesh().materialCount() + j][0]);
 
-				engine->device().updateDescriptorSets(write, {});
+					engine->device().updateDescriptorSets(write, {});
+				}
+
+				{
+					vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
+						.setBuffer(cameraBuffer_[i])
+						.setOffset(0)
+						.setRange(sizeof(glm::mat4) * 4);
+
+					write = vk::WriteDescriptorSet()
+						.setBufferInfo(bufferInfo)
+						.setDescriptorCount(1)
+						.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+						.setDstArrayElement(0)
+						.setDstBinding(1)
+						.setDstSet(sets_[ESubpassType::eRaw][i * scene->bgMesh()->mesh().materialCount() + j][0]);
+
+					engine->device().updateDescriptorSets(write, {});
+				}
 
 				{
 					vk::DescriptorImageInfo imageInfo = vk::DescriptorImageInfo()
@@ -333,10 +359,6 @@ void ShadowPipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 			}
 		}
 	}
-
-	camera_.range() = 1000.0f;
-	camera_.isOrtho() = true;
-	camera_.isFps() = false;
 }
 
 void ShadowPipeline::cleanup(RenderEngine* engine)
@@ -357,7 +379,7 @@ void ShadowPipeline::render(RenderEngine* engine, RenderPass* pass, Scene* scene
 	vk::CommandBuffer cb = engine->commandBuffer(currentImageIndex);
 
 	vk::ClearValue clearValues[ShadowPass::ETextureType::eNum] = {
-		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
+		vk::ClearColorValue(1.0f, 0.0f, 0.0f, 0.0f),
 		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
 		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
 		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
@@ -428,7 +450,7 @@ void ShadowPipeline::render(RenderEngine* engine, RenderPass* pass, Scene* scene
 	vk::RenderPassBeginInfo renderPassBeginInfo = vk::RenderPassBeginInfo()
 		.setClearValues(clearValues)
 		.setFramebuffer(pass->framebuffer())
-		.setRenderArea(vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(kScreenWidth, kScreenHeight)))
+		.setRenderArea(vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(kShadowMapWidth, kShadowMapHeight)))
 		.setRenderPass(pass->renderPass());
 
 	cb.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
@@ -457,7 +479,7 @@ void ShadowPipeline::render(RenderEngine* engine, RenderPass* pass, Scene* scene
 	cb.endRenderPass();
 }
 
-void ShadowPipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
+void ShadowPipeline::update(RenderEngine* engine, Scene* scene, uint32_t currentImageIndex)
 {
 
 	struct ViewProj
@@ -465,9 +487,18 @@ void ShadowPipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
 		glm::mat4 view;
 		glm::mat4 proj;
 		glm::mat4 world;
+		glm::vec4 sceneInfo;
+	};
+
+	struct Camera
+	{
+		glm::mat4 view;
+		glm::mat4 proj;
+		glm::mat4 world;
 	};
 
 	ViewProj vp;
+	Camera camera;
 
 	const float speed = 100.0f;
 
@@ -475,23 +506,32 @@ void ShadowPipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
 
 
 
-	camera_.transform().rotation() *=
-		glm::rotate(glm::identity<glm::quat>(), Input::Instance().GetMoveYLeftPushed() * 2.0f * -deltaTime, camera_.transform().right()) *
+	scene->shadowCaster().transform().rotation() *=
+		glm::rotate(glm::identity<glm::quat>(), Input::Instance().GetMoveYLeftPushed() * 2.0f * -deltaTime, scene->shadowCaster().transform().right()) *
 		glm::rotate(glm::identity<glm::quat>(), Input::Instance().GetMoveXLeftPushed() * 2.0f * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
 
-	camera_.update(Timer::instance().deltaTime());
+	scene->shadowCaster().update(Timer::instance().deltaTime());
 
 	static float rot = 0.0f;
 
 	vp.world =
 		glm::scale(glm::identity<glm::mat4>(), glm::vec3(0.25f, 0.25f, 0.25f));
-	vp.view = camera_.viewMatrix();
-	vp.proj = camera_.projMatrix();
+	vp.view = scene->shadowCaster().viewMatrix();
+	vp.proj = scene->shadowCaster().projMatrix();
+	vp.sceneInfo = glm::vec4((float)kShadowMapWidth, (float)kShadowMapHeight, scene->shadowCaster().nearZ(), scene->shadowCaster().farZ());
 
+	camera.view = scene->camera().viewMatrix();
+	camera.proj = scene->camera().projMatrix();
 
 	memcpy_s(
 		&mappedViewProjMemory_[sizeof(glm::mat4) * 4 * currentImageIndex + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 0],
 		sizeof(ViewProj),
 		&vp,
 		sizeof(ViewProj));
+
+	memcpy_s(
+		&mappedViewProjMemory_[sizeof(glm::mat4) * 4 * currentImageIndex + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 1],
+		sizeof(camera),
+		&camera,
+		sizeof(camera));
 }

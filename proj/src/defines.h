@@ -7,8 +7,8 @@ static const char* kAppName = "Tutorial Application";
 static const int kScreenWidth = 1920;
 static const int kScreenHeight = 1080;
 
-static const int kShadowmapWidth = 2048;
-static const int kShadowmapHeight = 2048;
+static const int kShadowMapWidth = 4096;
+static const int kShadowMapHeight = 4096;
 
 static const uint64_t kTimeOut = 1000000000000;
 

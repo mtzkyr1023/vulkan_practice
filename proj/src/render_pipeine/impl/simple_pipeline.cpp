@@ -8,14 +8,15 @@
 #include "../../util/material.h"
 #include "../../util/input.h"
 #include "../../render_pass/impl/deferred_pass.h"
+#include "../../render_pass/impl/shadow_pass.h"
 #include "../../imgui/backends/imgui_impl_vulkan.h"
 
 #undef MemoryBarrier
 
 SimplePipeline::SimplePipeline() :
-	mappedViewProjMemory_(nullptr),
-	camera_(Transform(), glm::pi<float>() * 0.5f, (float)kScreenWidth / (float)kScreenHeight, 0.1f, 1000.0f)
+	mappedViewProjMemory_(nullptr)
 {
+
 }
 
 SimplePipeline::~SimplePipeline() {
@@ -131,7 +132,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 
 	{
 		{
-			std::array<vk::DescriptorSetLayoutBinding, 3> binding =
+			std::array<vk::DescriptorSetLayoutBinding, 4> binding =
 			{
 				vk::DescriptorSetLayoutBinding()
 				.setBinding(0)
@@ -145,6 +146,11 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
 				vk::DescriptorSetLayoutBinding()
 				.setBinding(2)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eInputAttachment)
+				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
+				vk::DescriptorSetLayoutBinding()
+				.setBinding(3)
 				.setDescriptorCount(1)
 				.setDescriptorType(vk::DescriptorType::eInputAttachment)
 				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
@@ -666,7 +672,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 		engine->physicalDevice(),
 		engine->device(),
 		vk::BufferCreateInfo()
-		.setSize(sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 3)
+		.setSize(sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 4)
 		.setUsage(vk::BufferUsageFlagBits::eUniformBuffer),
 		vk::MemoryPropertyFlagBits::eHostVisible);
 	for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
@@ -678,6 +684,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 		viewProjBuffer_.push_back(engine->device().createBuffer(bufferCreateInfo));
 		invViewProjBuffer_.push_back(engine->device().createBuffer(bufferCreateInfo));
 		sceneInfoBuffer_.push_back(engine->device().createBuffer(bufferCreateInfo));
+		shadowBuffer_.push_back(engine->device().createBuffer(bufferCreateInfo));
 	}
 
 	for (uint32_t i = 0; i < engine->swapchainImageCount(); i++)
@@ -685,6 +692,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 		ubMemory_.bind(engine->device(), viewProjBuffer_[i], sizeof(glm::mat4) * 4 * i + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 0);
 		ubMemory_.bind(engine->device(), invViewProjBuffer_[i], sizeof(glm::mat4) * 4 * i + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 1);
 		ubMemory_.bind(engine->device(), sceneInfoBuffer_[i], sizeof(glm::mat4) * 4 * i + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 2);
+		ubMemory_.bind(engine->device(), shadowBuffer_[i], sizeof(glm::mat4) * 4 * i + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 3);
 	}
 
 	mappedViewProjMemory_ = ubMemory_.map(engine->device(), 0, sizeof(glm::mat4) * 4 * engine->swapchainImageCount());
@@ -706,7 +714,27 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 			.setMinLod(0)
 			.setMipmapMode(vk::SamplerMipmapMode::eLinear);
 
-		sampler_ = engine->device().createSampler(samplerCreateInfo);
+		wrapSampler_ = engine->device().createSampler(samplerCreateInfo);
+	}
+
+	{
+		vk::SamplerCreateInfo samplerCreateInfo = vk::SamplerCreateInfo()
+			.setAddressModeU(vk::SamplerAddressMode::eClampToEdge)
+			.setAddressModeV(vk::SamplerAddressMode::eClampToEdge)
+			.setAddressModeW(vk::SamplerAddressMode::eClampToEdge)
+			.setAnisotropyEnable(true)
+			.setBorderColor(vk::BorderColor::eFloatOpaqueBlack)
+			.setCompareEnable(false)
+			.setCompareOp(vk::CompareOp::eAlways)
+			.setMagFilter(vk::Filter::eLinear)
+			.setMaxAnisotropy(16.0f)
+			.setMinFilter(vk::Filter::eLinear)
+			.setMaxLod(0)
+			.setMipLodBias(0)
+			.setMinLod(0)
+			.setMipmapMode(vk::SamplerMipmapMode::eLinear);
+
+		clampSampler_ = engine->device().createSampler(samplerCreateInfo);
 	}
 
 	{
@@ -764,7 +792,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 				vk::DescriptorImageInfo samplerInfo = vk::DescriptorImageInfo()
 					.setImageView(VK_NULL_HANDLE)
 					.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-					.setSampler(sampler_);
+					.setSampler(wrapSampler_);
 
 				write = vk::WriteDescriptorSet()
 					.setImageInfo(samplerInfo)
@@ -835,7 +863,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 				vk::DescriptorImageInfo samplerInfo = vk::DescriptorImageInfo()
 					.setImageView(VK_NULL_HANDLE)
 					.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-					.setSampler(sampler_);
+					.setSampler(wrapSampler_);
 
 				write = vk::WriteDescriptorSet()
 					.setImageInfo(samplerInfo)
@@ -869,7 +897,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 				vk::DescriptorImageInfo imageInfo = vk::DescriptorImageInfo()
 					.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 					.setImageView(pass->imageView((uint32_t)DeferredPass::eAlbedo))
-					.setSampler(sampler_);
+					.setSampler(clampSampler_);
 
 				write = vk::WriteDescriptorSet()
 					.setImageInfo(imageInfo)
@@ -888,7 +916,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 				vk::DescriptorImageInfo imageInfo = vk::DescriptorImageInfo()
 					.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 					.setImageView(pass->imageView((uint32_t)DeferredPass::eNormalDepth))
-					.setSampler(sampler_);
+					.setSampler(clampSampler_);
 
 				write = vk::WriteDescriptorSet()
 					.setImageInfo(imageInfo)
@@ -907,7 +935,7 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 				vk::DescriptorImageInfo imageInfo = vk::DescriptorImageInfo()
 					.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 					.setImageView(pass->imageView((uint32_t)DeferredPass::eRoughMetalVelocity))
-					.setSampler(sampler_);
+					.setSampler(clampSampler_);
 
 				write = vk::WriteDescriptorSet()
 					.setImageInfo(imageInfo)
@@ -915,6 +943,25 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 					.setDescriptorType(vk::DescriptorType::eInputAttachment)
 					.setDstArrayElement(0)
 					.setDstBinding(2)
+					.setDstSet(sets_[ESubpassType::eComposition][i][0]);
+
+				engine->device().updateDescriptorSets({ write }, {});
+			}
+
+			{
+				vk::WriteDescriptorSet write;
+
+				vk::DescriptorImageInfo imageInfo = vk::DescriptorImageInfo()
+					.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+					.setImageView(pass->imageView((uint32_t)DeferredPass::eDepth))
+					.setSampler(clampSampler_);
+
+				write = vk::WriteDescriptorSet()
+					.setImageInfo(imageInfo)
+					.setDescriptorCount(1)
+					.setDescriptorType(vk::DescriptorType::eInputAttachment)
+					.setDstArrayElement(0)
+					.setDstBinding(3)
 					.setDstSet(sets_[ESubpassType::eComposition][i][0]);
 
 				engine->device().updateDescriptorSets({ write }, {});
@@ -957,6 +1004,61 @@ void SimplePipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPa
 
 				engine->device().updateDescriptorSets(write, {});
 			}
+
+			{
+				vk::WriteDescriptorSet write;
+
+				vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
+					.setBuffer(shadowBuffer_[i])
+					.setOffset(0)
+					.setRange(sizeof(glm::mat4) * 4);
+
+				write = vk::WriteDescriptorSet()
+					.setBufferInfo(bufferInfo)
+					.setDescriptorCount(1)
+					.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+					.setDstArrayElement(0)
+					.setDstBinding(2)
+					.setDstSet(sets_[ESubpassType::eComposition][i][1]);
+
+				engine->device().updateDescriptorSets(write, {});
+			}
+			{
+				vk::WriteDescriptorSet write;
+
+				vk::DescriptorImageInfo imageInfo = vk::DescriptorImageInfo()
+					.setImageView(prePass->imageView(ShadowPass::eRaw))
+					.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+					.setSampler(VK_NULL_HANDLE);
+
+				write = vk::WriteDescriptorSet()
+					.setImageInfo(imageInfo)
+					.setDescriptorCount(1)
+					.setDescriptorType(vk::DescriptorType::eSampledImage)
+					.setDstArrayElement(0)
+					.setDstBinding(0)
+					.setDstSet(sets_[ESubpassType::eComposition][i][2]);
+
+				engine->device().updateDescriptorSets(write, {});
+			}
+			{
+				vk::WriteDescriptorSet write;
+
+				vk::DescriptorImageInfo samplerInfo = vk::DescriptorImageInfo()
+					.setImageView(VK_NULL_HANDLE)
+					.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+					.setSampler(clampSampler_);
+
+				write = vk::WriteDescriptorSet()
+					.setImageInfo(samplerInfo)
+					.setDescriptorCount(1)
+					.setDescriptorType(vk::DescriptorType::eSampler)
+					.setDstArrayElement(0)
+					.setDstBinding(0)
+					.setDstSet(sets_[ESubpassType::eComposition][i][3]);
+
+				engine->device().updateDescriptorSets(write, {});
+			}
 		}
 	}
 }
@@ -969,9 +1071,11 @@ void SimplePipeline::cleanup(RenderEngine* engine) {
 		engine->device().destroyBuffer(viewProjBuffer_[i]);
 		engine->device().destroyBuffer(invViewProjBuffer_[i]);
 		engine->device().destroyBuffer(sceneInfoBuffer_[i]);
+		engine->device().destroyBuffer(shadowBuffer_[i]);
 	}
 
-	engine->device().destroySampler(sampler_);
+	engine->device().destroySampler(wrapSampler_);
+	engine->device().destroySampler(clampSampler_);
 	ubMemory_.free(engine->device());
 }
 
@@ -1135,7 +1239,7 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, Scene* scene
 	cb.endRenderPass();
 }
 
-void SimplePipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
+void SimplePipeline::update(RenderEngine* engine, Scene* scene, uint32_t currentImageIndex)
 {
 	struct ViewProj
 	{
@@ -1157,9 +1261,17 @@ void SimplePipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
 		glm::vec4 screenInfo;
 	};
 
+	struct ShadowMatrix
+	{
+		glm::mat4 view;
+		glm::mat4 proj;
+		glm::vec4 sceneInfo;
+	};
+
 	ViewProj vp;
 	InvViewProj invVP;
 	SceneInfo info;
+	ShadowMatrix shadow;
 
 	const float speed = 100.0f;
 
@@ -1167,49 +1279,53 @@ void SimplePipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
 
 	if (Input::Instance().Push(DIK_W))
 	{
-		camera_.transform().position() += camera_.transform().forward() * speed * deltaTime;
+		scene->camera().transform().position() += scene->camera().transform().forward() * speed * deltaTime;
 	}
 	if (Input::Instance().Push(DIK_S))
 	{
-		camera_.transform().position() -= camera_.transform().forward() * speed * deltaTime;
+		scene->camera().transform().position() -= scene->camera().transform().forward() * speed * deltaTime;
 	}
 	if (Input::Instance().Push(DIK_A))
 	{
-		camera_.transform().position() -= camera_.transform().right() * speed * deltaTime;
+		scene->camera().transform().position() -= scene->camera().transform().right() * speed * deltaTime;
 	}
 	if (Input::Instance().Push(DIK_D))
 	{
-		camera_.transform().position() += camera_.transform().right() * speed * deltaTime;
+		scene->camera().transform().position() += scene->camera().transform().right() * speed * deltaTime;
 	}
 	if (Input::Instance().Push(DIK_E))
 	{
-		camera_.transform().position() += camera_.transform().up() * speed * deltaTime;
+		scene->camera().transform().position() += scene->camera().transform().up() * speed * deltaTime;
 	}
 	if (Input::Instance().Push(DIK_Q))
 	{
-		camera_.transform().position() -= camera_.transform().up() * speed * deltaTime;
+		scene->camera().transform().position() -= scene->camera().transform().up() * speed * deltaTime;
 	}
 
 
-	camera_.transform().rotation() *=
-		glm::rotate(glm::identity<glm::quat>(), Input::Instance().GetMoveYRightPushed() * 2.0f * -deltaTime, camera_.transform().right()) *
+	scene->camera().transform().rotation() *=
+		glm::rotate(glm::identity<glm::quat>(), Input::Instance().GetMoveYRightPushed() * -2.0f * deltaTime, scene->camera().transform().right()) *
 		glm::rotate(glm::identity<glm::quat>(), Input::Instance().GetMoveXRightPushed() * 2.0f * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
 
-	camera_.update(Timer::instance().deltaTime());
+	scene->camera().update(Timer::instance().deltaTime());
 
 	static float rot = 0.0f;
 
 	vp.world =
 		glm::scale(glm::identity<glm::mat4>(), glm::vec3(0.25f, 0.25f, 0.25f));
-	vp.view = camera_.viewMatrix();
-	vp.proj = camera_.projMatrix();
+	vp.view = scene->camera().viewMatrix();
+	vp.proj = scene->camera().projMatrix();
 
 	invVP.invView = glm::inverse(vp.view);
 	invVP.invProj = glm::inverse(vp.proj);
 
-	info.lightVector = glm::vec4(1.0f, 1.0f, 1.0f, 0.0f);
-	info.cameraPosition = glm::vec4(camera_.transform().position(), 0.0f);
+	info.lightVector = glm::vec4(scene->shadowCaster().transform().forward() * glm::vec3(1, -1, 1), 0.0f);
+	info.cameraPosition = glm::vec4(scene->camera().transform().position(), 0.0f);
 	info.screenInfo = glm::vec4((float)kScreenWidth, (float)kScreenHeight, 0.0f, 0.0f);
+
+	shadow.view = scene->shadowCaster().viewMatrix();
+	shadow.proj = scene->shadowCaster().projMatrix();
+	shadow.sceneInfo = glm::vec4(0.0f, 0.0f, scene->shadowCaster().nearZ(), scene->shadowCaster().farZ());
 
 	memcpy_s(
 		&mappedViewProjMemory_[sizeof(glm::mat4) * 4 * currentImageIndex + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 0],
@@ -1228,4 +1344,10 @@ void SimplePipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
 		sizeof(info),
 		&info,
 		sizeof(info));
+
+	memcpy_s(
+		&mappedViewProjMemory_[sizeof(glm::mat4) * 4 * currentImageIndex + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 3],
+		sizeof(shadow),
+		&shadow,
+		sizeof(shadow));
 }

@@ -13,7 +13,7 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 	{
 		// 生のシャドウマップ
 		attachmentDescs[0] = vk::AttachmentDescription()
-			.setFormat(vk::Format::eR16G16Sfloat)
+			.setFormat(vk::Format::eR32G32Sfloat)
 			.setInitialLayout(vk::ImageLayout::eUndefined)
 			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 			.setLoadOp(vk::AttachmentLoadOp::eClear)
@@ -23,7 +23,7 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 
 		// X方向ブラー画像
 		attachmentDescs[1] = vk::AttachmentDescription()
-			.setFormat(vk::Format::eR16G16Sfloat)
+			.setFormat(vk::Format::eR32G32Sfloat)
 			.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal)
 			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 			.setLoadOp(vk::AttachmentLoadOp::eClear)
@@ -33,7 +33,7 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 
 		// Y方向ブラー画像
 		attachmentDescs[2] = vk::AttachmentDescription()
-			.setFormat(vk::Format::eR16G16Sfloat)
+			.setFormat(vk::Format::eR32G32Sfloat)
 			.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal)
 			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 			.setLoadOp(vk::AttachmentLoadOp::eClear)
@@ -43,7 +43,7 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 
 		// 最終出力バッファ
 		attachmentDescs[3] = vk::AttachmentDescription()
-			.setFormat(vk::Format::eR16G16Sfloat)
+			.setFormat(vk::Format::eR32G32Sfloat)
 			.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal)
 			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 			.setLoadOp(vk::AttachmentLoadOp::eClear)
@@ -108,10 +108,10 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 	}
 	{
 		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
-			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
+			.setExtent(vk::Extent3D(kShadowMapWidth, kShadowMapHeight, 1))
 			.setArrayLayers(5)
 			.setMipLevels(1)
-			.setFormat(vk::Format::eR16G16Sfloat)
+			.setFormat(vk::Format::eR32G32Sfloat)
 			.setImageType(vk::ImageType::e2D)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
@@ -120,13 +120,13 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 
 		memories_[0].allocateForImage(engine->physicalDevice(), engine->device(), imageCreateInfo, vk::MemoryPropertyFlagBits::eDeviceLocal);
 
-		alignment = (vk::DeviceSize)(kScreenWidth * kScreenHeight * sizeof(float) * 2) + (memories_[0].alignment() - 1) & ~(memories_[0].alignment() - 1);
+		alignment = (vk::DeviceSize)(kShadowMapWidth * kShadowMapHeight * sizeof(float) * 2) + (memories_[0].alignment() - 1) & ~(memories_[0].alignment() - 1);
 		alignment = memories_[0].size() / 4;
 	}
 
 	{
 		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
-			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
+			.setExtent(vk::Extent3D(kShadowMapWidth, kShadowMapHeight, 1))
 			.setArrayLayers(engine->swapchainImageCount())				// Depthバッファは前フレームの情報を使う拡張性を鑑みてフレームバッファの数
 			.setMipLevels(1)
 			.setFormat(vk::Format::eD32SfloatS8Uint)					// 
@@ -148,10 +148,10 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 		auto& image = images_[ETextureType::eRaw];
 		auto& view = imageViews_[ETextureType::eRaw];
 		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
-			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
+			.setExtent(vk::Extent3D(kShadowMapWidth, kShadowMapHeight, 1))
 			.setArrayLayers(1)
 			.setMipLevels(1)
-			.setFormat(vk::Format::eR16G16Sfloat)
+			.setFormat(vk::Format::eR32G32Sfloat)
 			.setImageType(vk::ImageType::e2D)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
@@ -163,7 +163,7 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eRaw));
 
 		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
-			.setFormat(vk::Format::eR16G16Sfloat)
+			.setFormat(vk::Format::eR32G32Sfloat)
 			.setSubresourceRange(
 				vk::ImageSubresourceRange()
 				.setLevelCount(1)
@@ -180,10 +180,10 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 		auto& image = images_[ETextureType::eBlurX];
 		auto& view = imageViews_[ETextureType::eBlurX];
 		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
-			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
+			.setExtent(vk::Extent3D(kShadowMapWidth, kShadowMapHeight, 1))
 			.setArrayLayers(1)
 			.setMipLevels(1)
-			.setFormat(vk::Format::eR16G16Sfloat)
+			.setFormat(vk::Format::eR32G32Sfloat)
 			.setImageType(vk::ImageType::e2D)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
@@ -195,7 +195,7 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eBlurX));
 
 		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
-			.setFormat(vk::Format::eR16G16Sfloat)
+			.setFormat(vk::Format::eR32G32Sfloat)
 			.setSubresourceRange(
 				vk::ImageSubresourceRange()
 				.setLevelCount(1)
@@ -212,10 +212,10 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 		auto& image = images_[ETextureType::eBlurY];
 		auto& view = imageViews_[ETextureType::eBlurY];
 		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
-			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
+			.setExtent(vk::Extent3D(kShadowMapWidth, kShadowMapHeight, 1))
 			.setArrayLayers(1)
 			.setMipLevels(1)
-			.setFormat(vk::Format::eR16G16Sfloat)
+			.setFormat(vk::Format::eR32G32Sfloat)
 			.setImageType(vk::ImageType::e2D)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
@@ -227,7 +227,7 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eBlurY));
 
 		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
-			.setFormat(vk::Format::eR16G16Sfloat)
+			.setFormat(vk::Format::eR32G32Sfloat)
 			.setSubresourceRange(
 				vk::ImageSubresourceRange()
 				.setLevelCount(1)
@@ -244,10 +244,10 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 		auto& image = images_[ETextureType::eResult];
 		auto& view = imageViews_[ETextureType::eResult];
 		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
-			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
+			.setExtent(vk::Extent3D(kShadowMapWidth, kShadowMapHeight, 1))
 			.setArrayLayers(1)
 			.setMipLevels(1)
-			.setFormat(vk::Format::eR16G16Sfloat)
+			.setFormat(vk::Format::eR32G32Sfloat)
 			.setImageType(vk::ImageType::e2D)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
@@ -259,7 +259,7 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eResult));
 
 		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
-			.setFormat(vk::Format::eR16G16Sfloat)
+			.setFormat(vk::Format::eR32G32Sfloat)
 			.setSubresourceRange(
 				vk::ImageSubresourceRange()
 				.setLevelCount(1)
@@ -276,7 +276,7 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 		auto& image = images_[ETextureType::eDepth];
 		auto& view = imageViews_[ETextureType::eDepth];
 		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
-			.setExtent(vk::Extent3D(kScreenWidth, kScreenHeight, 1))
+			.setExtent(vk::Extent3D(kShadowMapWidth, kShadowMapHeight, 1))
 			.setArrayLayers(1)
 			.setMipLevels(1)
 			.setFormat(vk::Format::eD32SfloatS8Uint)
@@ -313,8 +313,8 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 			imageViews_[ETextureType::eDepth],
 		};
 		vk::FramebufferCreateInfo framebufferCreateInfo = vk::FramebufferCreateInfo()
-			.setWidth(kScreenWidth)
-			.setHeight(kScreenHeight)
+			.setWidth(kShadowMapWidth)
+			.setHeight(kShadowMapHeight)
 			.setRenderPass(renderPass_)
 			.setLayers(1)
 			.setAttachments(attachments);

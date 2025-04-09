@@ -3,6 +3,7 @@
 layout(set=0, binding=0, input_attachment_index = 0) uniform subpassInput index0;
 layout(set=0, binding=1, input_attachment_index = 1) uniform subpassInput index1;
 layout(set=0, binding=2, input_attachment_index = 2) uniform subpassInput index2;
+layout(set=0, binding=3, input_attachment_index = 3) uniform subpassInput index3;
 
 layout(set=1, binding=0) uniform InvViewProjMatrix {
 	mat4 invView;
@@ -13,10 +14,78 @@ layout(set=1, binding=1) uniform SceneInfo {
 	vec4 cameraPosition;
 	vec4 screenInfo;
 } ub1;
+layout(set=1, binding=2) uniform ShadowMatrix {
+	mat4 shadowView;
+	mat4 shadowProj;
+	vec4 sceneInfo;
+} ub2;
+
+layout(set=2, binding=0) uniform texture2D shadowMap;
+layout(set=3, binding=0) uniform sampler clampSampler;
 
 layout(location=0) out vec4 outResult;
 
 const float PI = 3.141592653589f;
+
+vec3 fresnelSchlick(float cosTheta, vec3 F0);
+float distributionGGX(vec3 N, vec3 H, float roughness);
+float geometrySchlickGGX(float NdotV, float roughness);
+float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
+float sampleShadowMap(vec3 worldPosition);
+
+void main()
+{
+	vec4 albedo = subpassLoad(index0);
+	vec4 normalDepth = subpassLoad(index1);
+	vec4 roughMetalVelocity = subpassLoad(index2);
+	
+	float depth = subpassLoad(index3).x;
+	
+	vec4 screenCoord = vec4(gl_FragCoord.xy / ub1.screenInfo.xy * 2.0f - 1.0f, depth, 1.0f);
+	
+	vec4 viewPosition = ub0.invProj * screenCoord;
+	vec4 worldPosition = ub0.invView * viewPosition;
+	worldPosition /= worldPosition.w;
+	
+	vec3 N = normalDepth.xyz;
+	vec3 V = normalize(ub1.cameraPosition.xyz - worldPosition.xyz);
+	
+	float roughness = roughMetalVelocity.x;
+	float metalic = roughMetalVelocity.y;
+	
+	vec3 F0 = vec3(0.04f);
+	F0 = mix(F0, albedo.rgb, metalic);
+	
+	vec3 L = normalize(ub1.lightVector.xyz);
+	vec3 H = normalize(V + L);
+	
+	float NDF = distributionGGX(N, H, roughness);
+	float G = geometrySmith(N, V, L, roughness);
+	vec3 F = fresnelSchlick(max(dot(H, V), 0.0f), F0);
+	
+	vec3 kS = F;
+	vec3 kD = vec3(1.0f) - kS;
+	kD *= 1.0f - metalic;
+	
+	vec3 numerator = NDF * G * F;
+	float denominator = 4.0f * max(dot(N, V), 0.0f) * max(dot(N, L), 0.0f) + 0.0001f;
+	vec3 specular = numerator / denominator;
+	
+	float NdotL = max(dot(N, L), 0.0f);
+	vec3 color = (kD * albedo.rgb / PI + specular) * vec3(4.0f) * NdotL * sampleShadowMap(worldPosition.xyz);
+    vec3 ambient = vec3(0.05f) * albedo.rgb;
+	
+	color = color + ambient;
+	
+	color = color / (color + vec3(1.0f));
+	color = pow(color, vec3(1.0f / 2.2f));
+	
+	vec4 shadowCoord = ub2.shadowView * vec4(worldPosition.xyz, 1.0f);
+	shadowCoord = ub2.shadowProj * shadowCoord;
+	shadowCoord /= shadowCoord.w;
+	outResult = vec4(color, 1.0f);
+}
+
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0)
 {
@@ -58,53 +127,18 @@ float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 	return ggx1 * ggx2;
 }
 
-
-void main()
+float sampleShadowMap(vec3 worldPosition)
 {
-	vec4 albedo = subpassLoad(index0);
-	vec4 normalDepth = subpassLoad(index1);
-	vec4 roughMetalVelocity = subpassLoad(index2);
+	vec4 shadowCoord = ub2.shadowView * vec4(worldPosition, 1.0f);
+	shadowCoord = ub2.shadowProj * shadowCoord;
+	shadowCoord /= shadowCoord.w;
+	//shadowCoord.z /= (ub2.sceneInfo.w - ub2.sceneInfo.z);
 	
-	float depth = normalDepth.w;
+	float z = shadowCoord.z;
 	
-	vec4 screenCoord = vec4(gl_FragCoord.xy / ub1.screenInfo.xy * 2.0f - 1.0f, depth, 1.0f);
+	vec2 texcoord = shadowCoord.xy * vec2(0.5f, 0.5f) + vec2(0.5f, 0.5f);
 	
-	vec4 viewPosition = ub0.invProj * screenCoord;
-	vec4 worldPosition = ub0.invView * viewPosition;
-	worldPosition /= worldPosition.w;
+	float shadowMapDepth = texture(sampler2D(shadowMap, clampSampler), texcoord).x;
 	
-	vec3 N = normalDepth.xyz;
-	vec3 V = normalize(ub1.cameraPosition.xyz - worldPosition.xyz);
-	
-	float roughness = roughMetalVelocity.x;
-	float metalic = roughMetalVelocity.y;
-	
-	vec3 F0 = vec3(0.04f);
-	F0 = mix(F0, albedo.rgb, metalic);
-	
-	vec3 L = normalize(ub1.lightVector.xyz);
-	vec3 H = normalize(V + L);
-	
-	float NDF = distributionGGX(N, H, roughness);
-	float G = geometrySmith(N, V, L, roughness);
-	vec3 F = fresnelSchlick(max(dot(H, V), 0.0f), F0);
-	
-	vec3 kS = F;
-	vec3 kD = vec3(1.0f) - kS;
-	kD *= 1.0f - metalic;
-	
-	vec3 numerator = NDF * G * F;
-	float denominator = 4.0f * max(dot(N, V), 0.0f) * max(dot(N, L), 0.0f) + 0.0001f;
-	vec3 specular = numerator / denominator;
-	
-	float NdotL = max(dot(N, L), 0.0f);
-	vec3 color = (kD * albedo.rgb / PI + specular) * vec3(4.0f) * NdotL;
-    vec3 ambient = vec3(0.05f) * albedo.rgb;
-	
-	color = color + ambient;
-	
-	color = color / (color + vec3(1.0f));
-	color = pow(color, vec3(1.0f / 2.2f));
-	
-	outResult = vec4(color, 1.0f);
+	return shadowMapDepth < z - 0.00001f ? 0.0f : 1.0f;
 }

@@ -15,7 +15,7 @@ public:
 	virtual void cleanup(class RenderEngine* engine);
 	
 	virtual void render(class RenderEngine* engine, class RenderPass* pass, class Scene* scene, uint32_t currentImageIndex) = 0;
-	virtual void update(class RenderEngine* engine, uint32_t currentImageIndex) = 0;
+	virtual void update(class RenderEngine* engine, class Scene* scene, uint32_t currentImageIndex) = 0;
 
 	vk::CommandBuffer commandBuffer(uint32_t currentFrameIndex) { return commandBuffers_[currentFrameIndex]; }
 	vk::Semaphore renderCompletedSemaphore(uint32_t currentFrameIndex) { return renderCompletedSemaphores_[currentFrameIndex]; }

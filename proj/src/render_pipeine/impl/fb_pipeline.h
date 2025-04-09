@@ -15,8 +15,8 @@ public:
 	virtual void initialize(class RenderEngine* engine, class RenderPass* pass, class RenderPass* prePass, class Scene* scene) override;
 	virtual void cleanup(class RenderEngine* engine) override;
 
-	virtual void render(class RenderEngine* engine, class RenderPass* pass, uint32_t currentImageIndex) override;
-	virtual void update(class RenderEngine* engine, uint32_t currentImageIndex) override;
+	virtual void render(class RenderEngine* engine, class RenderPass* pass, class Scene* scene, uint32_t currentImageIndex) override;
+	virtual void update(class RenderEngine* engine, class Scene* scene, uint32_t currentImageIndex) override;
 
 protected:
 

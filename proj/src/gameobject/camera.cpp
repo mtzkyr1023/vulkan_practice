@@ -17,10 +17,24 @@ void Camera::update(float deltaTime) {
 			transform_.position(),
 			-transform_.up());
 	}
-	projMatrix_ = glm::perspective(
-		fov_,
-		aspect_,
-		nearZ_,
-		farZ_
-	);
+	if (isOrtho_)
+	{
+		projMatrix_ = glm::ortho(
+			-width_ * 0.125f,
+			width_ * 0.125f,
+			height_ * 0.125f,
+			-height_ * 0.125f,
+			-farZ_,
+			farZ_ 
+		);
+	}
+	else
+	{
+		projMatrix_ = glm::perspective(
+			fov_,
+			aspect_,
+			nearZ_,
+			farZ_
+		);
+	}
 }

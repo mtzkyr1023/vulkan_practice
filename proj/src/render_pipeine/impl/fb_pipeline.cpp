@@ -256,7 +256,7 @@ void FbPipeline::cleanup(RenderEngine* engine)
 }
 
 
-void FbPipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t currentImageIndex)
+void FbPipeline::render(RenderEngine* engine, RenderPass* pass, Scene* Scene, uint32_t currentImageIndex)
 {
 	vk::CommandBuffer cb = engine->commandBuffer(currentImageIndex);
 
@@ -276,7 +276,7 @@ void FbPipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t current
 	cb.draw(3, 1, 0, 0);
 }
 
-void FbPipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
+void FbPipeline::update(RenderEngine* engine, Scene* scene, uint32_t currentImageIndex)
 {
 
 }

@@ -14,4 +14,6 @@ void Scene::cleanup(RenderEngine* engine)
 	{
 		ite->cleanup(engine);
 	}
+
+	bgMesh_->cleanup(engine);
 }

@@ -90,6 +90,9 @@ void Mesh::loadMesh(RenderEngine* engine, const char* foldername, const char* fi
 		materials_.push_back(mat);
 	}
 
+	aabbMin_ = glm::vec3(FLT_MAX);
+	aabbMax_ = glm::vec3(-FLT_MAX);
+
 	uint32_t vertexOffset = 0;
 	for (uint32_t i = 0; i < scene->mNumMeshes; i++)
 	{
@@ -103,6 +106,9 @@ void Mesh::loadMesh(RenderEngine* engine, const char* foldername, const char* fi
 			vertex.tan = glm::vec3(mesh->mBitangents[j].x, mesh->mBitangents[j].y, mesh->mBitangents[j].z);
 			vertex.tex = glm::vec2(mesh->mTextureCoords[0][j].x, 1.0f - mesh->mTextureCoords[0][j].y);
 			verticies.push_back(vertex);
+
+			aabbMin_ = glm::min(aabbMin_, glm::vec3(vertex.pos));
+			aabbMax_ = glm::max(aabbMax_, glm::vec3(vertex.pos));
 		}
 
 		vertexCounts_.push_back(mesh->mNumVertices);
@@ -176,6 +182,8 @@ void Mesh::loadMesh(RenderEngine* engine, const char* foldername, const char* fi
 		.setRange(sizeof(uint32_t) * indicies.size());
 
 	//indexBufferView_ = engine->device().createBufferView(indexBufferViewCreateInfo);
+
+	center_ = (aabbMin_ + aabbMax_) * 0.5f;
 }
 
 void Mesh::release(RenderEngine* engine)
