@@ -54,15 +54,15 @@ void FbPipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPass* 
 
 	{
 		viewport_ = vk::Viewport()
-			.setWidth((float)kScreenWidth)
-			.setHeight((float)kScreenHeight)
+			.setWidth((float)kFramebufferWidth)
+			.setHeight((float)kFramebufferHeight)
 			.setMinDepth(0.0f)
 			.setMaxDepth(1.0f)
 			.setX(0.0f)
 			.setY(0.0f);
 
 		vk::Rect2D scissor = vk::Rect2D()
-			.setExtent(vk::Extent2D(kScreenWidth, kScreenHeight))
+			.setExtent(vk::Extent2D(kFramebufferWidth, kFramebufferHeight))
 			.setOffset(vk::Offset2D(0, 0));
 
 		vk::PipelineViewportStateCreateInfo viewportState = vk::PipelineViewportStateCreateInfo()

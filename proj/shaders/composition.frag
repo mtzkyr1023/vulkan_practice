@@ -77,9 +77,6 @@ void main()
 	
 	color = color + ambient;
 	
-	color = color / (color + vec3(1.0f));
-	color = pow(color, vec3(1.0f / 2.2f));
-	
 	vec4 shadowCoord = ub2.shadowView * vec4(worldPosition.xyz, 1.0f);
 	shadowCoord = ub2.shadowProj * shadowCoord;
 	shadowCoord /= shadowCoord.w;

@@ -1319,7 +1319,7 @@ void SimplePipeline::update(RenderEngine* engine, Scene* scene, uint32_t current
 	invVP.invView = glm::inverse(vp.view);
 	invVP.invProj = glm::inverse(vp.proj);
 
-	info.lightVector = glm::vec4(scene->shadowCaster().transform().forward() * glm::vec3(1, -1, 1), 0.0f);
+	info.lightVector = glm::vec4(scene->shadowCaster().transform().forward() * glm::vec3(-1, -1, -1), 0.0f);
 	info.cameraPosition = glm::vec4(scene->camera().transform().position(), 0.0f);
 	info.screenInfo = glm::vec4((float)kScreenWidth, (float)kScreenHeight, 0.0f, 0.0f);
 

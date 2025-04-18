@@ -95,7 +95,7 @@ bool Application::render(RenderEngine* engine) {
 		vk::RenderPassBeginInfo renderPassBeginInfo = vk::RenderPassBeginInfo()
 			.setRenderPass(engine->renderPass())
 			.setFramebuffer(engine->framebuffer(currentFrameIndex))
-			.setRenderArea(vk::Rect2D({ 0, 0 }, { kScreenWidth, kScreenHeight }))
+			.setRenderArea(vk::Rect2D({ 0, 0 }, { kFramebufferWidth, kFramebufferHeight }))
 			.setClearValues(clearValues);
 
 		cb.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);

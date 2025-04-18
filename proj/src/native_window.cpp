@@ -21,7 +21,7 @@ void NativeWindow::initializeWindow() {
 		throw MkException("window creation error");
 	}
 
-	RECT wr = { 0, 0, kScreenWidth, kScreenHeight };
+	RECT wr = { 0, 0, kFramebufferWidth, kFramebufferHeight };
 	AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, FALSE);
 	int nativeWidth = GetSystemMetrics(SM_CXSCREEN);
 	int nativeHeight = GetSystemMetrics(SM_CYSCREEN);
@@ -29,8 +29,8 @@ void NativeWindow::initializeWindow() {
 		kClassName,
 		L"Vulkan Totorial",
 		WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_SYSMENU,
-		(nativeWidth - kScreenWidth) / 2,
-		(nativeHeight - kScreenHeight) / 2 - GetSystemMetrics(SM_CYSIZE),
+		(nativeWidth - kFramebufferWidth) / 2,
+		(nativeHeight - kFramebufferHeight) / 2 - GetSystemMetrics(SM_CYSIZE),
 		wr.right - wr.left,		// width
 		wr.bottom - wr.top,		// height
 		nullptr,				// handle to parent
@@ -52,7 +52,7 @@ void NativeWindow::initializeWindow() {
 
 	engine_.initializeContext();
 	engine_.initializeSurface(hwnd_, hinstance_);
-	engine_.initializeSwapchain(kScreenWidth, kScreenHeight, false);
+	engine_.initializeSwapchain(kFramebufferWidth, kFramebufferHeight, false);
 	engine_.initializeRenderSettings();
 
 	application_.initialize(&engine_, hwnd_);

@@ -9,6 +9,7 @@
 #include <vulkan/vulkan_win32.h>
 #include <vulkan/vk_platform.h>
 
+
 class RenderEngine {
 public:
 	~RenderEngine() {}

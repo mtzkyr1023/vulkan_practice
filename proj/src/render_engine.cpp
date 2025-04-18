@@ -169,7 +169,7 @@ void RenderEngine::initializeSwapchain(int width, int height, bool enableVsync) 
 	vk::SurfaceCapabilitiesKHR surfaceCaps = physicalDevice_.getSurfaceCapabilitiesKHR(surface_);
 	std::vector<vk::PresentModeKHR> presentModes = physicalDevice_.getSurfacePresentModesKHR(surface_);
 
-	vk::Extent2D swapchainExtent(kScreenWidth, kScreenHeight);
+	vk::Extent2D swapchainExtent(kFramebufferWidth, kFramebufferHeight);
 	if (surfaceCaps.currentExtent.width > -1 && surfaceCaps.currentExtent.height > -1) {
 		swapchainExtent = surfaceCaps.currentExtent;
 	}
@@ -343,8 +343,8 @@ void RenderEngine::initializeRenderSettings() {
 			vk::FramebufferCreateInfo framebufferCreateInfo = vk::FramebufferCreateInfo()
 				.setAttachmentCount(1)
 				.setPAttachments(imageViews)
-				.setWidth((uint32_t)kScreenWidth)
-				.setHeight((uint32_t)kScreenHeight)
+				.setWidth((uint32_t)kFramebufferWidth)
+				.setHeight((uint32_t)kFramebufferHeight)
 				.setRenderPass(renderPass_)
 				.setLayers(1);
 
