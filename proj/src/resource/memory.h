@@ -1,5 +1,5 @@
-#ifndef _RESOURCE_H_
-#define _RESOURCE_H_
+#ifndef _MEMORY_H_
+#define _MEMORY_H_
 
 #include <vulkan/vulkan.hpp>
 #include <unordered_map>
@@ -48,5 +48,7 @@ private:
 	vk::DeviceSize alignment_;
 	vk::DeviceSize size_;
 };
+
+
 
 #endif

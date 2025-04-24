@@ -21,6 +21,34 @@
   <ItemGroup>
     <ClInclude Include="src\application.h" />
     <ClInclude Include="src\defines.h" />
+    <ClInclude Include="src\framegraph\framegraph.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="src\framegraph\realize.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="src\framegraph\render_task.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="src\framegraph\render_task_base.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="src\framegraph\render_task_builder.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="src\framegraph\resource.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="src\framegraph\resource_base.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
     <ClInclude Include="src\gameobject\camera.h" />
     <ClInclude Include="src\gameobject\gameobject.h" />
     <ClInclude Include="src\gameobject\meshobject.h">
@@ -68,8 +96,16 @@
       </SubType>
     </ClInclude>
     <ClInclude Include="src\render_pipeine\impl\simple_pipeline.h" />
+    <ClInclude Include="src\render_pipeine\impl\taa_pipeline.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
     <ClInclude Include="src\render_pipeine\render_pipeline.h" />
-    <ClInclude Include="src\render_pipeine\resource.h" />
+    <ClInclude Include="src\resource\memory.h" />
+    <ClInclude Include="src\resource\texture.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
     <ClInclude Include="src\util\imgui_wrapper.h">
       <SubType>
       </SubType>
@@ -135,8 +171,16 @@
       </SubType>
     </ClCompile>
     <ClCompile Include="src\render_pipeine\impl\simple_pipeline.cpp" />
+    <ClCompile Include="src\render_pipeine\impl\taa_pipeline.cpp">
+      <SubType>
+      </SubType>
+    </ClCompile>
     <ClCompile Include="src\render_pipeine\render_pipeline.cpp" />
-    <ClCompile Include="src\render_pipeine\resource.cpp" />
+    <ClCompile Include="src\resource\memory.cpp" />
+    <ClCompile Include="src\resource\texture.cpp">
+      <SubType>
+      </SubType>
+    </ClCompile>
     <ClCompile Include="src\util\imgui_wrapper.cpp">
       <SubType>
       </SubType>

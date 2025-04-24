@@ -1,15 +1,12 @@
 ﻿
-#define STB_IMAGE_IMPLEMENTATION
-
-
 #include "material.h"
 
 #include "../render_engine.h"
-#include "../render_pipeine/resource.h"
+#include "../resource/memory.h"
+#include "../resource/texture.h"
 
 #include "../defines.h"
 
-#include "stb_image.h"
 
 
 
@@ -57,6 +54,12 @@ void Material::loadImage(
 	std::array<Memory, (uint32_t)ETextureType::eNum> tempMemory;
 	std::array<vk::Buffer, (uint32_t)ETextureType::eNum> buffer;
 
+	std::array<std::string, 3> filenames =
+	{
+		albedoFilename,
+		normalFilename,
+		pbrFilename,
+	};
 
 	vk::DeviceSize size = 0;
 	vk::DeviceSize alignment = 0;
@@ -74,13 +77,11 @@ void Material::loadImage(
 			.setSharingMode(vk::SharingMode::eExclusive)
 			.setUsage(vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst);
 
-		memory_.push_back(std::make_shared<Memory>());
+		std::shared_ptr<Texture> texture = std::make_shared<Texture>();
 
-		memory_[i]->allocateForImage(engine->physicalDevice(), engine->device(), imageCreateInfo, vk::MemoryPropertyFlagBits::eDeviceLocal);
+		texture->setupResource2d(engine, filenames[i].c_str());
 
-		vk::DeviceSize a = memory_[i]->alignment();
-		size = memory_[i]->size();
-		alignment = width * height * sizeof(uint32_t) + (memory_[i]->alignment() - 1) & ~(memory_[i]->alignment() - 1);
+		textures_.push_back(texture);
 	}
 
 	{
@@ -573,18 +574,8 @@ void Material::loadImage(
 
 void Material::release(RenderEngine* engine)
 {
-	for (const auto& ite : images_)
+	for (const auto& ite : textures_)
 	{
-		engine->device().destroyImage(ite);
-	}
-
-	for (const auto& ite : imageViews_)
-	{
-		engine->device().destroyImageView(ite);
-	}
-
-	for (auto& ite : memory_)
-	{
-		ite->free(engine->device());
+		ite->release(engine);
 	}
 }

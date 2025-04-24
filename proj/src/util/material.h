@@ -46,8 +46,7 @@ public:
 		bool generateMipmap = false);
 	void release(class RenderEngine* engine);
 
-	const vk::Image& image(uint32_t index) { return images_[index]; }
-	const vk::ImageView& imageViews(uint32_t index) { return imageViews_[index]; }
+	const std::shared_ptr<class Texture>& texture(uint32_t index) { return textures_[index]; }
 
 	void addDrawInfo(uint32_t indexOffset, uint32_t indexCount)
 	{
@@ -63,10 +62,7 @@ public:
 	EMaterialType materialType() { return materialType_; }
 
 protected:
-	std::vector<std::shared_ptr<class Memory>> memory_;
-
-	vk::Image images_[(uint32_t)ETextureType::eNum];
-	vk::ImageView imageViews_[(uint32_t)ETextureType::eNum];
+	std::vector<std::shared_ptr<class Texture>> textures_;
 
 	std::vector<DrawInfo> drawInfos_;
 	

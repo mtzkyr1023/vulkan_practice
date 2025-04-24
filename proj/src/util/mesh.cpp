@@ -7,7 +7,7 @@
 #include "glm/glm.hpp"
 
 #include "../render_engine.h"
-#include "../render_pipeine/resource.h"
+#include "../render_pipeine/memory.h"
 
 
 #include "material.h"

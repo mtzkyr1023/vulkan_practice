@@ -1,4 +1,4 @@
-#include "resource.h"
+#include "memory.h"
 #include "../render_engine.h"
 
 void Memory::allocateForBuffer(

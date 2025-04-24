@@ -5,7 +5,7 @@
 #include <shaderc/shaderc.hpp>
 
 #include "../gameobject/gameobject.h"
-#include "resource.h"
+#include "resource/memory.h"
 
 class RenderPipeline {
 public:
