@@ -20,21 +20,44 @@ public:
 		eNum,
 	};
 
+	enum ETextureType : uint32_t
+	{
+		eAlbedo = 0,
+		eNormalDepth,
+		eRoughMetalVelocity,
+		eDepthStencil,
+		eShadowMap,
+		eComposition,
+	};
+
+	enum EBufferType : uint32_t
+	{
+		eCameraViewProj = 0,
+		eShadowViewProj,
+		eCameraInv,
+		eSceneInfo,
+	};
+
+	enum EMeshType : uint32_t
+	{
+		eBackground,
+	};
+
 	SimplePipeline();
 	~SimplePipeline();
 
-	virtual void initialize(class RenderEngine* engine, class RenderPass* pass, class RenderPass* prePass, class Scene* scene) override;
+	virtual void initialize(
+		class RenderEngine* engine,
+		class RenderPass* pass,
+		const std::vector<std::shared_ptr<class Texture>>& textures,
+		const std::vector<std::shared_ptr<class Buffer>>& buffers,
+		const std::vector<std::shared_ptr<class Mesh>>& meshes) override;
 	virtual void cleanup(class RenderEngine* engine) override;
 
-	virtual void render(class RenderEngine* engine, class RenderPass* pass, class Scene* scene, uint32_t currentImageIndex) override;
-	virtual void update(class RenderEngine* engine, class Scene* scene, uint32_t currentImageIndex) override;
+	virtual void render(class RenderEngine* engine, class RenderPass* pass, uint32_t currentImageIndex) override;
+	virtual void update(class RenderEngine* engine, uint32_t currentImageIndex) override;
 
 protected:
-	std::vector<vk::Buffer> viewProjBuffer_;
-	std::vector<vk::Buffer> invViewProjBuffer_;
-	std::vector<vk::Buffer> sceneInfoBuffer_;
-	std::vector<vk::Buffer> shadowBuffer_;
-	Memory ubMemory_;
 
 	vk::Sampler wrapSampler_;
 	vk::Sampler clampSampler_;

@@ -17,13 +17,12 @@ public:
 		eTemporary,
 
 		eDepth,
-		eStencil,
 
 		eNum,
 	};
 
 private:
-	virtual void setupInternal(class RenderEngine* engine) override;
+	virtual void setupInternal(class RenderEngine* engine, const std::vector<std::shared_ptr<class Texture>>& resources) override;
 };
 
 #endif

@@ -12,11 +12,16 @@ public:
 	FbPipeline();
 	~FbPipeline();
 
-	virtual void initialize(class RenderEngine* engine, class RenderPass* pass, class RenderPass* prePass, class Scene* scene) override;
+	virtual void initialize(
+		class RenderEngine* engine,
+		class RenderPass* pass,
+		const std::vector<std::shared_ptr<class Texture>>& textures,
+		const std::vector<std::shared_ptr<class Buffer>>& buffers,
+		const std::vector<std::shared_ptr<class Mesh>>& meshes) override;
 	virtual void cleanup(class RenderEngine* engine) override;
 
-	virtual void render(class RenderEngine* engine, class RenderPass* pass, class Scene* scene, uint32_t currentImageIndex) override;
-	virtual void update(class RenderEngine* engine, class Scene* scene, uint32_t currentImageIndex) override;
+	virtual void render(class RenderEngine* engine, class RenderPass* pass, uint32_t currentImageIndex) override;
+	virtual void update(class RenderEngine* engine, uint32_t currentImageIndex) override;
 
 protected:
 

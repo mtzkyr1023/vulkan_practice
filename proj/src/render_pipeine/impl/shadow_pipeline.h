@@ -23,18 +23,18 @@ public:
 	ShadowPipeline();
 	~ShadowPipeline();
 
-	virtual void initialize(class RenderEngine* engine, class RenderPass* pass, class RenderPass* prePass, class Scene* scene) override;
+	virtual void initialize(
+		class RenderEngine* engine,
+		class RenderPass* pass,
+		const std::vector<std::shared_ptr<class Texture>>& textures,
+		const std::vector<std::shared_ptr<class Buffer>>& buffers,
+		const std::vector<std::shared_ptr<class Mesh>>& meshes) override;
 	virtual void cleanup(class RenderEngine* engine) override;
 
-	virtual void render(class RenderEngine* engine, class RenderPass* pass, class Scene* scene, uint32_t currentImageIndex) override;
-	virtual void update(class RenderEngine* engine, class Scene* scene, uint32_t currentImagendex) override;
+	virtual void render(class RenderEngine* engine, class RenderPass* pass, uint32_t currentImageIndex) override;
+	virtual void update(class RenderEngine* engine, uint32_t currentImagendex) override;
 
 protected:
-	std::vector<vk::Buffer> viewProjBuffer_;
-	std::vector<vk::Buffer> cameraBuffer_;
-
-	Memory ubMemory_;
-
 	vk::Sampler sampler_;
 
 	uint8_t* mappedViewProjMemory_ = nullptr;

@@ -7,7 +7,8 @@
 #include "glm/glm.hpp"
 
 #include "../render_engine.h"
-#include "../render_pipeine/memory.h"
+#include "../resource/memory.h"
+#include "../resource/buffer.h"
 
 
 #include "material.h"
@@ -46,9 +47,6 @@ void Mesh::loadMesh(RenderEngine* engine, const char* foldername, const char* fi
 
 	std::vector<Vertex> verticies;
 	std::vector<uint32_t> indicies;
-
-	vertexMemory_ = std::make_shared<Memory>();
-	indexMemory_ = std::make_shared<Memory>();
 
 	for (uint32_t i = 0; i < scene->mNumMaterials; i++)
 	{
@@ -128,72 +126,19 @@ void Mesh::loadMesh(RenderEngine* engine, const char* foldername, const char* fi
 		vertexOffset += mesh->mNumVertices;
 	}
 
-	vk::BufferCreateInfo vertexBufferCreateInfo = vk::BufferCreateInfo()
-		.setSize(sizeof(Vertex) * verticies.size())
-		.setUsage(vk::BufferUsageFlagBits::eVertexBuffer);
-
-	vk::BufferCreateInfo indexBufferCreateInfo = vk::BufferCreateInfo()
-		.setSize(sizeof(uint32_t) * indicies.size())
-		.setUsage(vk::BufferUsageFlagBits::eIndexBuffer);
-
-	vertexMemory_->allocateForBuffer(
-		engine->physicalDevice(),
-		engine->device(),
-		vertexBufferCreateInfo,
-		vk::MemoryPropertyFlagBits::eHostVisible);
-
-	{
-		uint8_t* mappedMemory = vertexMemory_->map(engine->device(), 0, sizeof(Vertex) * verticies.size());
-		memcpy_s(mappedMemory, sizeof(Vertex) * verticies.size(), verticies.data(), sizeof(Vertex) * verticies.size());
-
-		vertexMemory_->unmap(engine->device());
-	}
-
-	indexMemory_->allocateForBuffer(
-		engine->physicalDevice(),
-		engine->device(),
-		indexBufferCreateInfo,
-		vk::MemoryPropertyFlagBits::eHostVisible);
-
-	{
-		uint8_t* mappedMemory = indexMemory_->map(engine->device(), 0, sizeof(uint32_t) * indicies.size());
-		memcpy_s(mappedMemory, sizeof(uint32_t) * indicies.size(), indicies.data(), sizeof(uint32_t) * indicies.size());
-
-		indexMemory_->unmap(engine->device());
-	}
-	vertexBuffer_ = engine->device().createBuffer(vertexBufferCreateInfo);
-	indexBuffer_ = engine->device().createBuffer(indexBufferCreateInfo);
-
-	vertexMemory_->bind(engine->device(), vertexBuffer_, 0);
-	indexMemory_->bind(engine->device(), indexBuffer_, 0);
-
-	vk::BufferViewCreateInfo vertexBufferViewCreateInfo = vk::BufferViewCreateInfo()
-		.setBuffer(vertexBuffer_)
-		.setFormat(vk::Format::eUndefined)
-		.setOffset(0)
-		.setRange(sizeof(Vertex) * verticies.size());
-
-	//vertexBufferView_ = engine->device().createBufferView(vertexBufferViewCreateInfo);
-
-	vk::BufferViewCreateInfo indexBufferViewCreateInfo = vk::BufferViewCreateInfo()
-		.setBuffer(indexBuffer_)
-		.setFormat(vk::Format::eR32Uint)
-		.setOffset(0)
-		.setRange(sizeof(uint32_t) * indicies.size());
-
-	//indexBufferView_ = engine->device().createBufferView(indexBufferViewCreateInfo);
-
 	center_ = (aabbMin_ + aabbMax_) * 0.5f;
+
+	vertexBuffer_ = std::make_shared<Buffer>();
+	indexBuffer_ = std::make_shared<Buffer>();
+
+	vertexBuffer_->setupVertexBuffer(engine, sizeof(Vertex), verticies.size(), (uint8_t*)verticies.data());
+	indexBuffer_->setupIndexBuffer(engine, sizeof(int), indicies.size(), (uint8_t*)indicies.data());
 }
 
 void Mesh::release(RenderEngine* engine)
 {
-	engine->device().destroyBufferView(vertexBufferView_);
-	engine->device().destroyBufferView(indexBufferView_);
-	engine->device().destroyBuffer(vertexBuffer_);
-	engine->device().destroyBuffer(indexBuffer_);
-	vertexMemory_->free(engine->device());
-	indexMemory_->free(engine->device());
+	vertexBuffer_->release(engine);
+	indexBuffer_->release(engine);
 
 	for (const auto& ite : materials_)
 	{

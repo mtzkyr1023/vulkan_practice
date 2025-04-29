@@ -4,7 +4,7 @@
 #include "../../render_pass/impl/deferred_pass.h"
 #include "../../defines.h"
 
-#include "../../gameobject/scene.h"
+#include "../../resource/texture.h"
 
 FbPipeline::FbPipeline()
 {
@@ -16,7 +16,7 @@ FbPipeline::~FbPipeline()
 
 }
 
-void FbPipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPass* prePass, Scene* scene)
+void FbPipeline::initialize(RenderEngine* engine, RenderPass* pass, const std::vector<std::shared_ptr<Texture>>& textures)
 {
 	{
 		{

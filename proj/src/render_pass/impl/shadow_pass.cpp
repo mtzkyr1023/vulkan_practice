@@ -2,9 +2,10 @@
 #include "shadow_pass.h"
 #include "../../render_engine.h"
 #include "../../defines.h"
+#include "../../resource/texture.h"
 
 
-void ShadowPass::setupInternal(RenderEngine* engine)
+void ShadowPass::setupInternal(RenderEngine* engine, const std::vector<std::shared_ptr<class Texture>>& resources)
 {
 	std::array<vk::AttachmentDescription, 5> attachmentDescs;
 	std::array<vk::SubpassDependency, 0> subpassDeps;
@@ -100,217 +101,14 @@ void ShadowPass::setupInternal(RenderEngine* engine)
 
 	renderPass_ = engine->device().createRenderPass(renderPassCreateInfo);
 
-	vk::DeviceSize alignment = 0;
-
-	// VRAM確保
-	{
-		memories_.resize(2);
-	}
-	{
-		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
-			.setExtent(vk::Extent3D(kShadowMapWidth, kShadowMapHeight, 1))
-			.setArrayLayers(5)
-			.setMipLevels(1)
-			.setFormat(vk::Format::eR32G32Sfloat)
-			.setImageType(vk::ImageType::e2D)
-			.setSamples(vk::SampleCountFlagBits::e1)
-			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
-			.setInitialLayout(vk::ImageLayout::eUndefined);
-
-		memories_[0].allocateForImage(engine->physicalDevice(), engine->device(), imageCreateInfo, vk::MemoryPropertyFlagBits::eDeviceLocal);
-
-		alignment = (vk::DeviceSize)(kShadowMapWidth * kShadowMapHeight * sizeof(float) * 2) + (memories_[0].alignment() - 1) & ~(memories_[0].alignment() - 1);
-		alignment = memories_[0].size() / 4;
-	}
-
-	{
-		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
-			.setExtent(vk::Extent3D(kShadowMapWidth, kShadowMapHeight, 1))
-			.setArrayLayers(engine->swapchainImageCount())				// Depthバッファは前フレームの情報を使う拡張性を鑑みてフレームバッファの数
-			.setMipLevels(1)
-			.setFormat(vk::Format::eD32SfloatS8Uint)					// 
-			.setImageType(vk::ImageType::e2D)
-			.setSamples(vk::SampleCountFlagBits::e1)
-			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eInputAttachment)
-			.setInitialLayout(vk::ImageLayout::eUndefined);
-
-		memories_[1].allocateForImage(engine->physicalDevice(), engine->device(), imageCreateInfo, vk::MemoryPropertyFlagBits::eDeviceLocal);
-	}
-
-	images_.resize(ETextureType::eNum);
-	imageViews_.resize(ETextureType::eNum);
-
-
-	// 生シャドウマップ作成
-	{
-		auto& image = images_[ETextureType::eRaw];
-		auto& view = imageViews_[ETextureType::eRaw];
-		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
-			.setExtent(vk::Extent3D(kShadowMapWidth, kShadowMapHeight, 1))
-			.setArrayLayers(1)
-			.setMipLevels(1)
-			.setFormat(vk::Format::eR32G32Sfloat)
-			.setImageType(vk::ImageType::e2D)
-			.setSamples(vk::SampleCountFlagBits::e1)
-			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
-			.setInitialLayout(vk::ImageLayout::eUndefined);
-
-		image = engine->device().createImage(imageCreateInfo);
-
-		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eRaw));
-
-		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
-			.setFormat(vk::Format::eR32G32Sfloat)
-			.setSubresourceRange(
-				vk::ImageSubresourceRange()
-				.setLevelCount(1)
-				.setLayerCount(1)
-				.setAspectMask(vk::ImageAspectFlagBits::eColor))
-			.setViewType(vk::ImageViewType::e2D)
-			.setImage(image);
-
-		view = engine->device().createImageView(viewCreateInfo);
-	}
-
-	// BlurXバッファ作成
-	{
-		auto& image = images_[ETextureType::eBlurX];
-		auto& view = imageViews_[ETextureType::eBlurX];
-		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
-			.setExtent(vk::Extent3D(kShadowMapWidth, kShadowMapHeight, 1))
-			.setArrayLayers(1)
-			.setMipLevels(1)
-			.setFormat(vk::Format::eR32G32Sfloat)
-			.setImageType(vk::ImageType::e2D)
-			.setSamples(vk::SampleCountFlagBits::e1)
-			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
-			.setInitialLayout(vk::ImageLayout::eUndefined);
-
-		image = engine->device().createImage(imageCreateInfo);
-
-		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eBlurX));
-
-		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
-			.setFormat(vk::Format::eR32G32Sfloat)
-			.setSubresourceRange(
-				vk::ImageSubresourceRange()
-				.setLevelCount(1)
-				.setLayerCount(1)
-				.setAspectMask(vk::ImageAspectFlagBits::eColor))
-			.setViewType(vk::ImageViewType::e2D)
-			.setImage(image);
-
-		view = engine->device().createImageView(viewCreateInfo);
-	}
-
-	// BlurYバッファ作成
-	{
-		auto& image = images_[ETextureType::eBlurY];
-		auto& view = imageViews_[ETextureType::eBlurY];
-		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
-			.setExtent(vk::Extent3D(kShadowMapWidth, kShadowMapHeight, 1))
-			.setArrayLayers(1)
-			.setMipLevels(1)
-			.setFormat(vk::Format::eR32G32Sfloat)
-			.setImageType(vk::ImageType::e2D)
-			.setSamples(vk::SampleCountFlagBits::e1)
-			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
-			.setInitialLayout(vk::ImageLayout::eUndefined);
-
-		image = engine->device().createImage(imageCreateInfo);
-
-		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eBlurY));
-
-		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
-			.setFormat(vk::Format::eR32G32Sfloat)
-			.setSubresourceRange(
-				vk::ImageSubresourceRange()
-				.setLevelCount(1)
-				.setLayerCount(1)
-				.setAspectMask(vk::ImageAspectFlagBits::eColor))
-			.setViewType(vk::ImageViewType::e2D)
-			.setImage(image);
-
-		view = engine->device().createImageView(viewCreateInfo);
-	}
-
-	// リザルトバッファ作成
-	{
-		auto& image = images_[ETextureType::eResult];
-		auto& view = imageViews_[ETextureType::eResult];
-		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
-			.setExtent(vk::Extent3D(kShadowMapWidth, kShadowMapHeight, 1))
-			.setArrayLayers(1)
-			.setMipLevels(1)
-			.setFormat(vk::Format::eR32G32Sfloat)
-			.setImageType(vk::ImageType::e2D)
-			.setSamples(vk::SampleCountFlagBits::e1)
-			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled)
-			.setInitialLayout(vk::ImageLayout::eUndefined);
-
-		image = engine->device().createImage(imageCreateInfo);
-
-		memories_[0].bind(engine->device(), image, (vk::DeviceSize)(alignment * ETextureType::eResult));
-
-		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
-			.setFormat(vk::Format::eR32G32Sfloat)
-			.setSubresourceRange(
-				vk::ImageSubresourceRange()
-				.setLevelCount(1)
-				.setLayerCount(1)
-				.setAspectMask(vk::ImageAspectFlagBits::eColor))
-			.setViewType(vk::ImageViewType::e2D)
-			.setImage(image);
-
-		view = engine->device().createImageView(viewCreateInfo);
-	}
-
-	// 深度ステンシルバッファ作成
-	{
-		auto& image = images_[ETextureType::eDepth];
-		auto& view = imageViews_[ETextureType::eDepth];
-		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
-			.setExtent(vk::Extent3D(kShadowMapWidth, kShadowMapHeight, 1))
-			.setArrayLayers(1)
-			.setMipLevels(1)
-			.setFormat(vk::Format::eD32SfloatS8Uint)
-			.setImageType(vk::ImageType::e2D)
-			.setSamples(vk::SampleCountFlagBits::e1)
-			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eInputAttachment)
-			.setInitialLayout(vk::ImageLayout::eUndefined);
-
-		image = engine->device().createImage(imageCreateInfo);
-
-		memories_[1].bind(engine->device(), image, 0);
-
-		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
-			.setFormat(vk::Format::eD32SfloatS8Uint)
-			.setSubresourceRange(
-				vk::ImageSubresourceRange()
-				.setLevelCount(1)
-				.setLayerCount(1)
-				.setAspectMask(vk::ImageAspectFlagBits::eDepth))
-			.setViewType(vk::ImageViewType::e2D)
-			.setImage(image);
-
-		view = engine->device().createImageView(viewCreateInfo);
-	}
-
 	{
 		std::array<vk::ImageView, 5> attachments =
 		{
-			imageViews_[ETextureType::eRaw],
-			imageViews_[ETextureType::eBlurX],
-			imageViews_[ETextureType::eBlurY],
-			imageViews_[ETextureType::eResult],
-			imageViews_[ETextureType::eDepth],
+			resources[ETextureType::eRaw]->view(),
+			resources[ETextureType::eBlurX]->view(),
+			resources[ETextureType::eBlurY]->view(),
+			resources[ETextureType::eResult]->view(),
+			resources[ETextureType::eDepth]->view(),
 		};
 		vk::FramebufferCreateInfo framebufferCreateInfo = vk::FramebufferCreateInfo()
 			.setWidth(kShadowMapWidth)

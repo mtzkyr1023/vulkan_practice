@@ -12,27 +12,13 @@ RenderPass::~RenderPass()
 
 }
 
-void RenderPass::setup(RenderEngine* engine)
+void RenderPass::setup(RenderEngine* engine, const std::vector<std::shared_ptr<class Texture>>& resources)
 {
-	setupInternal(engine);
+	setupInternal(engine, resources);
 }
 
 void RenderPass::cleanup(RenderEngine* engine)
 {
-	for (auto& image : images_)
-	{
-		engine->device().destroyImage(image);
-	}
-	for (auto& view : imageViews_)
-	{
-		engine->device().destroyImageView(view);
-	}
-
-	for (auto& memory : memories_)
-	{
-		memory.free(engine->device());
-	}
-
 	engine->device().destroyRenderPass(renderPass_);
 	engine->device().destroyFramebuffer(framebuffer_);
 }

@@ -7,7 +7,7 @@
 #include "../../util/material.h"
 #include "../../util/input.h"
 #include "../../util/timer.h"
-#include "../../gameobject/scene.h"
+#include "../../resource/texture.h"
 
 ShadowPipeline::ShadowPipeline()
 {
@@ -19,7 +19,7 @@ ShadowPipeline::~ShadowPipeline()
 
 }
 
-void ShadowPipeline::initialize(RenderEngine* engine, RenderPass* pass, RenderPass* prePass, Scene* scene)
+void ShadowPipeline::initialize(RenderEngine* engine, RenderPass* pass, const std::vector<std::shared_ptr<Texture>>& textures)
 {
 	{
 		{

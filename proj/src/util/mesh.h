@@ -16,11 +16,8 @@ public:
 	void loadMesh(class RenderEngine* engine, const char* foldername, const char* filename);
 	void release(class RenderEngine* engine);
 
-	const vk::Buffer& vertexBuffer() { return vertexBuffer_; }
-	const vk::Buffer& indexBuffer() { return indexBuffer_; }
-
-	const vk::BufferView& vertexBufferView() { return vertexBufferView_; }
-	const vk::BufferView& indexBufferView() { return indexBufferView_; }
+	const std::shared_ptr<class Buffer>& vertexBuffer() { return vertexBuffer_; }
+	const std::shared_ptr<class Buffer>& indexBuffer() { return indexBuffer_; }
 
 	uint32_t materialCount() { return (uint32_t)materials_.size(); }
 	std::shared_ptr<class Material> material(uint32_t index) { return materials_[index]; }
@@ -34,13 +31,8 @@ public:
 	const glm::vec3& center() { return center_; }
 
 protected:
-	std::shared_ptr<class Memory> vertexMemory_;
-	std::shared_ptr<class Memory> indexMemory_;
-
-	vk::Buffer vertexBuffer_;
-	vk::Buffer indexBuffer_;
-	vk::BufferView vertexBufferView_;
-	vk::BufferView indexBufferView_;
+	std::shared_ptr<class Buffer> vertexBuffer_;
+	std::shared_ptr<class Buffer> indexBuffer_;
 
 	std::vector<uint32_t> vertexCounts_;
 	std::vector<uint32_t> indexCounts_;
