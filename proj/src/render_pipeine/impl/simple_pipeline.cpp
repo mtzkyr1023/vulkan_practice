@@ -6,6 +6,7 @@
 #include "../../gameobject/scene.h"
 #include "../../util/timer.h"
 #include "../../util/material.h"
+#include "../../util/mesh.h"
 #include "../../util/input.h"
 #include "../../render_pass/impl/deferred_pass.h"
 #include "../../imgui/backends/imgui_impl_vulkan.h"
@@ -15,8 +16,7 @@
 
 #undef MemoryBarrier
 
-SimplePipeline::SimplePipeline() :
-	mappedViewProjMemory_(nullptr)
+SimplePipeline::SimplePipeline()
 {
 
 }
@@ -28,9 +28,9 @@ SimplePipeline::~SimplePipeline() {
 void SimplePipeline::initialize(
 	RenderEngine* engine,
 	RenderPass* pass,
-	const std::vector<std::shared_ptr<Texture>>& textures,
-	const std::vector<std::shared_ptr<Buffer>>& buffers,
-	const std::vector<std::shared_ptr<Mesh>>& meshes) {
+	const std::vector<class Texture*>& textures,
+	const std::vector<class Buffer*>& buffers,
+	const std::vector<class Mesh*>& meshes) {
 	{
 		{
 			std::array<vk::DescriptorSetLayoutBinding, 1> binding =
@@ -704,9 +704,9 @@ void SimplePipeline::initialize(
 			.setBorderColor(vk::BorderColor::eFloatOpaqueBlack)
 			.setCompareEnable(false)
 			.setCompareOp(vk::CompareOp::eAlways)
-			.setMagFilter(vk::Filter::eLinear)
+			.setMagFilter(vk::Filter::eNearest)
 			.setMaxAnisotropy(16.0f)
-			.setMinFilter(vk::Filter::eLinear)
+			.setMinFilter(vk::Filter::eNearest)
 			.setMaxLod(0)
 			.setMipLodBias(0)
 			.setMinLod(0)
@@ -755,22 +755,10 @@ void SimplePipeline::initialize(
 
 					engine->device().updateDescriptorSets(write, {});
 
-					{
-						vk::DescriptorImageInfo imageInfo = vk::DescriptorImageInfo()
-							.setImageView(ite->material(j)->texture(0)->view())
-							.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-							.setSampler(VK_NULL_HANDLE);
-
-						write = vk::WriteDescriptorSet()
-							.setImageInfo(imageInfo)
-							.setDescriptorCount(1)
-							.setDescriptorType(vk::DescriptorType::eSampledImage)
-							.setDstArrayElement(0)
-							.setDstBinding(0)
-							.setDstSet(sets_[ESubpassType::eDepthPrePass][i * ite->materialCount() + j][1]);
-
-						engine->device().updateDescriptorSets(write, {});
-					}
+					ite->material(j)->writeDescriptorSet(
+						engine,
+						Material::ETextureType::eAlbedo,
+						sets_[ESubpassType::eDepthPrePass][i * ite->materialCount() + j][1]);
 
 					vk::DescriptorImageInfo samplerInfo = vk::DescriptorImageInfo()
 						.setImageView(VK_NULL_HANDLE)
@@ -783,7 +771,7 @@ void SimplePipeline::initialize(
 						.setDescriptorType(vk::DescriptorType::eSampler)
 						.setDstArrayElement(0)
 						.setDstBinding(0)
-						.setDstSet(sets_[ESubpassType::eDepthPrePass][i * ite->materialCount() + j][1]);
+						.setDstSet(sets_[ESubpassType::eDepthPrePass][i * ite->materialCount() + j][2]);
 
 					engine->device().updateDescriptorSets(write, {});
 				}
@@ -833,20 +821,10 @@ void SimplePipeline::initialize(
 
 					for (uint32_t k = 0; k < (uint32_t)Material::ETextureType::eNum; k++)
 					{
-						vk::DescriptorImageInfo imageInfo = vk::DescriptorImageInfo()
-							.setImageView(ite->material(j)->texture(k)->view())
-							.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-							.setSampler(VK_NULL_HANDLE);
-
-						write = vk::WriteDescriptorSet()
-							.setImageInfo(imageInfo)
-							.setDescriptorCount(1)
-							.setDescriptorType(vk::DescriptorType::eSampledImage)
-							.setDstArrayElement(0)
-							.setDstBinding(k)
-							.setDstSet(sets_[ESubpassType::eGBuffer][i * ite->materialCount() + j][1]);
-
-						engine->device().updateDescriptorSets(write, {});
+						ite->material(j)->writeDescriptorSet(
+							engine,
+							k,
+							sets_[ESubpassType::eGBuffer][i * ite->materialCount() + j][1]);
 					}
 
 					vk::DescriptorImageInfo samplerInfo = vk::DescriptorImageInfo()
@@ -1051,6 +1029,10 @@ void SimplePipeline::initialize(
 			}
 		}
 	}
+
+	textures_ = textures;
+	buffers_ = buffers;
+	meshes_ = meshes;
 }
 
 void SimplePipeline::cleanup(RenderEngine* engine) {
@@ -1069,7 +1051,6 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
 		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
 		vk::ClearDepthStencilValue(1.0f, 0),
-		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
 	};
 
 	{
@@ -1087,10 +1068,10 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 			.setLayerCount(1)
 			.setLevelCount(1);
 
-		std::array<vk::ImageMemoryBarrier, 6> barriers;
+		std::array<vk::ImageMemoryBarrier, 5> barriers;
 		barriers[0].setSrcAccessMask(vk::AccessFlagBits::eTransferRead);
 		barriers[0].setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
-		barriers[0].setImage(pass->image(DeferredPass::eResult));
+		barriers[0].setImage(textures_[ETextureType::eResult]->image());
 		barriers[0].setOldLayout(vk::ImageLayout::eUndefined);
 		barriers[0].setNewLayout(vk::ImageLayout::eColorAttachmentOptimal);
 		barriers[0].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
@@ -1099,7 +1080,7 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 
 		barriers[1].setSrcAccessMask(vk::AccessFlagBits::eTransferRead);
 		barriers[1].setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
-		barriers[1].setImage(pass->image(DeferredPass::eAlbedo));
+		barriers[1].setImage(textures_[ETextureType::eAlbedo]->image());
 		barriers[1].setOldLayout(vk::ImageLayout::eUndefined);
 		barriers[1].setNewLayout(vk::ImageLayout::eColorAttachmentOptimal);
 		barriers[1].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
@@ -1108,7 +1089,7 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 
 		barriers[2].setSrcAccessMask(vk::AccessFlagBits::eTransferRead);
 		barriers[2].setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
-		barriers[2].setImage(pass->image(DeferredPass::eNormalDepth));
+		barriers[2].setImage(textures_[ETextureType::eNormalDepth]->image());
 		barriers[2].setOldLayout(vk::ImageLayout::eUndefined);
 		barriers[2].setNewLayout(vk::ImageLayout::eColorAttachmentOptimal);
 		barriers[2].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
@@ -1117,7 +1098,7 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 
 		barriers[3].setSrcAccessMask(vk::AccessFlagBits::eTransferRead);
 		barriers[3].setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
-		barriers[3].setImage(pass->image(DeferredPass::eRoughMetalVelocity));
+		barriers[3].setImage(textures_[ETextureType::eRoughMetalVelocity]->image());
 		barriers[3].setOldLayout(vk::ImageLayout::eUndefined);
 		barriers[3].setNewLayout(vk::ImageLayout::eColorAttachmentOptimal);
 		barriers[3].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
@@ -1125,22 +1106,13 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 		barriers[3].setSubresourceRange(colorSubresourceRange);
 
 		barriers[4].setSrcAccessMask(vk::AccessFlagBits::eTransferRead);
-		barriers[4].setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
-		barriers[4].setImage(pass->image(DeferredPass::eTemporary));
+		barriers[4].setDstAccessMask(vk::AccessFlagBits::eDepthStencilAttachmentWrite);
+		barriers[4].setImage(textures_[ETextureType::eDepthStencil]->image());
 		barriers[4].setOldLayout(vk::ImageLayout::eUndefined);
-		barriers[4].setNewLayout(vk::ImageLayout::eColorAttachmentOptimal);
+		barriers[4].setNewLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
 		barriers[4].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
 		barriers[4].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
-		barriers[4].setSubresourceRange(colorSubresourceRange);
-
-		barriers[5].setSrcAccessMask(vk::AccessFlagBits::eTransferRead);
-		barriers[5].setDstAccessMask(vk::AccessFlagBits::eDepthStencilAttachmentWrite);
-		barriers[5].setImage(pass->image(DeferredPass::eDepth));
-		barriers[5].setOldLayout(vk::ImageLayout::eUndefined);
-		barriers[5].setNewLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
-		barriers[5].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
-		barriers[5].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
-		barriers[5].setSubresourceRange(depthSubresourceRange);
+		barriers[4].setSubresourceRange(depthSubresourceRange);
 
 		cb.pipelineBarrier(
 			vk::PipelineStageFlagBits::eAllGraphics,
@@ -1161,8 +1133,8 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 
 	cb.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_[ESubpassType::eDepthPrePass]);
 
-	cb.bindVertexBuffers(0, { scene->bgMesh()->mesh().vertexBuffer() }, { 0 });
-	cb.bindIndexBuffer(scene->bgMesh()->mesh().indexBuffer(), 0, vk::IndexType::eUint32);
+	cb.bindVertexBuffers(0, { meshes_[EMeshType::eBackground]->vertexBuffer()->buffer(0)}, {0});
+	cb.bindIndexBuffer(meshes_[EMeshType::eBackground]->indexBuffer()->buffer(0), 0, vk::IndexType::eUint32);
 	
 	//for (uint32_t i = 0; i < mesh_.materialCount(); i++)
 	//{
@@ -1185,7 +1157,7 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 
 	cb.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_[ESubpassType::eGBuffer]);
 
-	for (uint32_t i = 0; i < scene->bgMesh()->mesh().materialCount(); i++)
+	for (uint32_t i = 0; i < meshes_[EMeshType::eBackground]->materialCount(); i++)
 	{
 		//if (mesh_.material(i)->isTransparent()) continue;
 
@@ -1193,12 +1165,12 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 			vk::PipelineBindPoint::eGraphics,
 			pipelineLayout_[ESubpassType::eGBuffer],
 			0,
-			sets_[ESubpassType::eGBuffer][currentImageIndex * scene->bgMesh()->mesh().materialCount() + i],
+			sets_[ESubpassType::eGBuffer][currentImageIndex * meshes_[EMeshType::eBackground]->materialCount() + i],
 			{});
 
-		for (uint32_t j = 0; j < scene->bgMesh()->mesh().material(i)->drawInfoCount(); j++)
+		for (uint32_t j = 0; j < meshes_[EMeshType::eBackground]->material(i)->drawInfoCount(); j++)
 		{
-			cb.drawIndexed(scene->bgMesh()->mesh().material(i)->indexCount(j), 1, scene->bgMesh()->mesh().material(i)->indexOffset(j), 0, 0);
+			cb.drawIndexed(meshes_[EMeshType::eBackground]->material(i)->indexCount(j), 1, meshes_[EMeshType::eBackground]->material(i)->indexOffset(j), 0, 0);
 		}
 	}
 
@@ -1220,115 +1192,6 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 	cb.endRenderPass();
 }
 
-void SimplePipeline::update(RenderEngine* engine, Scene* scene, uint32_t currentImageIndex)
+void SimplePipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
 {
-	struct ViewProj
-	{
-		glm::mat4 view;
-		glm::mat4 proj;
-		glm::mat4 world;
-	};
-
-	struct InvViewProj
-	{
-		glm::mat4 invView;
-		glm::mat4 invProj;
-	};
-
-	struct SceneInfo
-	{
-		glm::vec4 lightVector;
-		glm::vec4 cameraPosition;
-		glm::vec4 screenInfo;
-	};
-
-	struct ShadowMatrix
-	{
-		glm::mat4 view;
-		glm::mat4 proj;
-		glm::vec4 sceneInfo;
-	};
-
-	ViewProj vp;
-	InvViewProj invVP;
-	SceneInfo info;
-	ShadowMatrix shadow;
-
-	const float speed = 100.0f;
-
-	float deltaTime = Timer::instance().deltaTime();
-
-	if (Input::Instance().Push(DIK_W))
-	{
-		scene->camera().transform().position() += scene->camera().transform().forward() * speed * deltaTime;
-	}
-	if (Input::Instance().Push(DIK_S))
-	{
-		scene->camera().transform().position() -= scene->camera().transform().forward() * speed * deltaTime;
-	}
-	if (Input::Instance().Push(DIK_A))
-	{
-		scene->camera().transform().position() -= scene->camera().transform().right() * speed * deltaTime;
-	}
-	if (Input::Instance().Push(DIK_D))
-	{
-		scene->camera().transform().position() += scene->camera().transform().right() * speed * deltaTime;
-	}
-	if (Input::Instance().Push(DIK_E))
-	{
-		scene->camera().transform().position() += scene->camera().transform().up() * speed * deltaTime;
-	}
-	if (Input::Instance().Push(DIK_Q))
-	{
-		scene->camera().transform().position() -= scene->camera().transform().up() * speed * deltaTime;
-	}
-
-
-	scene->camera().transform().rotation() *=
-		glm::rotate(glm::identity<glm::quat>(), Input::Instance().GetMoveYRightPushed() * -2.0f * deltaTime, scene->camera().transform().right()) *
-		glm::rotate(glm::identity<glm::quat>(), Input::Instance().GetMoveXRightPushed() * 2.0f * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
-
-	scene->camera().update(Timer::instance().deltaTime());
-
-	static float rot = 0.0f;
-
-	vp.world =
-		glm::scale(glm::identity<glm::mat4>(), glm::vec3(0.25f, 0.25f, 0.25f));
-	vp.view = scene->camera().viewMatrix();
-	vp.proj = scene->camera().projMatrix();
-
-	invVP.invView = glm::inverse(vp.view);
-	invVP.invProj = glm::inverse(vp.proj);
-
-	info.lightVector = glm::vec4(scene->shadowCaster().transform().forward() * glm::vec3(-1, -1, -1), 0.0f);
-	info.cameraPosition = glm::vec4(scene->camera().transform().position(), 0.0f);
-	info.screenInfo = glm::vec4((float)kScreenWidth, (float)kScreenHeight, 0.0f, 0.0f);
-
-	shadow.view = scene->shadowCaster().viewMatrix();
-	shadow.proj = scene->shadowCaster().projMatrix();
-	shadow.sceneInfo = glm::vec4(0.0f, 0.0f, scene->shadowCaster().nearZ(), scene->shadowCaster().farZ());
-
-	memcpy_s(
-		&mappedViewProjMemory_[sizeof(glm::mat4) * 4 * currentImageIndex + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 0],
-		sizeof(ViewProj),
-		&vp,
-		sizeof(ViewProj));
-
-	memcpy_s(
-		&mappedViewProjMemory_[sizeof(glm::mat4) * 4 * currentImageIndex + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 1],
-		sizeof(invVP),
-		&invVP,
-		sizeof(invVP));
-
-	memcpy_s(
-		&mappedViewProjMemory_[sizeof(glm::mat4) * 4 * currentImageIndex + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 2],
-		sizeof(info),
-		&info,
-		sizeof(info));
-
-	memcpy_s(
-		&mappedViewProjMemory_[sizeof(glm::mat4) * 4 * currentImageIndex + sizeof(glm::mat4) * 4 * engine->swapchainImageCount() * 3],
-		sizeof(shadow),
-		&shadow,
-		sizeof(shadow));
 }

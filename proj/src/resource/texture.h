@@ -10,11 +10,12 @@ public:
 	virtual ~Texture() {}
 
 	void setupRenderTarget2d(class RenderEngine* engine, uint32_t width, uint32_t height, vk::Format format);
+	void setupDepthStencilBuffer(class RenderEngine* engine, uint32_t width, uint32_t height);
 	void setupResource2d(class RenderEngine* engine, const char* filename);
 
 	void release(class RenderEngine* engine);
 
-	const std::shared_ptr<Memory>& memory() { return memory_; }
+	const std::shared_ptr<class Memory>& memory() { return memory_; }
 
 	const vk::Image& image() { return image_; }
 	const vk::ImageView& view() { return view_; }

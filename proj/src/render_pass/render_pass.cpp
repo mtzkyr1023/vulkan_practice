@@ -12,7 +12,7 @@ RenderPass::~RenderPass()
 
 }
 
-void RenderPass::setup(RenderEngine* engine, const std::vector<std::shared_ptr<class Texture>>& resources)
+void RenderPass::setup(RenderEngine* engine, const std::vector<class Texture*>& resources)
 {
 	setupInternal(engine, resources);
 }

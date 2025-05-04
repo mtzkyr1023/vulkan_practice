@@ -12,7 +12,133 @@
 
 void Texture::setupRenderTarget2d(RenderEngine* engine, uint32_t width, uint32_t height, vk::Format format)
 {
+	{
+		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
+			.setExtent(vk::Extent3D(width, height, 1))
+			.setArrayLayers(1)
+			.setFormat(format)
+			.setImageType(vk::ImageType::e2D)
+			.setInitialLayout(vk::ImageLayout::eUndefined)
+			.setMipLevels(1)
+			.setSamples(vk::SampleCountFlagBits::e1)
+			.setTiling(vk::ImageTiling::eOptimal)
+			.setSharingMode(vk::SharingMode::eExclusive)
+			.setUsage(
+				vk::ImageUsageFlagBits::eSampled |
+				vk::ImageUsageFlagBits::eColorAttachment |
+				vk::ImageUsageFlagBits::eInputAttachment);
 
+		memory_ = std::make_shared<Memory>();
+		memory_->allocateForImage(
+			engine->physicalDevice(),
+			engine->device(),
+			imageCreateInfo,
+			vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+	}
+
+
+	{
+		vk::Image& image = image_;
+		vk::ImageView& view = view_;
+
+		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
+			.setExtent(vk::Extent3D(width, height, 1))
+			.setArrayLayers(1)
+			.setFormat(format)
+			.setImageType(vk::ImageType::e2D)
+			.setInitialLayout(vk::ImageLayout::eUndefined)
+			.setMipLevels(1)
+			.setSamples(vk::SampleCountFlagBits::e1)
+			.setTiling(vk::ImageTiling::eOptimal)
+			.setUsage(
+				vk::ImageUsageFlagBits::eSampled |
+				vk::ImageUsageFlagBits::eColorAttachment |
+				vk::ImageUsageFlagBits::eInputAttachment);
+
+		image = engine->device().createImage(imageCreateInfo);
+
+		memory_->bind(engine->device(), image, 0);
+
+		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
+			.setFormat(format)
+			.setSubresourceRange(
+				vk::ImageSubresourceRange()
+				.setBaseMipLevel(0)
+				.setLevelCount(1)
+				.setLayerCount(1)
+				.setAspectMask(vk::ImageAspectFlagBits::eColor))
+			.setViewType(vk::ImageViewType::e2D)
+			.setImage(image);
+
+		view = engine->device().createImageView(viewCreateInfo);
+	}
+}
+
+void Texture::setupDepthStencilBuffer(RenderEngine* engine, uint32_t width, uint32_t height)
+{
+
+	{
+		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
+			.setExtent(vk::Extent3D(width, height, 1))
+			.setArrayLayers(1)
+			.setFormat(vk::Format::eD32SfloatS8Uint)
+			.setImageType(vk::ImageType::e2D)
+			.setInitialLayout(vk::ImageLayout::eUndefined)
+			.setMipLevels(1)
+			.setSamples(vk::SampleCountFlagBits::e1)
+			.setTiling(vk::ImageTiling::eOptimal)
+			.setSharingMode(vk::SharingMode::eExclusive)
+			.setUsage(
+				vk::ImageUsageFlagBits::eSampled |
+				vk::ImageUsageFlagBits::eDepthStencilAttachment |
+				vk::ImageUsageFlagBits::eInputAttachment);
+
+		memory_ = std::make_shared<Memory>();
+		memory_->allocateForImage(
+			engine->physicalDevice(),
+			engine->device(),
+			imageCreateInfo,
+			vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+	}
+
+
+	{
+		vk::Image& image = image_;
+		vk::ImageView& view = view_;
+
+		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
+			.setExtent(vk::Extent3D(width, height, 1))
+			.setArrayLayers(1)
+			.setFormat(vk::Format::eD32SfloatS8Uint)
+			.setImageType(vk::ImageType::e2D)
+			.setInitialLayout(vk::ImageLayout::eUndefined)
+			.setMipLevels(1)
+			.setSamples(vk::SampleCountFlagBits::e1)
+			.setTiling(vk::ImageTiling::eOptimal)
+			.setUsage(
+				vk::ImageUsageFlagBits::eSampled |
+				vk::ImageUsageFlagBits::eDepthStencilAttachment |
+				vk::ImageUsageFlagBits::eInputAttachment);
+
+		image = engine->device().createImage(imageCreateInfo);
+
+		memory_->bind(engine->device(), image, 0);
+
+		vk::ImageViewCreateInfo viewCreateInfo = vk::ImageViewCreateInfo()
+			.setFormat(vk::Format::eD32SfloatS8Uint)
+			.setSubresourceRange(
+				vk::ImageSubresourceRange()
+				.setBaseMipLevel(0)
+				.setLevelCount(1)
+				.setLayerCount(1)
+				.setAspectMask(vk::ImageAspectFlagBits::eDepth))
+			.setViewType(vk::ImageViewType::e2D)
+			.setImage(image);
+
+		view = engine->device().createImageView(viewCreateInfo);
+	}
 }
 
 void Texture::setupResource2d(RenderEngine* engine, const char* filename)
@@ -37,6 +163,8 @@ void Texture::setupResource2d(RenderEngine* engine, const char* filename)
 	vk::DeviceSize size = 0;
 	vk::DeviceSize alignment = 0;
 	
+	memory_ = std::make_shared<Memory>();
+
 	{
 		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
 			.setExtent(vk::Extent3D(width, height, 1))

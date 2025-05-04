@@ -5,7 +5,6 @@
 #include <fstream>
 #include <iostream>
 
-GameObjectManager RenderPipeline::objectManager_;
 
 void RenderPipeline::cleanup(RenderEngine* engine) {
 	for (auto& it : pipeline_)

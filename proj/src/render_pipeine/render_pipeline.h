@@ -12,9 +12,9 @@ public:
 	virtual void initialize(
 		class RenderEngine* engine,
 		class RenderPass* pass,
-		const std::vector<std::shared_ptr<class Texture>>& textures,
-		const std::vector<std::shared_ptr<class Buffer>>& buffers,
-		const std::vector<std::shared_ptr<class Mesh>>& meshes) = 0;
+		const std::vector<class Texture*>& textures,
+		const std::vector<class Buffer*>& buffers,
+		const std::vector<class Mesh*>& meshes) = 0;
 	virtual void cleanup(class RenderEngine* engine);
 	
 	virtual void render(class RenderEngine* engine, class RenderPass* pass, uint32_t currentImageIndex) = 0;
@@ -40,9 +40,9 @@ protected:
 	std::vector<vk::CommandBuffer> commandBuffers_;
 	std::vector<vk::Semaphore> renderCompletedSemaphores_;
 
-	std::vector<std::shared_ptr<class Texture>> textures_;
-	std::vector<std::shared_ptr<class Buffer>> buffers_;
-	std::vector<std::shared_ptr<class Mesh>> meshed_;
+	std::vector<class Texture*> textures_;
+	std::vector<class Buffer*> buffers_;
+	std::vector<class Mesh*> meshes_;
 };
 
 #endif

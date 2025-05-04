@@ -138,20 +138,26 @@ void Buffer::setupIndexBuffer(RenderEngine* engine, size_t stride, size_t count,
 
 void Buffer::setupUniformBuffer(RenderEngine* engine, size_t size, size_t count)
 {
-	vk::BufferCreateInfo bufferCreateInfo = vk::BufferCreateInfo()
-		.setSize(size)
-		.setUsage(vk::BufferUsageFlagBits::eUniformBuffer);
+	{
+		vk::BufferCreateInfo bufferCreateInfo = vk::BufferCreateInfo()
+			.setSize(size * count)
+			.setUsage(vk::BufferUsageFlagBits::eUniformBuffer);
 
-	memory_ = std::make_shared<Memory>();
-	memory_->allocateForBuffer(engine->physicalDevice(), engine->device(), bufferCreateInfo, vk::MemoryPropertyFlagBits::eHostVisible);
+		memory_ = std::make_shared<Memory>();
+		memory_->allocateForBuffer(engine->physicalDevice(), engine->device(), bufferCreateInfo, vk::MemoryPropertyFlagBits::eHostVisible);
+	}
 
 	buffers_.resize(count);
 
 	for (size_t i = 0; i < count; i++)
 	{
+		vk::BufferCreateInfo bufferCreateInfo = vk::BufferCreateInfo()
+			.setSize(size)
+			.setUsage(vk::BufferUsageFlagBits::eUniformBuffer);
+
 		buffers_[i] = engine->device().createBuffer(bufferCreateInfo);
 
-		memory_->bind(engine->device(), buffers_[i], 0);
+		memory_->bind(engine->device(), buffers_[i], i * size);
 	}
 }
 
@@ -160,4 +166,13 @@ void Buffer::release(RenderEngine* engine)
 	for (const auto& ite : buffers_)
 	engine->device().destroyBuffer(ite);
 	memory_->free(engine->device());
+}
+
+void Buffer::update(RenderEngine* engine, size_t offset, size_t size, void* data)
+{
+	uint8_t* mappedMemory = memory_->map(engine->device(), offset, size);
+
+	memcpy_s(mappedMemory, size, data, size);
+
+	memory_->unmap(engine->device());
 }

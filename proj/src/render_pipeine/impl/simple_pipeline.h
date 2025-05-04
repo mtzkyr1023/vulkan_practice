@@ -27,7 +27,7 @@ public:
 		eRoughMetalVelocity,
 		eDepthStencil,
 		eShadowMap,
-		eComposition,
+		eResult,
 	};
 
 	enum EBufferType : uint32_t
@@ -49,9 +49,9 @@ public:
 	virtual void initialize(
 		class RenderEngine* engine,
 		class RenderPass* pass,
-		const std::vector<std::shared_ptr<class Texture>>& textures,
-		const std::vector<std::shared_ptr<class Buffer>>& buffers,
-		const std::vector<std::shared_ptr<class Mesh>>& meshes) override;
+		const std::vector<class Texture*>& textures,
+		const std::vector<class Buffer*>& buffers,
+		const std::vector<class Mesh*>& meshes) override;
 	virtual void cleanup(class RenderEngine* engine) override;
 
 	virtual void render(class RenderEngine* engine, class RenderPass* pass, uint32_t currentImageIndex) override;

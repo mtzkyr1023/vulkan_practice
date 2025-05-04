@@ -31,7 +31,7 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0);
 float distributionGGX(vec3 N, vec3 H, float roughness);
 float geometrySchlickGGX(float NdotV, float roughness);
 float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
-float sampleShadowMap(vec3 worldPosition);
+float sampleShadowMap(vec3 worldPosition, float NdotL, vec2 offset);
 
 void main()
 {
@@ -71,8 +71,20 @@ void main()
 	float denominator = 4.0f * max(dot(N, V), 0.0f) * max(dot(N, L), 0.0f) + 0.0001f;
 	vec3 specular = numerator / denominator;
 	
+	float shadow = 0.0f;
+	
 	float NdotL = max(dot(N, L), 0.0f);
-	vec3 color = (kD * albedo.rgb / PI + specular) * vec3(4.0f) * NdotL * sampleShadowMap(worldPosition.xyz);
+	
+	
+	for (int i = -1; i <= 1; i++)
+	{
+		for (int j = -1; j <= 1; j++)
+		{
+			shadow += sampleShadowMap(worldPosition.xyz, NdotL, vec2(i, j) / 512.0f) / 9.0f;
+		}
+	}
+	
+	vec3 color = (kD * albedo.rgb / PI + specular) * vec3(4.0f) * NdotL * shadow;
     vec3 ambient = vec3(0.05f) * albedo.rgb;
 	
 	color = color + ambient;
@@ -124,7 +136,7 @@ float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 	return ggx1 * ggx2;
 }
 
-float sampleShadowMap(vec3 worldPosition)
+float sampleShadowMap(vec3 worldPosition, float NdotL, vec2 offset)
 {
 	vec4 shadowCoord = ub2.shadowView * vec4(worldPosition, 1.0f);
 	shadowCoord = ub2.shadowProj * shadowCoord;
@@ -135,7 +147,9 @@ float sampleShadowMap(vec3 worldPosition)
 	
 	vec2 texcoord = shadowCoord.xy * vec2(0.5f, 0.5f) + vec2(0.5f, 0.5f);
 	
-	float shadowMapDepth = texture(sampler2D(shadowMap, clampSampler), texcoord).x;
+	float shadowMapDepth = texture(sampler2D(shadowMap, clampSampler), texcoord + offset).x;
 	
-	return shadowMapDepth < z - 0.00001f ? 0.0f : 1.0f;
+	float bias = max(0.001f * (1.0f - NdotL), 0.0001f);
+	
+	return shadowMapDepth < z - bias ? 0.0f : 1.0f;
 }

@@ -5,7 +5,7 @@
 #include "../../resource/texture.h"
 
 
-void ShadowPass::setupInternal(RenderEngine* engine, const std::vector<std::shared_ptr<class Texture>>& resources)
+void ShadowPass::setupInternal(RenderEngine* engine, const std::vector<Texture*>& resources)
 {
 	std::array<vk::AttachmentDescription, 5> attachmentDescs;
 	std::array<vk::SubpassDependency, 0> subpassDeps;

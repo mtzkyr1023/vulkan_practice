@@ -14,6 +14,8 @@ public:
 	virtual void initialize(class RenderEngine* engine);
 	virtual void cleanup(class RenderEngine* engine);
 
+	virtual void update(float deltaTime) {}
+
 	std::vector<std::shared_ptr<MeshObject>>& meshObjects() { return meshObjects_; }
 
 	std::shared_ptr<MeshObject>& meshObject(uint32_t index) { return meshObjects_[index]; }

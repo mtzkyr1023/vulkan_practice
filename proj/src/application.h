@@ -9,6 +9,9 @@
 #include "render_pass/impl/shadow_pass.h"
 #include "util/imgui_wrapper.h"
 #include "gameobject/test_scene.h"
+#include "resource/buffer.h"
+#include "resource/texture.h"
+#include "util/mesh.h"
 
 class Application {
 public:
@@ -31,9 +34,29 @@ private:
 	DeferredPass deferredPass_;
 	FbPipeline fbPipeline_;
 	ImGuiWrapper imgui_;
-	vk::Sampler sampler_;
-	VkDescriptorSet depthBuffer_;
 	TestScene testscene_;
+
+	Buffer cameraViewProjBuffer_;
+	Buffer shadowViewProjBuffer_;
+	Buffer cameraInvViewProjBuffer_;
+	Buffer sceneInfoBuffer_;
+
+	Texture albedoBuffer_;
+	Texture normalDepthBuffer_;
+	Texture roughMetalVelocityBuffer_;
+	Texture depthStencilBuffer_;
+	Texture compositionBuffer_;
+	Texture shadowMap_;
+	Texture shadowDepthBuffer_;
+	Texture shadowBlurXBuffer_;
+	Texture shadowBlurYBuffer_;
+	Texture deferredResultBuffer_;
+	Texture shadowResultBuffer_;
+
+	Mesh sponzaModel_;
+
+	VkDescriptorSet shadowMapDebug_;
+	vk::Sampler sampler_;
 };
 
 #endif

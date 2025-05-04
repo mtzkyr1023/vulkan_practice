@@ -15,6 +15,8 @@ public:
 
 	void release(class RenderEngine* engine);
 
+	void update(class RenderEngine* engine, size_t offset, size_t size, void* data);
+
 	const vk::Buffer& buffer(uint32_t index) { return buffers_[index]; }
 	const vk::BufferView& view(uint32_t index) { return views_[index]; }
 

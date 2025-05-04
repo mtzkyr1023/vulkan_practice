@@ -14,7 +14,6 @@ public:
 		eAlbedo,
 		eNormalDepth,
 		eRoughMetalVelocity,
-		eTemporary,
 
 		eDepth,
 
@@ -22,7 +21,7 @@ public:
 	};
 
 private:
-	virtual void setupInternal(class RenderEngine* engine, const std::vector<std::shared_ptr<class Texture>>& resources) override;
+	virtual void setupInternal(class RenderEngine* engine, const std::vector<class Texture*>& resources) override;
 };
 
 #endif

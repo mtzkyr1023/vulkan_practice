@@ -16,7 +16,12 @@ FbPipeline::~FbPipeline()
 
 }
 
-void FbPipeline::initialize(RenderEngine* engine, RenderPass* pass, const std::vector<std::shared_ptr<Texture>>& textures)
+void FbPipeline::initialize(
+	RenderEngine* engine,
+	RenderPass* pass,
+	const std::vector<Texture*>& textures,
+	const std::vector<Buffer*>& buffers,
+	const std::vector<Mesh*>& meshes)
 {
 	{
 		{
@@ -217,7 +222,7 @@ void FbPipeline::initialize(RenderEngine* engine, RenderPass* pass, const std::v
 		{
 			vk::DescriptorImageInfo imageInfo = vk::DescriptorImageInfo()
 				.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-				.setImageView(prePass->imageView((uint32_t)DeferredPass::eTemporary))
+				.setImageView(textures[ETextureType::eSrc]->view())
 				.setSampler(VK_NULL_HANDLE);
 
 			writes.push_back(vk::WriteDescriptorSet()
@@ -246,6 +251,11 @@ void FbPipeline::initialize(RenderEngine* engine, RenderPass* pass, const std::v
 
 		engine->device().updateDescriptorSets(writes, {});
 	}
+
+	textures_ = textures;
+	buffers_ = buffers;
+	meshes_ = meshes;
+
 }
 
 void FbPipeline::cleanup(RenderEngine* engine)
@@ -256,7 +266,7 @@ void FbPipeline::cleanup(RenderEngine* engine)
 }
 
 
-void FbPipeline::render(RenderEngine* engine, RenderPass* pass, Scene* Scene, uint32_t currentImageIndex)
+void FbPipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t currentImageIndex)
 {
 	vk::CommandBuffer cb = engine->commandBuffer(currentImageIndex);
 
@@ -276,7 +286,7 @@ void FbPipeline::render(RenderEngine* engine, RenderPass* pass, Scene* Scene, ui
 	cb.draw(3, 1, 0, 0);
 }
 
-void FbPipeline::update(RenderEngine* engine, Scene* scene, uint32_t currentImageIndex)
+void FbPipeline::update(RenderEngine* engine, uint32_t currentImageIndex)
 {
 
 }

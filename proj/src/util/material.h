@@ -29,7 +29,7 @@ public:
 	~Material();
 
 
-	enum class ETextureType
+	enum ETextureType
 	{
 		eAlbedo = 0,
 		eNormal,
@@ -61,9 +61,10 @@ public:
 
 	EMaterialType materialType() { return materialType_; }
 
+	void writeDescriptorSet(class RenderEngine* engine, uint32_t textureIndex, vk::DescriptorSet set);
+	
 protected:
 	std::vector<std::shared_ptr<class Texture>> textures_;
-
 	std::vector<DrawInfo> drawInfos_;
 	
 	EMaterialType materialType_;

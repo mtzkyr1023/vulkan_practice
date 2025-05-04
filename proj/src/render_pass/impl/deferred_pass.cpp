@@ -5,9 +5,9 @@
 
 #include "../../resource/texture.h"
 
-void DeferredPass::setupInternal(RenderEngine* engine, const std::vector<std::shared_ptr<class Texture>>& resources)
+void DeferredPass::setupInternal(RenderEngine* engine, const std::vector<Texture*>& resources)
 {
-	std::array<vk::AttachmentDescription, 6> attachmentDescs;
+	std::array<vk::AttachmentDescription, 5> attachmentDescs;
 	std::array<vk::SubpassDependency, 2> subpassDeps;
 	std::array<vk::SubpassDescription, 3> subpassDescs;
 
@@ -57,16 +57,6 @@ void DeferredPass::setupInternal(RenderEngine* engine, const std::vector<std::sh
 		attachmentDescs[4] = vk::AttachmentDescription()
 			.setFormat(vk::Format::eD32SfloatS8Uint)
 			.setInitialLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal)
-			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-			.setLoadOp(vk::AttachmentLoadOp::eClear)
-			.setStoreOp(vk::AttachmentStoreOp::eStore)
-			.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
-			.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
-
-		// 不透明ライティングバッファ
-		attachmentDescs[5] = vk::AttachmentDescription()
-			.setFormat(vk::Format::eR16G16B16A16Sfloat)
-			.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal)
 			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 			.setLoadOp(vk::AttachmentLoadOp::eClear)
 			.setStoreOp(vk::AttachmentStoreOp::eStore)
@@ -135,7 +125,7 @@ void DeferredPass::setupInternal(RenderEngine* engine, const std::vector<std::sh
 		std::array<vk::AttachmentReference, 1> colorAttachments =
 		{
 			vk::AttachmentReference()
-			.setAttachment(5)
+			.setAttachment(0)
 			.setLayout(vk::ImageLayout::eColorAttachmentOptimal),
 		};
 
@@ -206,14 +196,13 @@ void DeferredPass::setupInternal(RenderEngine* engine, const std::vector<std::sh
 	renderPass_ = engine->device().createRenderPass(renderPassCreateInfo);
 
 	{
-		std::array<vk::ImageView, 6> attachments =
+		std::array<vk::ImageView, 5> attachments =
 		{
 			resources[ETextureType::eResult]->view(),
 			resources[ETextureType::eAlbedo]->view(),
 			resources[ETextureType::eNormalDepth]->view(),
 			resources[ETextureType::eRoughMetalVelocity]->view(),
 			resources[ETextureType::eDepth]->view(),
-			resources[ETextureType::eTemporary]->view(),
 		};
 		vk::FramebufferCreateInfo framebufferCreateInfo = vk::FramebufferCreateInfo()
 			.setWidth(kScreenWidth)
