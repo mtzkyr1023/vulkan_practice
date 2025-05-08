@@ -78,7 +78,8 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 			(uint32_t)kShadowMapHeight,
 			vk::Format::eR32G32Sfloat);
 
-		sponzaModel_.loadMesh(engine, "models/sponza/gltf/", "sponza.gltf");
+		//sponzaModel_.loadMesh(engine, "models/sponza/gltf/", "sponza.gltf");
+		sponzaModel_.loadMesh(engine, "models/ABeautifulGame/gltf/", "ABeautifulGame.gltf");
 
 		imgui_.setup(engine, hwnd);
 		shadowPass_.setup(
@@ -343,13 +344,15 @@ void Application::update(RenderEngine* engine, uint32_t currentFrameIndex)
 	ViewProj camerainvVp;
 	SceneInfo sceneInfo;
 
+	float scale = 500.0f;
+
 	cameraVp.view = testscene_.camera().viewMatrix();
 	cameraVp.proj = testscene_.camera().projMatrix();
-	cameraVp.world = glm::scale(glm::identity<glm::mat4>(), glm::vec3(0.25f, 0.25f, 0.25f));
+	cameraVp.world = glm::scale(glm::identity<glm::mat4>(), glm::vec3(scale, scale, scale));
 
 	shadowVp.view = testscene_.shadowCaster().viewMatrix();
 	shadowVp.proj = testscene_.shadowCaster().projMatrix();
-	shadowVp.world = glm::scale(glm::identity<glm::mat4>(), glm::vec3(0.25f, 0.25f, 0.25f));
+	shadowVp.world = glm::scale(glm::identity<glm::mat4>(), glm::vec3(scale, scale, scale));
 
 	camerainvVp.view = glm::inverse(cameraVp.view);
 	camerainvVp.proj = glm::inverse(cameraVp.proj);

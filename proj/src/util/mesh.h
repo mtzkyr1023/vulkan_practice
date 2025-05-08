@@ -10,6 +10,14 @@
 class Mesh
 {
 public:
+	struct Vertex
+	{
+		glm::vec4 pos;
+		glm::vec3 nor;
+		glm::vec3 tan;
+		glm::vec2 tex;
+	};
+
 	Mesh();
 	~Mesh();
 
@@ -31,6 +39,10 @@ public:
 	const glm::vec3& center() { return center_; }
 
 protected:
+
+	std::vector<Vertex> verticies_;
+	std::vector<uint32_t> indicies_;
+
 	std::shared_ptr<class Buffer> vertexBuffer_;
 	std::shared_ptr<class Buffer> indexBuffer_;
 
@@ -39,11 +51,17 @@ protected:
 
 	std::vector<std::shared_ptr<class Material>> materials_;
 
+	uint32_t vertexOffset_;
+	uint32_t indexOffset_;
+
 	glm::vec3 aabbMin_;
 	glm::vec3 aabbMax_;
 	glm::vec3 center_;
 
 	uint32_t indexCount_;
+
+protected:
+	void recursiveNode(const struct aiScene* scene, struct aiNode* node);
 };
 
 #endif

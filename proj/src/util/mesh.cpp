@@ -37,17 +37,6 @@ void Mesh::loadMesh(RenderEngine* engine, const char* foldername, const char* fi
 
 	const aiScene* scene = importer->ReadFile(path.c_str(), flags);
 
-	struct Vertex
-	{
-		glm::vec4 pos;
-		glm::vec3 nor;
-		glm::vec3 tan;
-		glm::vec2 tex;
-	};
-
-	std::vector<Vertex> verticies;
-	std::vector<uint32_t> indicies;
-
 	for (uint32_t i = 0; i < scene->mNumMaterials; i++)
 	{
 		aiMaterial* material = scene->mMaterials[i];
@@ -91,48 +80,23 @@ void Mesh::loadMesh(RenderEngine* engine, const char* foldername, const char* fi
 	aabbMin_ = glm::vec3(FLT_MAX);
 	aabbMax_ = glm::vec3(-FLT_MAX);
 
-	uint32_t vertexOffset = 0;
-	for (uint32_t i = 0; i < scene->mNumMeshes; i++)
-	{
-		aiMesh* mesh = scene->mMeshes[i];
-		Vertex vertex;
+	aiNode* node = scene->mRootNode;
 
-		for (uint32_t j = 0; j < mesh->mNumVertices; j++)
-		{
-			vertex.pos = glm::vec4(mesh->mVertices[j].x, mesh->mVertices[j].y, mesh->mVertices[j].z, 1.0f);
-			vertex.nor = glm::vec3(mesh->mNormals[j].x, mesh->mNormals[j].y, mesh->mNormals[j].z);
-			vertex.tan = glm::vec3(mesh->mBitangents[j].x, mesh->mBitangents[j].y, mesh->mBitangents[j].z);
-			vertex.tex = glm::vec2(mesh->mTextureCoords[0][j].x, 1.0f - mesh->mTextureCoords[0][j].y);
-			verticies.push_back(vertex);
+	vertexOffset_ = 0;
+	indexOffset_ = 0;
 
-			aabbMin_ = glm::min(aabbMin_, glm::vec3(vertex.pos));
-			aabbMax_ = glm::max(aabbMax_, glm::vec3(vertex.pos));
-		}
+	verticies_.clear();
+	indicies_.clear();
 
-		vertexCounts_.push_back(mesh->mNumVertices);
-
-		for (uint32_t j = 0; j < mesh->mNumFaces; j++)
-		{
-			indicies.push_back(mesh->mFaces[j].mIndices[0] + vertexOffset);
-			indicies.push_back(mesh->mFaces[j].mIndices[1] + vertexOffset);
-			indicies.push_back(mesh->mFaces[j].mIndices[2] + vertexOffset);
-		}
-
-		indexCounts_.push_back(mesh->mNumFaces * 3);
-
-		materials_[mesh->mMaterialIndex]->addDrawInfo(indexCount_, mesh->mNumFaces * 3);
-
-		indexCount_ += mesh->mNumFaces * 3;
-		vertexOffset += mesh->mNumVertices;
-	}
+	recursiveNode(scene, node);
 
 	center_ = (aabbMin_ + aabbMax_) * 0.5f;
 
 	vertexBuffer_ = std::make_shared<Buffer>();
 	indexBuffer_ = std::make_shared<Buffer>();
 
-	vertexBuffer_->setupVertexBuffer(engine, sizeof(Vertex), verticies.size(), (uint8_t*)verticies.data());
-	indexBuffer_->setupIndexBuffer(engine, sizeof(int), indicies.size(), (uint8_t*)indicies.data());
+	vertexBuffer_->setupVertexBuffer(engine, sizeof(Vertex), verticies_.size(), (uint8_t*)verticies_.data());
+	indexBuffer_->setupIndexBuffer(engine, sizeof(int), indicies_.size(), (uint8_t*)indicies_.data());
 }
 
 void Mesh::release(RenderEngine* engine)
@@ -143,5 +107,54 @@ void Mesh::release(RenderEngine* engine)
 	for (const auto& ite : materials_)
 	{
 		ite->release(engine);
+	}
+}
+
+void Mesh::recursiveNode(const aiScene* scene, aiNode* node)
+{
+	if (node == nullptr) return;
+	for (uint32_t i = 0; i < node->mNumMeshes; i++)
+	{
+		aiMesh* mesh = scene->mMeshes[i];
+		Vertex vertex;
+
+		for (uint32_t j = 0; j < mesh->mNumVertices; j++)
+		{
+			glm::mat4 offsetMatrix = glm::mat4(
+				glm::vec4((float)node->mTransformation[0][0], (float)node->mTransformation[0][1], (float)node->mTransformation[0][2], (float)node->mTransformation[0][3]),
+				glm::vec4((float)node->mTransformation[1][0], (float)node->mTransformation[1][1], (float)node->mTransformation[1][2], (float)node->mTransformation[1][3]),
+				glm::vec4((float)node->mTransformation[2][0], (float)node->mTransformation[2][1], (float)node->mTransformation[2][2], (float)node->mTransformation[2][3]),
+				glm::vec4((float)node->mTransformation[3][0], (float)node->mTransformation[3][1], (float)node->mTransformation[3][2], (float)node->mTransformation[3][3])
+			);
+			vertex.pos = glm::vec4(mesh->mVertices[j].x, mesh->mVertices[j].y, mesh->mVertices[j].z, 1.0f) * offsetMatrix;
+			vertex.nor = glm::vec3(mesh->mNormals[j].x, mesh->mNormals[j].y, mesh->mNormals[j].z) * glm::mat3(offsetMatrix);
+			vertex.tan = glm::vec3(mesh->mBitangents[j].x, mesh->mBitangents[j].y, mesh->mBitangents[j].z) * glm::mat3(offsetMatrix);
+			vertex.tex = glm::vec2(mesh->mTextureCoords[0][j].x, 1.0f - mesh->mTextureCoords[0][j].y);
+			verticies_.push_back(vertex);
+
+			aabbMin_ = glm::min(aabbMin_, glm::vec3(vertex.pos));
+			aabbMax_ = glm::max(aabbMax_, glm::vec3(vertex.pos));
+		}
+
+		vertexCounts_.push_back(mesh->mNumVertices);
+
+		for (uint32_t j = 0; j < mesh->mNumFaces; j++)
+		{
+			indicies_.push_back(mesh->mFaces[j].mIndices[0] + vertexOffset_);
+			indicies_.push_back(mesh->mFaces[j].mIndices[1] + vertexOffset_);
+			indicies_.push_back(mesh->mFaces[j].mIndices[2] + vertexOffset_);
+		}
+
+		indexCounts_.push_back(mesh->mNumFaces * 3);
+
+		materials_[mesh->mMaterialIndex]->addDrawInfo(indexCount_, mesh->mNumFaces * 3);
+
+		indexCount_ += mesh->mNumFaces * 3;
+		vertexOffset_ += mesh->mNumVertices;
+	}
+
+	for (uint32_t i = 0; i < node->mNumChildren; i++)
+	{
+		recursiveNode(scene, node->mChildren[i]);
 	}
 }

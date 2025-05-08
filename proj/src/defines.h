@@ -4,8 +4,8 @@
 
 static const char* kAppName = "Tutorial Application";
 
-static const int kFramebufferWidth = 1280;
-static const int kFramebufferHeight = 720;
+static const int kFramebufferWidth = 1920;
+static const int kFramebufferHeight = 1080;
 
 static const int kScreenWidth = kFramebufferWidth;
 static const int kScreenHeight = kFramebufferHeight;
