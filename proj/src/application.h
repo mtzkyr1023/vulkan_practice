@@ -53,6 +53,8 @@ private:
 	Texture deferredResultBuffer_;
 	Texture shadowResultBuffer_;
 
+	Texture cubemapTexture_;
+
 	Mesh sponzaModel_;
 
 	VkDescriptorSet shadowMapDebug_;

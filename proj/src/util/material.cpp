@@ -26,6 +26,7 @@ void Material::loadImage(
 	const char* albedoFilename,
 	const char* normalFilename,
 	const char* pbrFilename,
+	const char* aoFilename,
 	bool generateMipmap)
 {
 	textures_.resize((uint32_t)ETextureType::eNum);
@@ -49,6 +50,13 @@ void Material::loadImage(
 		tex->setupResource2d(engine, pbrFilename);
 
 		textures_[(uint32_t)ETextureType::ePBR] = tex;
+	}
+
+	{
+		std::shared_ptr<Texture> tex = std::make_shared<Texture>();
+		tex->setupResource2d(engine, aoFilename);
+
+		textures_[(uint32_t)ETextureType::eAO] = tex;
 	}
 }
 

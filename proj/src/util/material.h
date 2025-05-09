@@ -34,6 +34,7 @@ public:
 		eAlbedo = 0,
 		eNormal,
 		ePBR,
+		eAO,
 
 		eNum,
 	};
@@ -43,6 +44,7 @@ public:
 		const char* albedoFilename,
 		const char* normalFilename,
 		const char* pbrFilename,
+		const char* aoFilename,
 		bool generateMipmap = false);
 	void release(class RenderEngine* engine);
 

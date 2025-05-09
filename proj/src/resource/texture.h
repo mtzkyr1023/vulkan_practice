@@ -12,6 +12,7 @@ public:
 	void setupRenderTarget2d(class RenderEngine* engine, uint32_t width, uint32_t height, vk::Format format);
 	void setupDepthStencilBuffer(class RenderEngine* engine, uint32_t width, uint32_t height);
 	void setupResource2d(class RenderEngine* engine, const char* filename);
+	void setupResourceCubemap(class RenderEngine* engine, const char* filename);
 
 	void release(class RenderEngine* engine);
 

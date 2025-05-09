@@ -3,6 +3,7 @@
 layout(set=1,binding=0) uniform texture2D albedoTex;
 layout(set=1,binding=1) uniform texture2D normalTex;
 layout(set=1,binding=2) uniform texture2D pbrTex;
+layout(set=1,binding=3) uniform texture2D aoTex;
 layout(set=2,binding=0) uniform sampler wrapSampler;
 
 layout(location=0) in vec3 inNormal;
@@ -20,9 +21,12 @@ void main()
 	vec3 normal = texture(sampler2D(normalTex, wrapSampler), inTexcoord).xyz * 2.0f - vec3(1.0f);
 	normal = normalize(inTangent * normal.x + inBinormal * normal.y + inNormal * normal.z);
 	outNormalDepth = vec4(normal, gl_FragCoord.z);
-	outRoughMetalVelocity = vec4(texture(sampler2D(pbrTex, wrapSampler), inTexcoord).yz, 0.0f, 0.0f);
-	
+	vec3 occRoughMetal = texture(sampler2D(pbrTex, wrapSampler), inTexcoord).rgb;
+	outRoughMetalVelocity = vec4(occRoughMetal.gb, 0.0f, 0.0f);
+	float ao = occRoughMetal.r;
 	
 	if (outAlbedo.a - 0.5f < 0.0f)
 		discard;
+	
+	outAlbedo.a = ao;
 }

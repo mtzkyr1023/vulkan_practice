@@ -2,6 +2,12 @@
 #define STB_IMAGE_IMPLEMENTATION
 
 
+#include "functional"
+
+#include "glm/glm.hpp"
+#include "glm/gtc/quaternion.hpp"
+#include "glm/common.hpp"
+
 #include "texture.h"
 #include "memory.h"
 #include "../render_engine.h"
@@ -456,6 +462,86 @@ void Texture::setupResource2d(RenderEngine* engine, const char* filename)
 	stbi_image_free(pixels);
 }
 
+void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
+{
+	enum EAxisType
+	{
+		eRight = 0,
+		eLeft,
+		eUp,
+		eDown,
+		eForward,
+		eBack,
+		
+		eNum,
+	};
+
+
+	float* pixels = nullptr;
+	int bpp;
+	int srcWidth, srcHeight;
+	pixels = stbi_loadf(filename, &srcWidth, &srcHeight, &bpp, 4);
+
+	int width = srcWidth / 4;
+	int height = width;
+
+	std::vector<float> right(width * height);
+	std::vector<float> left(width * height);
+	std::vector<float> up(width * height);
+	std::vector<float> down(width * height);
+	std::vector<float> forward(width * height);
+	std::vector<float> back(width * height);
+
+	std::array<std::vector<float>&, EAxisType::eNum> pixelArray =
+	{
+		right,
+		left,
+		up,
+		down,
+		forward,
+		back,
+	};
+
+	std::array<glm::vec3, EAxisType::eNum> axisArray =
+	{
+		glm::vec3(1.0f, 0.0f, 0.0f),
+		glm::vec3(-1.0f, 0.0f, 0.0f),
+		glm::vec3(0.0f, 1.0f, 0.0f),
+		glm::vec3(0.0f, -1.0f, 0.0f),
+		glm::vec3(0.0f, 0.0f, 1.0f),
+		glm::vec3(0.0f, 0.0f, -1.0f),
+	};
+
+	for (int y = 0; y < srcHeight; y++)
+	{
+		float phi = (float)y / (float)srcHeight * glm::pi<float>() - glm::half_pi<float>();
+		for (int x = 0; x < srcWidth; x++)
+		{
+			float theta = (float)x / (float)srcWidth * glm::two_pi<float>();
+
+			float vx = glm::cos(theta) * glm::cos(phi);
+			float vy = glm::sin(phi);
+			float vz = glm::sin(theta) * glm::cos(phi);
+
+			glm::vec3 v = glm::vec3(vx, vy, vz);
+
+			for (int i = 0; i < 6; i++)
+			{
+				float dotProduct = glm::dot(v, axisArray[i]);
+				float rad = glm::acos(dotProduct);
+				if (rad < glm::quarter_pi<float>())
+				{
+					if (i == EAxisType::eRight)
+					{
+						pixelArray[i][(int)(vz)] = pixels[y * srcWidth + x];
+					}
+				}
+			}
+		}
+	}
+
+	stbi_image_free(pixels);
+}
 
 void Texture::release(RenderEngine* engine)
 {

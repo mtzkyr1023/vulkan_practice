@@ -38,6 +38,7 @@ void main()
 	vec4 albedo = subpassLoad(index0);
 	vec4 normalDepth = subpassLoad(index1);
 	vec4 roughMetalVelocity = subpassLoad(index2);
+	float ao = albedo.a;
 	
 	float depth = subpassLoad(index3).x;
 	
@@ -85,7 +86,7 @@ void main()
 	}
 	
 	vec3 color = (kD * albedo.rgb / PI + specular) * vec3(4.0f) * NdotL * shadow;
-    vec3 ambient = vec3(0.05f) * albedo.rgb;
+    vec3 ambient = vec3(0.05f) * albedo.rgb * ao;
 	
 	color = color + ambient;
 	

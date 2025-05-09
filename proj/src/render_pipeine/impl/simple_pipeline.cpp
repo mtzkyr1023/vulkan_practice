@@ -95,7 +95,7 @@ void SimplePipeline::initialize(
 		}
 
 		{
-			std::array<vk::DescriptorSetLayoutBinding, 3> binding =
+			std::array<vk::DescriptorSetLayoutBinding, 4> binding =
 			{
 				vk::DescriptorSetLayoutBinding()
 				.setBinding(0)
@@ -109,6 +109,11 @@ void SimplePipeline::initialize(
 				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
 				vk::DescriptorSetLayoutBinding()
 				.setBinding(2)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eSampledImage)
+				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
+				vk::DescriptorSetLayoutBinding()
+				.setBinding(3)
 				.setDescriptorCount(1)
 				.setDescriptorType(vk::DescriptorType::eSampledImage)
 				.setStageFlags(vk::ShaderStageFlagBits::eFragment),

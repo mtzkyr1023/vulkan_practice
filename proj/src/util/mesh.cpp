@@ -45,18 +45,21 @@ void Mesh::loadMesh(RenderEngine* engine, const char* foldername, const char* fi
 		aiString output;
 		material->Get(AI_MATKEY_GLTF_ALPHAMODE, output);
 
-		aiString albedoPath, normalPath, pbrPath;
+		aiString albedoPath, normalPath, pbrPath, aoPath;
 		material->GetTexture(aiTextureType_BASE_COLOR, 0, &albedoPath);
 		material->GetTexture(aiTextureType_NORMALS, 0, &normalPath);
 		material->GetTexture(aiTextureType_METALNESS, 0, &pbrPath);
+		material->GetTexture(aiTextureType_AMBIENT_OCCLUSION, 0, &aoPath);
 
 		std::string albedoFullPath = foldername;
 		std::string normalFullPath = foldername;
 		std::string pbrFullPath = foldername;
+		std::string aoFullPath = foldername;
 
 		albedoFullPath += albedoPath.C_Str();
 		normalFullPath += normalPath.C_Str();
 		pbrFullPath += pbrPath.C_Str();
+		aoFullPath += aoPath.C_Str();
 
 		std::shared_ptr<Material> mat;
 		if (output == aiString("OPAQUE"))
@@ -72,7 +75,7 @@ void Mesh::loadMesh(RenderEngine* engine, const char* foldername, const char* fi
 			mat = std::make_shared<Material>(EMaterialType::eTransparent);
 		}
 
-		mat->loadImage(engine, albedoFullPath.c_str(), normalFullPath.c_str(), pbrFullPath.c_str(), false);
+		mat->loadImage(engine, albedoFullPath.c_str(), normalFullPath.c_str(), pbrFullPath.c_str(), aoFullPath.c_str(), false);
 
 		materials_.push_back(mat);
 	}
@@ -115,7 +118,7 @@ void Mesh::recursiveNode(const aiScene* scene, aiNode* node)
 	if (node == nullptr) return;
 	for (uint32_t i = 0; i < node->mNumMeshes; i++)
 	{
-		aiMesh* mesh = scene->mMeshes[i];
+		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 		Vertex vertex;
 
 		for (uint32_t j = 0; j < mesh->mNumVertices; j++)
@@ -126,6 +129,7 @@ void Mesh::recursiveNode(const aiScene* scene, aiNode* node)
 				glm::vec4((float)node->mTransformation[2][0], (float)node->mTransformation[2][1], (float)node->mTransformation[2][2], (float)node->mTransformation[2][3]),
 				glm::vec4((float)node->mTransformation[3][0], (float)node->mTransformation[3][1], (float)node->mTransformation[3][2], (float)node->mTransformation[3][3])
 			);
+
 			vertex.pos = glm::vec4(mesh->mVertices[j].x, mesh->mVertices[j].y, mesh->mVertices[j].z, 1.0f) * offsetMatrix;
 			vertex.nor = glm::vec3(mesh->mNormals[j].x, mesh->mNormals[j].y, mesh->mNormals[j].z) * glm::mat3(offsetMatrix);
 			vertex.tan = glm::vec3(mesh->mBitangents[j].x, mesh->mBitangents[j].y, mesh->mBitangents[j].z) * glm::mat3(offsetMatrix);
