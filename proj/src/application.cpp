@@ -79,7 +79,7 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 			vk::Format::eR32G32Sfloat);
 
 		//sponzaModel_.loadMesh(engine, "models/sponza/gltf/", "sponza.gltf");
-		sponzaModel_.loadMesh(engine, "models/DamagedHelmet/glTF/", "DamagedHelmet.gltf");
+		sponzaModel_.loadMesh(engine, "models/ABeautifulGame/gltf/", "ABeautifulGame.gltf");
 
 		cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/industrial_sunset_puresky_1k.hdr");
 
@@ -346,7 +346,7 @@ void Application::update(RenderEngine* engine, uint32_t currentFrameIndex)
 	ViewProj camerainvVp;
 	SceneInfo sceneInfo;
 
-	float scale = 100.0f;
+	float scale = 500.0f;
 
 	cameraVp.view = testscene_.camera().viewMatrix();
 	cameraVp.proj = testscene_.camera().projMatrix();

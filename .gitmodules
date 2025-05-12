@@ -7,3 +7,6 @@
 [submodule "imgui"]
 	path = imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "openexr"]
+	path = openexr
+	url = https://github.com/AcademySoftwareFoundation/openexr.git
