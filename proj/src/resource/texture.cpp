@@ -8,6 +8,7 @@
 #include "glm/gtc/quaternion.hpp"
 #include "glm/common.hpp"
 
+
 #include "texture.h"
 #include "memory.h"
 #include "../render_engine.h"
@@ -511,34 +512,6 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 		glm::vec3(0.0f, 0.0f, 1.0f),
 		glm::vec3(0.0f, 0.0f, -1.0f),
 	};
-
-	for (int y = 0; y < srcHeight; y++)
-	{
-		float phi = (float)y / (float)srcHeight * glm::pi<float>() - glm::half_pi<float>();
-		for (int x = 0; x < srcWidth; x++)
-		{
-			float theta = (float)x / (float)srcWidth * glm::two_pi<float>();
-
-			float vx = glm::cos(theta) * glm::cos(phi);
-			float vy = glm::sin(phi);
-			float vz = glm::sin(theta) * glm::cos(phi);
-
-			glm::vec3 v = glm::vec3(vx, vy, vz);
-
-			for (int i = 0; i < 6; i++)
-			{
-				float dotProduct = glm::dot(v, axisArray[i]);
-				float rad = glm::acos(dotProduct);
-				if (rad < glm::quarter_pi<float>())
-				{
-					if (i == EAxisType::eRight)
-					{
-						pixelArray[i][(int)(vz)] = pixels[y * srcWidth + x];
-					}
-				}
-			}
-		}
-	}
 
 	stbi_image_free(pixels);
 }

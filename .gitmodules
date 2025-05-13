@@ -10,3 +10,6 @@
 [submodule "openexr"]
 	path = openexr
 	url = https://github.com/AcademySoftwareFoundation/openexr.git
+[submodule "pbrt-v4"]
+	path = pbrt-v4
+	url = https://github.com/mmp/pbrt-v4.git
