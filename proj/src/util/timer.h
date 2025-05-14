@@ -1,8 +1,8 @@
 ﻿#ifndef _TIMER_H_
 #define _TIMER_H_
 
-#include "chrono"
-#include "iostream"
+#include <chrono>
+#include <iostream>
 
 class Timer
 {

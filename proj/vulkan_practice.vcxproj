@@ -293,7 +293,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include\;$(ProjectDir)..\shaderc\libshaderc\include\;$(ProjectDir)..\assimp\assimp_build\include;$(ProjectDir)..\assimp\include\;$(ProjectDir)..\openexr\src\lib\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include\;$(ProjectDir)..\shaderc\libshaderc\include\;$(ProjectDir)..\assimp\assimp_build\include;$(ProjectDir)..\assimp\include\;$(ProjectDir)..\openexr\src\lib\;$(ProjectDir)..\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>

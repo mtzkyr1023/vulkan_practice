@@ -4,13 +4,14 @@
 #include "../defines.h"
 #include "../util/input.h"
 
-#include "glm/glm.hpp"
-
 
 void TestScene::initialize(RenderEngine* engine)
 {
 	bgMesh_ = std::make_shared<MeshObject>("models/sponza/gltf/", "sponza.gltf");
 	bgMesh_->setup(engine);
+
+	camera_.width() = (float)kScreenWidth;
+	camera_.height() = (float)kScreenHeight;
 
 	shadowCaster_.aspect() = 1.0f;
 	shadowCaster_.range() = 1000.0f;

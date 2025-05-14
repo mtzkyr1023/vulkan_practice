@@ -1,10 +1,10 @@
 ﻿#ifndef _MESH_H_
 #define _MESH_H_
 
-#include "memory"
-#include "vector"
-#include "vulkan/vulkan.hpp"
-#include "glm/glm.hpp"
+#include <memory>
+#include <vector>
+#include <vulkan/vulkan.hpp>
+#include <glm/glm.hpp>
 
 
 class Mesh

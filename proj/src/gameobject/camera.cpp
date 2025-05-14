@@ -1,3 +1,6 @@
+
+#include <glm/gtc/reciprocal.hpp>
+
 #include "camera.h"
 
 
@@ -30,11 +33,13 @@ void Camera::update(float deltaTime) {
 	}
 	else
 	{
-		projMatrix_ = glm::perspective(
-			fov_,
-			aspect_,
-			nearZ_,
-			farZ_
-		);
+		float f = 1.0f / glm::tan(fov_ * 0.5f);
+		float fn = 1.0f / (nearZ_ - farZ_);
+		projMatrix_ = glm::zero<glm::mat4>();
+		projMatrix_[0][0] = f / aspect_;
+		projMatrix_[1][1] = f;
+		projMatrix_[2][2] = farZ_ * fn;
+		projMatrix_[2][3] = farZ_ * nearZ_ * fn;
+		projMatrix_[3][2] = -1.0f;
 	}
 }

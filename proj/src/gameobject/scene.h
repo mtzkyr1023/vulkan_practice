@@ -5,8 +5,8 @@
 #include "meshobject.h"
 #include "camera.h"
 
-#include "memory"
-#include "vector"
+#include <memory>
+#include <vector>
 
 class Scene
 {

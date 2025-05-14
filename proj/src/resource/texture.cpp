@@ -2,11 +2,11 @@
 #define STB_IMAGE_IMPLEMENTATION
 
 
-#include "functional"
+#include <functional>
 
-#include "glm/glm.hpp"
-#include "glm/gtc/quaternion.hpp"
-#include "glm/common.hpp"
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/common.hpp>
 
 
 #include "texture.h"
@@ -485,33 +485,6 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 
 	int width = srcWidth / 4;
 	int height = width;
-
-	std::vector<float> right(width * height);
-	std::vector<float> left(width * height);
-	std::vector<float> up(width * height);
-	std::vector<float> down(width * height);
-	std::vector<float> forward(width * height);
-	std::vector<float> back(width * height);
-
-	std::array<std::vector<float>&, EAxisType::eNum> pixelArray =
-	{
-		right,
-		left,
-		up,
-		down,
-		forward,
-		back,
-	};
-
-	std::array<glm::vec3, EAxisType::eNum> axisArray =
-	{
-		glm::vec3(1.0f, 0.0f, 0.0f),
-		glm::vec3(-1.0f, 0.0f, 0.0f),
-		glm::vec3(0.0f, 1.0f, 0.0f),
-		glm::vec3(0.0f, -1.0f, 0.0f),
-		glm::vec3(0.0f, 0.0f, 1.0f),
-		glm::vec3(0.0f, 0.0f, -1.0f),
-	};
 
 	stbi_image_free(pixels);
 }

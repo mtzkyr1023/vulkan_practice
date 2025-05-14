@@ -1,10 +1,11 @@
 ﻿#include "mesh.h"
-#include "assimp/Importer.hpp"
-#include "assimp/scene.h"
-#include "assimp/postprocess.h"
-#include "assimp/GltfMaterial.h"
-#include "assimp/vector3.h"
-#include "glm/glm.hpp"
+
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <assimp/GltfMaterial.h>
+#include <assimp/vector3.h>
+#include <glm/glm.hpp>
 
 #include "../render_engine.h"
 #include "../resource/memory.h"

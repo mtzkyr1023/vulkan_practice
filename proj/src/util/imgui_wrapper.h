@@ -1,8 +1,8 @@
 ﻿#ifndef _IMGUI_WRAPPER_H_
 #define _IMGUI_WRAPPER_H_
 
-#include "vulkan/vulkan.hpp"
-#include "Windows.h"
+#include <vulkan/vulkan.hpp>
+#include <Windows.h>
 
 class ImGuiWrapper
 {
