@@ -57,7 +57,7 @@ void main()
 	vec3 F0 = vec3(0.04f);
 	F0 = mix(F0, albedo.rgb, metalic);
 	
-	vec3 L = normalize(ub1.lightVector.xyz);
+	vec3 L = normalize(ub1.lightVector.xyz * vec3(1, -1, 1));
 	vec3 H = normalize(V + L);
 	
 	float NDF = distributionGGX(N, H, roughness);
@@ -93,9 +93,6 @@ void main()
 	color = color / (vec3(1.0f) + color);
 	color = pow(color, vec3(1.0f / 2.2f));
 	
-	vec4 shadowCoord = ub2.shadowView * vec4(worldPosition.xyz, 1.0f);
-	shadowCoord = ub2.shadowProj * shadowCoord;
-	shadowCoord /= shadowCoord.w;
 	outResult = vec4(color, 1.0f);
 }
 
@@ -155,5 +152,5 @@ float sampleShadowMap(vec3 worldPosition, float NdotL, vec2 offset)
 	
 	float bias = max(0.001f * (1.0f - NdotL), 0.0001f);
 	
-	return shadowMapDepth < z - bias ? 0.0f : 1.0f;
+	return (shadowMapDepth + bias) < z ? 1.0f : 0.0f;
 }

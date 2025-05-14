@@ -17,6 +17,7 @@ void TestScene::initialize(RenderEngine* engine)
 	shadowCaster_.range() = 1000.0f;
 	shadowCaster_.farZ() = 2000.0f;
 	shadowCaster_.nearZ() = 1.0f;
+	shadowCaster_.fov() = glm::pi<float>() * 0.125f;
 	shadowCaster_.isFps() = false;
 	shadowCaster_.isOrtho() = true;
 	shadowCaster_.width() = (float)kShadowMapWidth * 4;

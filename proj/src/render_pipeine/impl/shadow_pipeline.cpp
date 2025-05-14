@@ -191,7 +191,7 @@ void ShadowPipeline::initialize(
 			.setBack(backState)
 			.setFront(frontState)
 			.setDepthBoundsTestEnable(false)
-			.setDepthCompareOp(vk::CompareOp::eLess)
+			.setDepthCompareOp(vk::CompareOp::eGreater)
 			.setDepthTestEnable(true)
 			.setDepthWriteEnable(true)
 			.setMaxDepthBounds(1.0f)
@@ -356,7 +356,7 @@ void ShadowPipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
 		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
 		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
-		vk::ClearDepthStencilValue(1.0f, 0),
+		vk::ClearDepthStencilValue(0.0f, 0),
 	};
 
 	{
