@@ -28,6 +28,7 @@ public:
 		eDepthStencil,
 		eShadowMap,
 		eResult,
+		eCubeMap,
 	};
 
 	enum EBufferType : uint32_t

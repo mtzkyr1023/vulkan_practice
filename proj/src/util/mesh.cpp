@@ -131,7 +131,15 @@ void Mesh::recursiveNode(const aiScene* scene, aiNode* node)
 				glm::vec4((float)node->mTransformation[3][0], (float)node->mTransformation[3][1], (float)node->mTransformation[3][2], (float)node->mTransformation[3][3])
 			);
 
+			glm::mat4 rootMatrix = glm::mat4(
+				glm::vec4((float)scene->mRootNode->mTransformation[0][0], (float)scene->mRootNode->mTransformation[0][1], (float)scene->mRootNode->mTransformation[0][2], (float)scene->mRootNode->mTransformation[0][3]),
+				glm::vec4((float)scene->mRootNode->mTransformation[1][0], (float)scene->mRootNode->mTransformation[1][1], (float)scene->mRootNode->mTransformation[1][2], (float)scene->mRootNode->mTransformation[1][3]),
+				glm::vec4((float)scene->mRootNode->mTransformation[2][0], (float)scene->mRootNode->mTransformation[2][1], (float)scene->mRootNode->mTransformation[2][2], (float)scene->mRootNode->mTransformation[2][3]),
+				glm::vec4((float)scene->mRootNode->mTransformation[3][0], (float)scene->mRootNode->mTransformation[3][1], (float)scene->mRootNode->mTransformation[3][2], (float)scene->mRootNode->mTransformation[3][3])
+			);
+
 			vertex.pos = glm::vec4(mesh->mVertices[j].x, mesh->mVertices[j].y, mesh->mVertices[j].z, 1.0f) * offsetMatrix;
+			vertex.pos = vertex.pos * rootMatrix;
 			vertex.nor = glm::vec3(mesh->mNormals[j].x, mesh->mNormals[j].y, mesh->mNormals[j].z) * glm::mat3(offsetMatrix);
 			vertex.tan = glm::vec3(mesh->mBitangents[j].x, mesh->mBitangents[j].y, mesh->mBitangents[j].z) * glm::mat3(offsetMatrix);
 			vertex.tex = glm::vec2(mesh->mTextureCoords[0][j].x, 1.0f - mesh->mTextureCoords[0][j].y);

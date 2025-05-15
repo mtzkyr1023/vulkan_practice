@@ -21,6 +21,7 @@ layout(set=1, binding=2) uniform ShadowMatrix {
 } ub2;
 
 layout(set=2, binding=0) uniform texture2D shadowMap;
+layout(set=2, binding=1) uniform textureCube cubeMap;
 layout(set=3, binding=0) uniform sampler clampSampler;
 
 layout(location=0) out vec4 outResult;
@@ -57,7 +58,7 @@ void main()
 	vec3 F0 = vec3(0.04f);
 	F0 = mix(F0, albedo.rgb, metalic);
 	
-	vec3 L = normalize(ub1.lightVector.xyz * vec3(1, -1, 1));
+	vec3 L = normalize(ub1.lightVector.xyz);
 	vec3 H = normalize(V + L);
 	
 	float NDF = distributionGGX(N, H, roughness);
@@ -81,12 +82,14 @@ void main()
 	{
 		for (int j = -1; j <= 1; j++)
 		{
-			shadow += sampleShadowMap(worldPosition.xyz, NdotL, vec2(i, j) / 512.0f) / 9.0f;
+			shadow += sampleShadowMap(worldPosition.xyz, NdotL, vec2(i, j) / 2048.0f) / 9.0f;
 		}
 	}
 	
+	//shadow = sampleShadowMap(worldPosition.xyz, NdotL, vec2(0.0f, 0.0f));
+	
 	vec3 color = (kD * albedo.rgb / PI + specular) * vec3(4.0f) * NdotL * shadow;
-    vec3 ambient = vec3(0.05f) * albedo.rgb * ao;
+    vec3 ambient = vec3(0.05f) * albedo.rgb * ao + vec3(0.001f);
 	
 	color = color + ambient;
 	
@@ -150,7 +153,7 @@ float sampleShadowMap(vec3 worldPosition, float NdotL, vec2 offset)
 	
 	float shadowMapDepth = texture(sampler2D(shadowMap, clampSampler), texcoord + offset).x;
 	
-	float bias = max(0.001f * (1.0f - NdotL), 0.0001f);
+	float bias = max(0.0000000001f * (1.0f - NdotL), 0.00000000001f) * 16.0f;
 	
-	return (shadowMapDepth + bias) < z ? 1.0f : 0.0f;
+	return shadowMapDepth < z + bias ? 1.0f : 0.0f;
 }

@@ -134,7 +134,8 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 				&depthStencilBuffer_,
 				&shadowMap_,
 				&compositionBuffer_,
-				&deferredResultBuffer_
+				&deferredResultBuffer_,
+				&cubemapTexture_
 			},
 			{
 				&cameraViewProjBuffer_,
@@ -329,6 +330,8 @@ void Application::update(RenderEngine* engine, uint32_t currentFrameIndex)
 
 	testscene_.update(Timer::instance().deltaTime());
 
+	testscene_.shadowCaster().range() = glm::length(sponzaModel_.aabbMax() - sponzaModel_.center());
+
 	struct ViewProj
 	{
 		glm::mat4 view;
@@ -348,7 +351,11 @@ void Application::update(RenderEngine* engine, uint32_t currentFrameIndex)
 	ViewProj camerainvVp;
 	SceneInfo sceneInfo;
 
-	float scale = 500.0f;
+	float scale = 50.0f;
+	float range = glm::length(sponzaModel_.aabbMax() - sponzaModel_.aabbMin()) * scale;
+	testscene_.shadowCaster().range() = range;
+	testscene_.shadowCaster().width() = (float)kShadowMapWidth / range;
+	testscene_.shadowCaster().height() = (float)kShadowMapHeight / range;
 
 	cameraVp.view = testscene_.camera().viewMatrix();
 	cameraVp.proj = testscene_.camera().projMatrix();

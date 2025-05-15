@@ -201,10 +201,15 @@ void SimplePipeline::initialize(
 		}
 
 		{
-			std::array<vk::DescriptorSetLayoutBinding, 1> binding =
+			std::array<vk::DescriptorSetLayoutBinding, 2> binding =
 			{
 				vk::DescriptorSetLayoutBinding()
 				.setBinding(0)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eSampledImage)
+				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
+				vk::DescriptorSetLayoutBinding()
+				.setBinding(1)
 				.setDescriptorCount(1)
 				.setDescriptorType(vk::DescriptorType::eSampledImage)
 				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
@@ -345,7 +350,7 @@ void SimplePipeline::initialize(
 			.setBack(backState)
 			.setFront(frontState)
 			.setDepthBoundsTestEnable(false)
-			.setDepthCompareOp(vk::CompareOp::eLess)
+			.setDepthCompareOp(vk::CompareOp::eGreater)
 			.setDepthTestEnable(true)
 			.setDepthWriteEnable(true)
 			.setMaxDepthBounds(1.0f)
@@ -506,7 +511,7 @@ void SimplePipeline::initialize(
 			.setBack(backState)
 			.setFront(frontState)
 			.setDepthBoundsTestEnable(false)
-			.setDepthCompareOp(vk::CompareOp::eLessOrEqual)
+			.setDepthCompareOp(vk::CompareOp::eGreater)
 			.setDepthTestEnable(true)
 			.setDepthWriteEnable(true)
 			.setMaxDepthBounds(1.0f)
@@ -633,7 +638,7 @@ void SimplePipeline::initialize(
 			.setBack(backState)
 			.setFront(frontState)
 			.setDepthBoundsTestEnable(false)
-			.setDepthCompareOp(vk::CompareOp::eLessOrEqual)
+			.setDepthCompareOp(vk::CompareOp::eGreater)
 			.setDepthTestEnable(false)
 			.setDepthWriteEnable(true)
 			.setMaxDepthBounds(1.0f)
@@ -1017,6 +1022,24 @@ void SimplePipeline::initialize(
 			{
 				vk::WriteDescriptorSet write;
 
+				vk::DescriptorImageInfo imageInfo = vk::DescriptorImageInfo()
+					.setImageView(textures[ETextureType::eCubeMap]->view())
+					.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+					.setSampler(VK_NULL_HANDLE);
+
+				write = vk::WriteDescriptorSet()
+					.setImageInfo(imageInfo)
+					.setDescriptorCount(1)
+					.setDescriptorType(vk::DescriptorType::eSampledImage)
+					.setDstArrayElement(0)
+					.setDstBinding(1)
+					.setDstSet(sets_[ESubpassType::eComposition][i][2]);
+
+				engine->device().updateDescriptorSets(write, {});
+			}
+			{
+				vk::WriteDescriptorSet write;
+
 				vk::DescriptorImageInfo samplerInfo = vk::DescriptorImageInfo()
 					.setImageView(VK_NULL_HANDLE)
 					.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
@@ -1055,7 +1078,7 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
 		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
 		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
-		vk::ClearDepthStencilValue(1.0f, 0),
+		vk::ClearDepthStencilValue(0.0f, 0),
 	};
 
 	{
