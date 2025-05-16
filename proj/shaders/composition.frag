@@ -29,6 +29,7 @@ layout(location=0) out vec4 outResult;
 const float PI = 3.141592653589f;
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0);
+vec3 fresnelSchlickRoughness(float codTheta, vec3 F0, float roughness);
 float distributionGGX(vec3 N, vec3 H, float roughness);
 float geometrySchlickGGX(float NdotV, float roughness);
 float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
@@ -39,7 +40,7 @@ void main()
 	vec4 albedo = subpassLoad(index0);
 	vec4 normalDepth = subpassLoad(index1);
 	vec4 roughMetalVelocity = subpassLoad(index2);
-	float ao = albedo.a;
+	float ao = 1.0f - albedo.a;
 	
 	float depth = subpassLoad(index3).x;
 	
@@ -51,9 +52,10 @@ void main()
 	
 	vec3 N = normalDepth.xyz;
 	vec3 V = normalize(ub1.cameraPosition.xyz - worldPosition.xyz);
+	vec3 R = reflect(-V, N);
 	
 	float roughness = roughMetalVelocity.x;
-	float metalic = roughMetalVelocity.y;
+	float metalic = 1.0f - roughMetalVelocity.y;
 	
 	vec3 F0 = vec3(0.04f);
 	F0 = mix(F0, albedo.rgb, metalic);
@@ -63,7 +65,7 @@ void main()
 	
 	float NDF = distributionGGX(N, H, roughness);
 	float G = geometrySmith(N, V, L, roughness);
-	vec3 F = fresnelSchlick(max(dot(H, V), 0.0f), F0);
+	vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0f), F0, roughness);
 	
 	vec3 kS = F;
 	vec3 kD = vec3(1.0f) - kS;
@@ -76,7 +78,13 @@ void main()
 	float shadow = 0.0f;
 	
 	float NdotL = max(dot(N, L), 0.0f);
+	float NdotV = max(dot(N, V), 0.0f);
 	
+	NdotL = NdotL * 0.5f + 0.5f;
+	NdotV = NdotV * 0.5f + 0.5f;
+	
+	NdotL = NdotL * NdotL;
+	NdotV = NdotV * NdotV;
 	
 	for (int i = -1; i <= 1; i++)
 	{
@@ -88,8 +96,13 @@ void main()
 	
 	//shadow = sampleShadowMap(worldPosition.xyz, NdotL, vec2(0.0f, 0.0f));
 	
-	vec3 color = (kD * albedo.rgb / PI + specular) * vec3(4.0f) * NdotL * shadow;
-    vec3 ambient = vec3(0.05f) * albedo.rgb * ao + vec3(0.001f);
+	int mipLevel = textureQueryLevels(samplerCube(cubeMap, clampSampler));
+	vec3 irradiance = textureLod(samplerCube(cubeMap, clampSampler), R, float(mipLevel) * roughness).rgb;
+	
+	vec3 diffuse = irradiance * albedo.rgb;
+	
+	vec3 color = (kD * albedo.rgb / PI + specular) * vec3(1.0f) * NdotV * 1.0f;
+    vec3 ambient = (kD * diffuse);
 	
 	color = color + ambient;
 	
@@ -103,6 +116,11 @@ void main()
 vec3 fresnelSchlick(float cosTheta, vec3 F0)
 {
 	return F0 + (1.0f - F0) * pow(clamp(1.0f - cosTheta, 0.0f, 1.0f), 5.0f);
+}
+
+vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+	return F0 + (max(vec3(1.0f - roughness), F0) - F0) * pow(clamp(1.0f - cosTheta, 0.0f, 1.0f), 5.0f);
 }
 
 float distributionGGX(vec3 N, vec3 H, float roughness)

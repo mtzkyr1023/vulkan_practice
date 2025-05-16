@@ -498,25 +498,19 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 		{
 			for (int x = 0; x < width; x++)
 			{
-				glm::vec3 axis = glm::vec3(1.0f, (float)y / (float)height - (float)(height / 2), -((float)x / (float)width - (float)(width / 2)));
+				glm::vec3 axis = glm::vec3(1.0f, ((float)y / (float)height - 0.5f) * -2.0f, ((float)x / (float)width - 0.5f) * -2.0f);
 				axis = glm::normalize(axis);
 
-				glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-				glm::vec3 side = glm::vec3(-1.0f, 0.0f, 0.0f);
+				float theta = glm::atan(axis.z, axis.x);
+				float phi = glm::acos(axis.y);
 
-				float dotProductSide = glm::dot(side, axis);
-				float dotProductUp = glm::dot(up, axis);
-
-				float theta = glm::cot(dotProductSide) + glm::pi<float>();
-				float phi = glm::cot(dotProductUp);
-
-				float normalizedX = theta / glm::two_pi<float>();
+				float normalizedX = (theta + glm::pi<float>()) / glm::two_pi<float>();
 				float normalizedY = phi / glm::pi<float>();
 
-				int sampledX = glm::clamp((int)(normalizedX * (float)srcWidth), 0, width - 1);
-				int sampledY = glm::clamp((int)(normalizedY * (float)srcHeight), 0, height - 1);
+				int sampledX = glm::clamp((int)(normalizedX * (float)srcWidth), 0, srcWidth - 1);
+				int sampledY = glm::clamp((int)(normalizedY * (float)srcHeight), 0, srcHeight - 1);
 
-				memcpy_s(&tempMap[0][y * width + x], sizeof(float) * 4, &pixels[sampledY * srcWidth + sampledX], sizeof(float) * 4);
+				memcpy_s(&tempMap[0][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
 			}
 		}
 	}
@@ -525,25 +519,19 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 		{
 			for (int x = 0; x < width; x++)
 			{
-				glm::vec3 axis = glm::vec3(-1.0f, (float)y / (float)height - (float)(height / 2), (float)x / (float)width - (float)(width / 2));
+				glm::vec3 axis = glm::vec3(-1.0f, ((float)y / (float)height - 0.5f) * -2.0f, ((float)x / (float)width - 0.5f) * 2.0f);
 				axis = glm::normalize(axis);
 
-				glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-				glm::vec3 side = glm::vec3(-1.0f, 0.0f, 0.0f);
+				float theta = glm::atan(axis.z, axis.x);
+				float phi = glm::acos(axis.y);
 
-				float dotProductSide = glm::dot(side, axis);
-				float dotProductUp = glm::dot(up, axis);
-
-				float theta = glm::cot(dotProductSide) + glm::pi<float>();
-				float phi = glm::cot(dotProductUp);
-
-				float normalizedX = theta / glm::two_pi<float>();
+				float normalizedX = (theta + glm::pi<float>()) / glm::two_pi<float>();
 				float normalizedY = phi / glm::pi<float>();
 
-				int sampledX = glm::clamp((int)(normalizedX * (float)srcWidth), 0, width - 1);
-				int sampledY = glm::clamp((int)(normalizedY * (float)srcHeight), 0, height - 1);
+				int sampledX = glm::clamp((int)(normalizedX * (float)srcWidth), 0, srcWidth - 1);
+				int sampledY = glm::clamp((int)(normalizedY * (float)srcHeight), 0, srcHeight - 1);
 
-				memcpy_s(&tempMap[1][y * width + x], sizeof(float) * 4, &pixels[sampledY * srcWidth + sampledX], sizeof(float) * 4);
+				memcpy_s(&tempMap[1][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
 			}
 		}
 	}
@@ -552,25 +540,19 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 		{
 			for (int x = 0; x < width; x++)
 			{
-				glm::vec3 axis = glm::vec3(-((float)x / (float)width - (float)(width / 2)), 1.0f, -((float)y / (float)height - (float)(height / 2)));
+				glm::vec3 axis = glm::vec3(((float)x / (float)width - 0.5f) * 2.0f, 1.0f, ((float)y / (float)height - 0.5f) * 2.0f);
 				axis = glm::normalize(axis);
 
-				glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-				glm::vec3 side = glm::vec3(-1.0f, 0.0f, 0.0f);
+				float theta = glm::atan(axis.z, axis.x);
+				float phi = glm::acos(axis.y);
 
-				float dotProductSide = glm::dot(side, axis);
-				float dotProductUp = glm::dot(up, axis);
-
-				float theta = glm::cot(dotProductSide) + glm::pi<float>();
-				float phi = glm::cot(dotProductUp);
-
-				float normalizedX = theta / glm::two_pi<float>();
+				float normalizedX = (theta + glm::pi<float>()) / glm::two_pi<float>();
 				float normalizedY = phi / glm::pi<float>();
 
-				int sampledX = glm::clamp((int)(normalizedX * (float)srcWidth), 0, width - 1);
-				int sampledY = glm::clamp((int)(normalizedY * (float)srcHeight), 0, height - 1);
+				int sampledX = glm::clamp((int)(normalizedX * (float)srcWidth), 0, srcWidth - 1);
+				int sampledY = glm::clamp((int)(normalizedY * (float)srcHeight), 0, srcHeight - 1);
 
-				memcpy_s(&tempMap[2][y * width + x], sizeof(float) * 4, &pixels[sampledY * srcWidth + sampledX], sizeof(float) * 4);
+				memcpy_s(&tempMap[2][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
 			}
 		}
 	}
@@ -579,25 +561,19 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 		{
 			for (int x = 0; x < width; x++)
 			{
-				glm::vec3 axis = glm::vec3(((float)x / (float)width - (float)(width / 2)), -1.0f, ((float)y / (float)height - (float)(height / 2)));
+				glm::vec3 axis = glm::vec3(((float)x / (float)width - 0.5f) * 2.0f, -1.0f, ((float)y / (float)height - 0.5f) * -2.0f);
 				axis = glm::normalize(axis);
 
-				glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-				glm::vec3 side = glm::vec3(-1.0f, 0.0f, 0.0f);
+				float theta = glm::atan(axis.z, axis.x);
+				float phi = glm::acos(axis.y);
 
-				float dotProductSide = glm::dot(side, axis);
-				float dotProductUp = glm::dot(up, axis);
-
-				float theta = glm::cot(dotProductSide) + glm::pi<float>();
-				float phi = glm::cot(dotProductUp);
-
-				float normalizedX = theta / glm::two_pi<float>();
+				float normalizedX = (theta + glm::pi<float>()) / glm::two_pi<float>();
 				float normalizedY = phi / glm::pi<float>();
 
-				int sampledX = glm::clamp((int)(normalizedX * (float)srcWidth), 0, width - 1);
-				int sampledY = glm::clamp((int)(normalizedY * (float)srcHeight), 0, height - 1);
+				int sampledX = glm::clamp((int)(normalizedX * (float)srcWidth), 0, srcWidth - 1);
+				int sampledY = glm::clamp((int)(normalizedY * (float)srcHeight), 0, srcHeight - 1);
 
-				memcpy_s(&tempMap[3][y * width + x], sizeof(float) * 4, &pixels[sampledY * srcWidth + sampledX], sizeof(float) * 4);
+				memcpy_s(&tempMap[3][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
 			}
 		}
 	}
@@ -606,25 +582,19 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 		{
 			for (int x = 0; x < width; x++)
 			{
-				glm::vec3 axis = glm::vec3((float)x / (float)width - (float)(width / 2), -((float)y / (float)height - (float)(height / 2)), 1.0f);
+				glm::vec3 axis = glm::vec3(((float)x / (float)width - 0.5f) * 2.0f, ((float)y / (float)height - 0.5f) * -2.0f, 1.0f);
 				axis = glm::normalize(axis);
 
-				glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-				glm::vec3 side = glm::vec3(-1.0f, 0.0f, 0.0f);
+				float theta = glm::atan(axis.z, axis.x);
+				float phi = glm::acos(axis.y);
 
-				float dotProductSide = glm::dot(side, axis);
-				float dotProductUp = glm::dot(up, axis);
-
-				float theta = glm::cot(dotProductSide) + glm::pi<float>();
-				float phi = glm::cot(dotProductUp);
-
-				float normalizedX = theta / glm::two_pi<float>();
+				float normalizedX = (theta + glm::pi<float>()) / glm::two_pi<float>();
 				float normalizedY = phi / glm::pi<float>();
 
-				int sampledX = glm::clamp((int)(normalizedX * (float)srcWidth), 0, width - 1);
-				int sampledY = glm::clamp((int)(normalizedY * (float)srcHeight), 0, height - 1);
+				int sampledX = glm::clamp((int)(normalizedX * (float)srcWidth), 0, srcWidth - 1);
+				int sampledY = glm::clamp((int)(normalizedY * (float)srcHeight), 0, srcHeight - 1);
 
-				memcpy_s(&tempMap[4][y * width + x], sizeof(float) * 4, &pixels[sampledY * srcWidth + sampledX], sizeof(float) * 4);
+				memcpy_s(&tempMap[4][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
 			}
 		}
 	}
@@ -633,33 +603,27 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 		{
 			for (int x = 0; x < width; x++)
 			{
-				glm::vec3 axis = glm::vec3(-((float)x / (float)width - (float)(width / 2)), -((float)y / (float)height - (float)(height / 2)), 1.0f);
+				glm::vec3 axis = glm::vec3(((float)x / (float)width - 0.5f) * -2.0f, ((float)y / (float)height - 0.5f) * -2.0f, -1.0f);
 				axis = glm::normalize(axis);
 
-				glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-				glm::vec3 side = glm::vec3(-1.0f, 0.0f, 0.0f);
+				float theta = glm::atan(axis.z, axis.x);
+				float phi = glm::acos(axis.y);
 
-				float dotProductSide = glm::dot(side, axis);
-				float dotProductUp = glm::dot(up, axis);
-
-				float theta = glm::cot(dotProductSide) + glm::pi<float>();
-				float phi = glm::cot(dotProductUp);
-
-				float normalizedX = theta / glm::two_pi<float>();
+				float normalizedX = (theta + glm::pi<float>()) / glm::two_pi<float>();
 				float normalizedY = phi / glm::pi<float>();
 
-				int sampledX = glm::clamp((int)(normalizedX * (float)srcWidth), 0, width - 1);
-				int sampledY = glm::clamp((int)(normalizedY * (float)srcHeight), 0, height - 1);
+				int sampledX = glm::clamp((int)(normalizedX * (float)srcWidth), 0, srcWidth - 1);
+				int sampledY = glm::clamp((int)(normalizedY * (float)srcHeight), 0, srcHeight - 1);
 
-				memcpy_s(&tempMap[5][y * width + x], sizeof(float) * 4, &pixels[sampledY * srcWidth + sampledX], sizeof(float) * 4);
+				memcpy_s(&tempMap[5][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
 			}
 		}
 	}
 
 	int mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
 
-	Memory tempMemory;
-	vk::Buffer buffer;
+	Memory tempMemory[6];
+	vk::Buffer buffer[6];
 
 	vk::DeviceSize size = 0;
 	vk::DeviceSize alignment = 0;
@@ -688,29 +652,24 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 		alignment = width * height * sizeof(uint32_t) * 4 + (memory_->alignment() - 1) & ~(memory_->alignment() - 1);
 	}
 
+	for (int i = 0; i < 6; i++)
 	{
 		vk::BufferCreateInfo bufferCreateInfo = vk::BufferCreateInfo()
-			.setSize(size)
+			.setSize(sizeof(float) * 4 * width * height)
 			.setUsage(vk::BufferUsageFlagBits::eTransferSrc);
 
-		tempMemory.allocateForBuffer(engine->physicalDevice(), engine->device(), bufferCreateInfo, vk::MemoryPropertyFlagBits::eHostVisible);
+		tempMemory[i].allocateForBuffer(engine->physicalDevice(), engine->device(), bufferCreateInfo, vk::MemoryPropertyFlagBits::eHostVisible);
 
 		{
-			uint8_t* mappedMemory = tempMemory.map(engine->device(), 0, alignment);
-			if (pixels != nullptr)
-			{
-				for (int i = 0; i < 6; i++)
-				{
-					memcpy_s(mappedMemory + sizeof(float) * width * height * 4 * i, sizeof(float) * width * height * 4, tempMap[i].data(), sizeof(float) * width * height * 4);
-				}
-			}
+			uint8_t* mappedMemory = tempMemory[i].map(engine->device(), 0, alignment);
+			memcpy_s(mappedMemory, sizeof(float) * width * height * 4, tempMap[i].data(), sizeof(float) * width * height * 4);
 		}
 
-		tempMemory.unmap(engine->device());
+		tempMemory[i].unmap(engine->device());
 
-		buffer = engine->device().createBuffer(bufferCreateInfo);
+		buffer[i] = engine->device().createBuffer(bufferCreateInfo);
 
-		tempMemory.bind(engine->device(), buffer, 0);
+		tempMemory[i].bind(engine->device(), buffer[i], 0);
 	}
 
 	{
@@ -782,18 +741,18 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 
 		{
 			vk::BufferImageCopy copyInfo = vk::BufferImageCopy()
-				.setBufferOffset(sizeof(float) * width * height * 4 * i)
+				.setBufferOffset(0)
 				.setBufferImageHeight(height * sizeof(uint32_t) * 4)
 				.setBufferRowLength(width)
 				.setImageExtent(vk::Extent3D(width, height, 1))
-				.setImageOffset(0)
+				.setImageOffset(vk::Offset3D(0, 0, 0))
 				.setImageSubresource(
 					vk::ImageSubresourceLayers()
 					.setMipLevel(0)
 					.setLayerCount(1)
 					.setAspectMask(vk::ImageAspectFlagBits::eColor)
-					.setBaseArrayLayer(0));
-			cbs[0].copyBufferToImage(buffer, image_, vk::ImageLayout::eTransferDstOptimal, { copyInfo });
+					.setBaseArrayLayer(i));
+			cbs[0].copyBufferToImage(buffer[i], image_, vk::ImageLayout::eTransferDstOptimal, {copyInfo});
 		}
 
 		{
@@ -983,12 +942,15 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 
 	engine->device().waitForFences({ fence }, vk::True, kTimeOut);
 
-	tempMemory.free(engine->device());
-
 	engine->device().freeCommandBuffers(engine->commandPool(), cbs);
 	engine->device().destroyFence(fence);
-	engine->device().destroyBuffer(buffer);
+	
 
+	for (int i = 0; i < 6; i++)
+	{
+		tempMemory[i].free(engine->device());
+		engine->device().destroyBuffer(buffer[i]);
+	}
 	stbi_image_free(pixels);
 }
 

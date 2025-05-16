@@ -80,8 +80,8 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 			(uint32_t)kShadowMapHeight,
 			vk::Format::eR32G32Sfloat);
 
-		//sponzaModel_.loadMesh(engine, "models/sponza/gltf/", "sponza.gltf");
-		sponzaModel_.loadMesh(engine, "models/ABeautifulGame/gltf/", "ABeautifulGame.gltf");
+		sponzaModel_.loadMesh(engine, "models/sponza/gltf/", "sponza.gltf");
+		//sponzaModel_.loadMesh(engine, "models/ABeautifulGame/gltf/", "ABeautifulGame.gltf");
 
 		cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/industrial_sunset_puresky_1k.hdr");
 
@@ -210,6 +210,7 @@ void Application::cleanup(RenderEngine* engine) {
 	shadowBlurYBuffer_.release(engine);
 	shadowResultBuffer_.release(engine);
 
+	cubemapTexture_.release(engine);
 	sponzaModel_.release(engine);
 
 	testscene_.cleanup(engine);
@@ -351,7 +352,7 @@ void Application::update(RenderEngine* engine, uint32_t currentFrameIndex)
 	ViewProj camerainvVp;
 	SceneInfo sceneInfo;
 
-	float scale = 50.0f;
+	float scale = 500.0f;
 	float range = glm::length(sponzaModel_.aabbMax() - sponzaModel_.aabbMin()) * scale;
 	testscene_.shadowCaster().range() = range;
 	testscene_.shadowCaster().width() = (float)kShadowMapWidth / range;

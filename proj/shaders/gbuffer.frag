@@ -22,7 +22,7 @@ void main()
 	normal = normalize(inTangent * normal.x + inBinormal * normal.y + inNormal * normal.z);
 	outNormalDepth = vec4(normal, gl_FragCoord.z);
 	vec3 occRoughMetal = texture(sampler2D(pbrTex, wrapSampler), inTexcoord).rgb;
-	outRoughMetalVelocity = vec4(occRoughMetal.gb, 0.0f, 0.0f);
+	outRoughMetalVelocity = vec4(occRoughMetal.yz, 0.0f, 0.0f);
 	float ao = occRoughMetal.r;
 	
 	if (outAlbedo.a - 0.5f < 0.0f)

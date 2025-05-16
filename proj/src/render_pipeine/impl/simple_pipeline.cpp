@@ -711,7 +711,7 @@ void SimplePipeline::initialize(
 			.setAddressModeV(vk::SamplerAddressMode::eClampToEdge)
 			.setAddressModeW(vk::SamplerAddressMode::eClampToEdge)
 			.setAnisotropyEnable(true)
-			.setBorderColor(vk::BorderColor::eFloatOpaqueBlack)
+			.setBorderColor(vk::BorderColor::eFloatOpaqueWhite)
 			.setCompareEnable(false)
 			.setCompareOp(vk::CompareOp::eAlways)
 			.setMagFilter(vk::Filter::eNearest)

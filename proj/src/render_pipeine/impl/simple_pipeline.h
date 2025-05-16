@@ -28,6 +28,7 @@ public:
 		eDepthStencil,
 		eShadowMap,
 		eResult,
+		eDeferredResult,
 		eCubeMap,
 	};
 
