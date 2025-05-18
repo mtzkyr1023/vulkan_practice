@@ -15,6 +15,8 @@ public:
 		eNormalDepth,
 		eRoughMetalVelocity,
 
+		eComposition,
+
 		eDepth,
 
 		eNum,

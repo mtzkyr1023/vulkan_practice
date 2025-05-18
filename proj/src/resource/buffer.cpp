@@ -161,6 +161,91 @@ void Buffer::setupUniformBuffer(RenderEngine* engine, size_t size, size_t count)
 	}
 }
 
+void Buffer::setupStorageBuffer(RenderEngine* engine, size_t stride, size_t count, uint8_t* src)
+{
+	if (src == nullptr)
+	{
+		buffers_.resize(1);
+
+		{
+			vk::BufferCreateInfo bufferCreateInfo = vk::BufferCreateInfo()
+				.setSize(stride * count)
+				.setUsage(vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst);
+			memory_ = std::make_shared<Memory>();
+
+			memory_->allocateForBuffer(engine->physicalDevice(), engine->device(), bufferCreateInfo, vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+			buffers_[0] = engine->device().createBuffer(bufferCreateInfo);
+		}
+
+		memory_->bind(engine->device(), buffers_[0], 0);
+	}
+	else
+	{
+		vk::Buffer buffer;
+		Memory tempMemory;
+		{
+			vk::BufferCreateInfo bufferCreateInfo = vk::BufferCreateInfo()
+				.setSize(stride * count)
+				.setUsage(vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferSrc);
+
+			tempMemory.allocateForBuffer(engine->physicalDevice(), engine->device(), bufferCreateInfo, vk::MemoryPropertyFlagBits::eHostVisible);
+			buffer = engine->device().createBuffer(bufferCreateInfo);
+		}
+		{
+			uint8_t* mappedMemory = tempMemory.map(engine->device(), 0, stride * count);
+			memcpy_s(mappedMemory, stride * count, src, stride * count);
+			tempMemory.unmap(engine->device());
+		}
+
+		tempMemory.bind(engine->device(), buffer, 0);
+
+		buffers_.resize(1);
+
+		{
+			vk::BufferCreateInfo bufferCreateInfo = vk::BufferCreateInfo()
+				.setSize(stride * count)
+				.setUsage(vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst);
+			memory_ = std::make_shared<Memory>();
+
+			memory_->allocateForBuffer(engine->physicalDevice(), engine->device(), bufferCreateInfo, vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+			buffers_[0] = engine->device().createBuffer(bufferCreateInfo);
+		}
+
+		memory_->bind(engine->device(), buffers_[0], 0);
+
+		auto cb = engine->allocateCommandBuffer(1);
+
+		cb[0].begin(vk::CommandBufferBeginInfo());
+
+		vk::BufferCopy bufferCopy = vk::BufferCopy()
+			.setSize(stride * count)
+			.setDstOffset(0)
+			.setSrcOffset(0);
+
+		cb[0].copyBuffer(buffer, buffers_[0], { bufferCopy });
+
+		cb[0].end();
+
+
+		vk::SubmitInfo submitInfo = vk::SubmitInfo()
+			.setCommandBuffers(cb);
+
+		vk::Fence fence = engine->device().createFence(vk::FenceCreateInfo());
+
+		engine->graphicsQueue().submit(submitInfo, fence);
+
+		engine->device().waitForFences({ fence }, vk::True, kTimeOut);
+
+		tempMemory.free(engine->device());
+
+		engine->device().freeCommandBuffers(engine->commandPool(), cb);
+		engine->device().destroyFence(fence);
+		engine->device().destroyBuffer(buffer);
+	}
+}
+
 void Buffer::release(RenderEngine* engine)
 {
 	for (const auto& ite : buffers_)

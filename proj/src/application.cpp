@@ -25,6 +25,8 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 		shadowViewProjBuffer_.setupUniformBuffer(engine, sizeof(glm::mat4) * 4, engine->swapchainImageCount());
 		cameraInvViewProjBuffer_.setupUniformBuffer(engine, sizeof(glm::mat4) * 4, engine->swapchainImageCount());
 		sceneInfoBuffer_.setupUniformBuffer(engine, sizeof(glm::mat4) * 4, engine->swapchainImageCount());
+		skyboxInfoBuffer_.setupUniformBuffer(engine, sizeof(glm::mat4) * 4, engine->swapchainImageCount());
+		vsmWeightsBuffer_.setupUniformBuffer(engine, sizeof(glm::mat4) * 4, engine->swapchainImageCount());
 
 		albedoBuffer_.setupRenderTarget2d(
 			engine,
@@ -59,7 +61,8 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 			engine,
 			(uint32_t)kShadowMapWidth,
 			(uint32_t)kShadowMapHeight,
-			vk::Format::eR32G32Sfloat);
+			vk::Format::eR32G32Sfloat,
+			true);
 		shadowDepthBuffer_.setupDepthStencilBuffer(
 			engine,
 			(uint32_t)kShadowMapWidth,
@@ -68,22 +71,25 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 			engine,
 			(uint32_t)kShadowMapWidth,
 			(uint32_t)kShadowMapHeight,
-			vk::Format::eR32G32Sfloat);
+			vk::Format::eR32G32Sfloat,
+			true);
 		shadowBlurYBuffer_.setupRenderTarget2d(
 			engine,
 			(uint32_t)kShadowMapWidth,
 			(uint32_t)kShadowMapHeight,
-			vk::Format::eR32G32Sfloat);
+			vk::Format::eR32G32Sfloat,
+			true);
 		shadowResultBuffer_.setupRenderTarget2d(
 			engine,
 			(uint32_t)kShadowMapWidth,
 			(uint32_t)kShadowMapHeight,
 			vk::Format::eR32G32Sfloat);
 
-		sponzaModel_.loadMesh(engine, "models/sponza/gltf/", "sponza.gltf");
-		//sponzaModel_.loadMesh(engine, "models/ABeautifulGame/gltf/", "ABeautifulGame.gltf");
+		//sponzaModel_.loadMesh(engine, "models/sponza/gltf/", "sponza.gltf");
+		sponzaModel_.loadMesh(engine, "models/ABeautifulGame/gltf/", "ABeautifulGame.gltf");
+		sphereModel_.loadMesh(engine, "models/", "sphere.gltf");
 
-		cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/industrial_sunset_puresky_1k.hdr");
+		cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/industrial_sunset_puresky_4k.hdr");
 
 		imgui_.setup(engine, hwnd);
 		shadowPass_.setup(
@@ -103,6 +109,7 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 				&albedoBuffer_,
 				&normalDepthBuffer_,
 				&roughMetalVelocityBuffer_,
+				&compositionBuffer_,
 				&depthStencilBuffer_,
 			}
 			);
@@ -124,6 +131,21 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 			{
 				&sponzaModel_,
 			});
+			shadowBlurPipeline_.initialize(
+				engine,
+				nullptr,
+				{
+					&shadowMap_,
+					&shadowBlurXBuffer_,
+					&shadowBlurYBuffer_,
+				},
+				{
+					&vsmWeightsBuffer_,
+				},
+				{
+
+				}
+			);
 		simplePipeline_.initialize(
 			engine,
 			&deferredPass_,
@@ -132,7 +154,7 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 				&normalDepthBuffer_,
 				&roughMetalVelocityBuffer_,
 				&depthStencilBuffer_,
-				&shadowMap_,
+				&shadowBlurYBuffer_,
 				&compositionBuffer_,
 				&deferredResultBuffer_,
 				&cubemapTexture_
@@ -142,15 +164,17 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 				&shadowViewProjBuffer_,
 				&cameraInvViewProjBuffer_,
 				&sceneInfoBuffer_,
+				&skyboxInfoBuffer_,
 			},
 			{
 				&sponzaModel_,
+				&sphereModel_,
 			});
 		fbPipeline_.initialize(
 			engine,
 			nullptr,
 			{
-				&deferredResultBuffer_,
+				&compositionBuffer_,
 			},
 			{
 
@@ -177,8 +201,26 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 
 			sampler_ = engine->device().createSampler(samplerCreateInfo);
 
-			shadowMapDebug_ = ImGui_ImplVulkan_AddTexture(sampler_, shadowMap_.view(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			shadowMapDebug_ = ImGui_ImplVulkan_AddTexture(sampler_, shadowBlurYBuffer_.view(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		Input::Instance().Initialize(hwnd);
+
+		{
+			float weights[8];
+			float total = 0.0f;
+			for (int i = 0; i < 8; i++)
+			{
+				float pos = 1.0f + 2.0f * (float)i;
+				weights[i] = glm::exp(-0.5f * pos * pos / 1.0f);
+				total += 2.0f * weights[i];
+			}
+
+			for (int i = 0; i < 8; i++)
+			{
+				weights[i] /= 8.0f;
+			}
+
+			vsmWeightsBuffer_.update(engine, 0, sizeof(float) * 8, weights);
+		}
 	}
 	catch (std::exception& e) {
 		wchar_t buf[8192];
@@ -197,6 +239,8 @@ void Application::cleanup(RenderEngine* engine) {
 	shadowViewProjBuffer_.release(engine);
 	cameraInvViewProjBuffer_.release(engine);
 	sceneInfoBuffer_.release(engine);
+	skyboxInfoBuffer_.release(engine);
+	vsmWeightsBuffer_.release(engine);
 
 	albedoBuffer_.release(engine);
 	normalDepthBuffer_.release(engine);
@@ -212,6 +256,7 @@ void Application::cleanup(RenderEngine* engine) {
 
 	cubemapTexture_.release(engine);
 	sponzaModel_.release(engine);
+	sphereModel_.release(engine);
 
 	testscene_.cleanup(engine);
 	shadowPipeline_.cleanup(engine);
@@ -236,6 +281,8 @@ bool Application::render(RenderEngine* engine) {
 		cb.begin(vk::CommandBufferBeginInfo());
 
 		shadowPipeline_.render(engine, &shadowPass_, currentFrameIndex);
+
+		shadowBlurPipeline_.render(engine, nullptr, currentFrameIndex);
 
 		simplePipeline_.render(engine, &deferredPass_, currentFrameIndex);
 
@@ -351,6 +398,7 @@ void Application::update(RenderEngine* engine, uint32_t currentFrameIndex)
 	ViewProj shadowVp;
 	ViewProj camerainvVp;
 	SceneInfo sceneInfo;
+	ViewProj skyboxVp;
 
 	float scale = 500.0f;
 	float range = glm::length(sponzaModel_.aabbMax() - sponzaModel_.aabbMin()) * scale;
@@ -373,8 +421,13 @@ void Application::update(RenderEngine* engine, uint32_t currentFrameIndex)
 	sceneInfo.cameraPos = glm::vec4(testscene_.camera().transform().position(), 0.0f);
 	sceneInfo.sceneInfo = glm::vec4((float)kScreenWidth, (float)kScreenHeight, testscene_.camera().nearZ(), testscene_.camera().farZ());
 
+	skyboxVp.world = glm::scale(glm::identity<glm::mat4>(), glm::vec3(10000.0f));
+	skyboxVp.view = testscene_.camera().viewMatrix();
+	skyboxVp.proj = testscene_.camera().projMatrix();
+
 	cameraViewProjBuffer_.update(engine, currentFrameIndex * sizeof(glm::mat4) * 4, sizeof(ViewProj), &cameraVp);
 	shadowViewProjBuffer_.update(engine, currentFrameIndex * sizeof(glm::mat4) * 4, sizeof(ViewProj), &shadowVp);
 	cameraInvViewProjBuffer_.update(engine, currentFrameIndex * sizeof(glm::mat4) * 4, sizeof(ViewProj), &camerainvVp);
 	sceneInfoBuffer_.update(engine, currentFrameIndex * sizeof(glm::mat4) * 4, sizeof(SceneInfo), &sceneInfo);
+	skyboxInfoBuffer_.update(engine, currentFrameIndex * sizeof(glm::mat4) * 4, sizeof(ViewProj), &skyboxVp);
 }

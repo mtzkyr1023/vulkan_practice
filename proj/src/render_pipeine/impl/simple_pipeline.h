@@ -12,9 +12,11 @@ class SimplePipeline : public RenderPipeline {
 public:
 	enum ESubpassType : uint32_t
 	{
-		eDepthPrePass = 0,
 		eGBuffer,
 		eComposition,
+
+		eSkybox,
+
 		eTransparent,
 
 		eNum,
@@ -27,8 +29,8 @@ public:
 		eRoughMetalVelocity,
 		eDepthStencil,
 		eShadowMap,
-		eResult,
 		eDeferredResult,
+		eResult,
 		eCubeMap,
 	};
 
@@ -38,11 +40,13 @@ public:
 		eShadowViewProj,
 		eCameraInv,
 		eSceneInfo,
+		eSkyboxInfo,
 	};
 
 	enum EMeshType : uint32_t
 	{
 		eBackground,
+		eSphere,
 	};
 
 	SimplePipeline();
@@ -63,8 +67,6 @@ protected:
 
 	vk::Sampler wrapSampler_;
 	vk::Sampler clampSampler_;
-
-	uint8_t* mappedViewProjMemory_ = nullptr;
 };
 
 #endif

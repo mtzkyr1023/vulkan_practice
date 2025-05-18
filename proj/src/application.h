@@ -3,6 +3,7 @@
 
 
 #include "render_pipeine/impl/shadow_pipeline.h"
+#include "render_pipeine/impl/shadow_blur_pipeline.h"
 #include "render_pipeine/impl/simple_pipeline.h"
 #include "render_pipeine/impl/fb_pipeline.h"
 #include "render_pass/impl/deferred_pass.h"
@@ -29,6 +30,7 @@ private:
 
 private:
 	ShadowPipeline shadowPipeline_;
+	ShadowBlurPipeline shadowBlurPipeline_;
 	SimplePipeline simplePipeline_;
 	ShadowPass shadowPass_;
 	DeferredPass deferredPass_;
@@ -40,6 +42,8 @@ private:
 	Buffer shadowViewProjBuffer_;
 	Buffer cameraInvViewProjBuffer_;
 	Buffer sceneInfoBuffer_;
+	Buffer skyboxInfoBuffer_;
+	Buffer vsmWeightsBuffer_;
 
 	Texture albedoBuffer_;
 	Texture normalDepthBuffer_;
@@ -56,6 +60,7 @@ private:
 	Texture cubemapTexture_;
 
 	Mesh sponzaModel_;
+	Mesh sphereModel_;
 
 	VkDescriptorSet shadowMapDebug_;
 	vk::Sampler sampler_;

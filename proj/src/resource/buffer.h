@@ -12,6 +12,7 @@ public:
 	void setupVertexBuffer(class RenderEngine* engine, size_t stride, size_t count, uint8_t* src);
 	void setupIndexBuffer(class RenderEngine* engine, size_t stride, size_t count, uint8_t* src);
 	void setupUniformBuffer(class RenderEngine* engine, size_t size, size_t count);
+	void setupStorageBuffer(class RenderEngine* engine, size_t stride, size_t count, uint8_t* src);
 
 	void release(class RenderEngine* engine);
 

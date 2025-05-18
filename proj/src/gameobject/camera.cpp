@@ -42,7 +42,7 @@ void Camera::update(float deltaTime) {
 
 		projMatrix_[3][0] = 0.0f;
 		projMatrix_[3][1] = 0.0f;
-		projMatrix_[3][2] = -nearZ_ * fn;
+		projMatrix_[3][2] = -nearZ_;
 		projMatrix_[3][3] = 0.0f;
 	}
 	else

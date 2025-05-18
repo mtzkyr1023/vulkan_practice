@@ -1,0 +1,44 @@
+#version 450
+
+
+const uint BLUR_SIZE = 8;
+const uint THREADS_PER_GROUP = 256;
+const uint SCAN_SIZE = THREADS_PER_GROUP + BLUR_SIZE;
+
+layout(rg32f, set=0, binding=0) uniform image2D srcTex;
+layout(rg32f, set=0, binding=1) uniform image2D dstTex;
+
+layout(set=1, binding=0) uniform GaussCoeff
+{
+	float weights[BLUR_SIZE];
+} ub0;
+
+layout(local_size_x=THREADS_PER_GROUP, local_size_y=1, local_size_z=1) in;
+
+shared vec2 cache[SCAN_SIZE];
+
+void main()
+{
+	uint localThreadId = gl_LocalInvocationID.x;
+	uint GlobalThreadId = gl_GlobalInvocationID.x;
+	uint location = localThreadId;
+	
+	for (uint offset = location; offset < SCAN_SIZE; offset += SCAN_SIZE)
+	{
+		cache[location] = imageLoad(srcTex, ivec2(GlobalThreadId + location, gl_GlobalInvocationID.y)).xy;
+		location += SCAN_SIZE;
+	}
+	
+	
+	groupMemoryBarrier();
+	barrier();
+	
+	vec2 result = vec2(0.0f);
+	
+	for (uint i = 0; i < BLUR_SIZE; i++)
+	{
+		result += cache[localThreadId + i] * ub0.weights[i];
+	}
+	
+	imageStore(dstTex, ivec2(gl_GlobalInvocationID.xy), vec4(result, 0.0f, 0.0f));
+}

@@ -18,8 +18,21 @@
 
 #include "../util/stb_image.h"
 
-void Texture::setupRenderTarget2d(RenderEngine* engine, uint32_t width, uint32_t height, vk::Format format)
+void Texture::setupRenderTarget2d(RenderEngine* engine, uint32_t width, uint32_t height, vk::Format format, bool isStorage)
 {
+	vk::ImageUsageFlags usage =
+		vk::ImageUsageFlagBits::eSampled |
+		vk::ImageUsageFlagBits::eColorAttachment;
+
+	if (isStorage)
+	{
+		usage |= vk::ImageUsageFlagBits::eStorage;
+	}
+	else
+	{
+		usage |= vk::ImageUsageFlagBits::eInputAttachment;
+	}
+
 	{
 		vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
 			.setExtent(vk::Extent3D(width, height, 1))
@@ -31,10 +44,7 @@ void Texture::setupRenderTarget2d(RenderEngine* engine, uint32_t width, uint32_t
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
 			.setSharingMode(vk::SharingMode::eExclusive)
-			.setUsage(
-				vk::ImageUsageFlagBits::eSampled |
-				vk::ImageUsageFlagBits::eColorAttachment |
-				vk::ImageUsageFlagBits::eInputAttachment);
+			.setUsage(usage);
 
 		memory_ = std::make_shared<Memory>();
 		memory_->allocateForImage(
@@ -59,10 +69,7 @@ void Texture::setupRenderTarget2d(RenderEngine* engine, uint32_t width, uint32_t
 			.setMipLevels(1)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(
-				vk::ImageUsageFlagBits::eSampled |
-				vk::ImageUsageFlagBits::eColorAttachment |
-				vk::ImageUsageFlagBits::eInputAttachment);
+			.setUsage(usage);
 
 		image = engine->device().createImage(imageCreateInfo);
 
