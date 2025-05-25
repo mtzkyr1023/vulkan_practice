@@ -96,9 +96,6 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 			engine,
 			{
 				&shadowMap_,
-				&shadowBlurXBuffer_,
-				&shadowBlurYBuffer_,
-				&shadowResultBuffer_,
 				&shadowDepthBuffer_,
 			}
 		);
@@ -119,9 +116,6 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 			&shadowPass_,
 			{
 				&shadowMap_,
-				&shadowBlurXBuffer_,
-				&shadowBlurYBuffer_,
-				&shadowResultBuffer_,
 				&shadowDepthBuffer_,
 			},
 			{
@@ -205,21 +199,28 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 		Input::Instance().Initialize(hwnd);
 
 		{
-			float weights[8];
+			struct Weights
+			{
+				float weight;
+				glm::vec3 padding;
+			};
+			float sigma = 0.5f;
+			Weights weights[8];
 			float total = 0.0f;
+			float d = sigma * sigma;
 			for (int i = 0; i < 8; i++)
 			{
-				float pos = 1.0f + 2.0f * (float)i;
-				weights[i] = glm::exp(-0.5f * pos * pos / 1.0f);
-				total += 2.0f * weights[i];
+				float pos = 1.0f + 2.0f * (float)(i - 4);
+				weights[i].weight = glm::exp(-0.5f * pos * pos / d);
+				total += weights[i].weight;
 			}
 
 			for (int i = 0; i < 8; i++)
 			{
-				weights[i] /= 8.0f;
+				weights[i].weight /= total;
 			}
 
-			vsmWeightsBuffer_.update(engine, 0, sizeof(float) * 8, weights);
+			vsmWeightsBuffer_.update(engine, 0, sizeof(glm::vec4) * 8, weights);
 		}
 	}
 	catch (std::exception& e) {
@@ -403,8 +404,8 @@ void Application::update(RenderEngine* engine, uint32_t currentFrameIndex)
 	float scale = 500.0f;
 	float range = glm::length(sponzaModel_.aabbMax() - sponzaModel_.aabbMin()) * scale;
 	testscene_.shadowCaster().range() = range;
-	testscene_.shadowCaster().width() = (float)kShadowMapWidth / range;
-	testscene_.shadowCaster().height() = (float)kShadowMapHeight / range;
+	testscene_.shadowCaster().width() = (float)kShadowMapWidth / range * 100.0f;
+	testscene_.shadowCaster().height() = (float)kShadowMapHeight / range * 100.0f;
 
 	cameraVp.view = testscene_.camera().viewMatrix();
 	cameraVp.proj = testscene_.camera().projMatrix();

@@ -1108,6 +1108,7 @@ void SimplePipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
 		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
 		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
+		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
 		vk::ClearDepthStencilValue(0.0f, 0),
 	};
 

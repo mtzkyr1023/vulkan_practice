@@ -191,7 +191,7 @@ void ShadowPipeline::initialize(
 			.setBack(backState)
 			.setFront(frontState)
 			.setDepthBoundsTestEnable(false)
-			.setDepthCompareOp(vk::CompareOp::eGreater)
+			.setDepthCompareOp(vk::CompareOp::eLess)
 			.setDepthTestEnable(true)
 			.setDepthWriteEnable(true)
 			.setMaxDepthBounds(1.0f)
@@ -353,10 +353,7 @@ void ShadowPipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 
 	vk::ClearValue clearValues[ShadowPass::ETextureType::eNum] = {
 		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
-		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
-		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
-		vk::ClearColorValue(0.0f, 0.0f, 0.0f, 0.0f),
-		vk::ClearDepthStencilValue(0.0f, 0),
+		vk::ClearDepthStencilValue(1.0f, 0),
 	};
 
 	{
@@ -374,10 +371,10 @@ void ShadowPipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 			.setLayerCount(1)
 			.setLevelCount(1);
 
-		std::array<vk::ImageMemoryBarrier, 4> barriers;
+		std::array<vk::ImageMemoryBarrier, 2> barriers;
 		barriers[0].setSrcAccessMask(vk::AccessFlagBits::eTransferRead);
 		barriers[0].setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
-		barriers[0].setImage(textures_[ShadowPass::eResult]->image());
+		barriers[0].setImage(textures_[ShadowPass::eRaw]->image());
 		barriers[0].setOldLayout(vk::ImageLayout::eUndefined);
 		barriers[0].setNewLayout(vk::ImageLayout::eColorAttachmentOptimal);
 		barriers[0].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
@@ -385,31 +382,13 @@ void ShadowPipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t cur
 		barriers[0].setSubresourceRange(colorSubresourceRange);
 
 		barriers[1].setSrcAccessMask(vk::AccessFlagBits::eTransferRead);
-		barriers[1].setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
-		barriers[1].setImage(textures_[ShadowPass::eBlurX]->image());
+		barriers[1].setDstAccessMask(vk::AccessFlagBits::eDepthStencilAttachmentWrite);
+		barriers[1].setImage(textures_[ShadowPass::eDepth]->image());
 		barriers[1].setOldLayout(vk::ImageLayout::eUndefined);
-		barriers[1].setNewLayout(vk::ImageLayout::eColorAttachmentOptimal);
+		barriers[1].setNewLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
 		barriers[1].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
 		barriers[1].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
-		barriers[1].setSubresourceRange(colorSubresourceRange);
-
-		barriers[2].setSrcAccessMask(vk::AccessFlagBits::eTransferRead);
-		barriers[2].setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
-		barriers[2].setImage(textures_[ShadowPass::eBlurY]->image());
-		barriers[2].setOldLayout(vk::ImageLayout::eUndefined);
-		barriers[2].setNewLayout(vk::ImageLayout::eColorAttachmentOptimal);
-		barriers[2].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
-		barriers[2].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
-		barriers[2].setSubresourceRange(colorSubresourceRange);
-
-		barriers[3].setSrcAccessMask(vk::AccessFlagBits::eTransferRead);
-		barriers[3].setDstAccessMask(vk::AccessFlagBits::eDepthStencilAttachmentWrite);
-		barriers[3].setImage(textures_[ShadowPass::eDepth]->image());
-		barriers[3].setOldLayout(vk::ImageLayout::eUndefined);
-		barriers[3].setNewLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
-		barriers[3].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
-		barriers[3].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
-		barriers[3].setSubresourceRange(depthSubresourceRange);
+		barriers[1].setSubresourceRange(depthSubresourceRange);
 
 		cb.pipelineBarrier(
 			vk::PipelineStageFlagBits::eAllGraphics,

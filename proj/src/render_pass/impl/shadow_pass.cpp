@@ -7,7 +7,7 @@
 
 void ShadowPass::setupInternal(RenderEngine* engine, const std::vector<Texture*>& resources)
 {
-	std::array<vk::AttachmentDescription, 5> attachmentDescs;
+	std::array<vk::AttachmentDescription, 2> attachmentDescs;
 	std::array<vk::SubpassDependency, 0> subpassDeps;
 	std::array<vk::SubpassDescription, 1> subpassDescs;
 
@@ -22,38 +22,8 @@ void ShadowPass::setupInternal(RenderEngine* engine, const std::vector<Texture*>
 			.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
 			.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
 
-		// X方向ブラー画像
-		attachmentDescs[1] = vk::AttachmentDescription()
-			.setFormat(vk::Format::eR32G32Sfloat)
-			.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal)
-			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-			.setLoadOp(vk::AttachmentLoadOp::eClear)
-			.setStoreOp(vk::AttachmentStoreOp::eDontCare)
-			.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
-			.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
-
-		// Y方向ブラー画像
-		attachmentDescs[2] = vk::AttachmentDescription()
-			.setFormat(vk::Format::eR32G32Sfloat)
-			.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal)
-			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-			.setLoadOp(vk::AttachmentLoadOp::eClear)
-			.setStoreOp(vk::AttachmentStoreOp::eDontCare)
-			.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
-			.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
-
-		// 最終出力バッファ
-		attachmentDescs[3] = vk::AttachmentDescription()
-			.setFormat(vk::Format::eR32G32Sfloat)
-			.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal)
-			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-			.setLoadOp(vk::AttachmentLoadOp::eClear)
-			.setStoreOp(vk::AttachmentStoreOp::eStore)
-			.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
-			.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
-
 		// 深度バッファ
-		attachmentDescs[4] = vk::AttachmentDescription()
+		attachmentDescs[1] = vk::AttachmentDescription()
 			.setFormat(vk::Format::eD32SfloatS8Uint)
 			.setInitialLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal)
 			.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
@@ -73,7 +43,7 @@ void ShadowPass::setupInternal(RenderEngine* engine, const std::vector<Texture*>
 			.setLayout(vk::ImageLayout::eColorAttachmentOptimal),
 		};
 		vk::AttachmentReference depthStencilAttachment = vk::AttachmentReference()
-			.setAttachment(4)
+			.setAttachment(1)
 			.setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
 		subpassDescs[0] = vk::SubpassDescription()
@@ -102,12 +72,9 @@ void ShadowPass::setupInternal(RenderEngine* engine, const std::vector<Texture*>
 	renderPass_ = engine->device().createRenderPass(renderPassCreateInfo);
 
 	{
-		std::array<vk::ImageView, 5> attachments =
+		std::array<vk::ImageView, 2> attachments =
 		{
 			resources[ETextureType::eRaw]->view(),
-			resources[ETextureType::eBlurX]->view(),
-			resources[ETextureType::eBlurY]->view(),
-			resources[ETextureType::eResult]->view(),
 			resources[ETextureType::eDepth]->view(),
 		};
 		vk::FramebufferCreateInfo framebufferCreateInfo = vk::FramebufferCreateInfo()

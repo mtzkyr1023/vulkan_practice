@@ -10,9 +10,6 @@ public:
 	enum ETextureType : uint32_t
 	{
 		eRaw = 0,
-		eBlurX,
-		eBlurY,
-		eResult,
 
 		eDepth,
 

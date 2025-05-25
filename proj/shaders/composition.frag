@@ -89,17 +89,18 @@ void main()
 	
 	shadow = sampleShadowMap(worldPosition.xyz, NdotL, vec2(0.0f, 0.0f));
 	
-	vec3 irradiance = texture(samplerCube(cubeMap, clampSampler), N).rgb;
+	int miplevel = textureQueryLevels(samplerCube(cubeMap, clampSampler));
+	vec3 irradiance = textureLod(samplerCube(cubeMap, clampSampler), N, roughness * float(miplevel)).rgb;
 	
 	vec3 diffuse = irradiance * albedo.rgb;
 	
-	vec3 color = (kD * albedo.rgb / PI + specular) * vec3(4.0f) * NdotL * shadow;
+	vec3 color = (kD * albedo.rgb / PI + specular) * vec3(4.0f) * shadow;
     
 	kS = fresnelSchlickRoughness(max(dot(N, V), 0.0f), F0, roughness);
 	kD = vec3(1.0f) - kS;
 	kD *= max(1.0f - metalic, 0.0f);
 	
-    vec3 ambient = max((kD * diffuse), vec3(0.0f));
+    vec3 ambient = max((kD * diffuse), vec3(0.04f));
 	
 	color = color + ambient;
 	
@@ -170,7 +171,7 @@ float sampleShadowMap(vec3 worldPosition, float NdotL, vec2 offset)
 	float md = z - shadowMapDepth.x;
 	float p = variance / (variance + (md * md));
 	
-	float bias = max(0.0000000001f * (1.0f - NdotL), 0.00000000001f) * 16.0f;
+	float bias = max(0.00000001f * (1.0f - NdotL), 0.00000000001f) * 2.0f;
 	
-	return max(float(shadowMapDepth.x < z + bias), p);
+	return max(shadowMapDepth.x > z ? 1.0f : 0.0f, p);
 }

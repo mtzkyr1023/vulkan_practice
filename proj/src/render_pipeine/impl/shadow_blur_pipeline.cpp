@@ -202,7 +202,7 @@ void ShadowBlurPipeline::initialize(
 			vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
 				.setBuffer(buffers[EBufferType::eGaussWeights]->buffer(0))
 				.setOffset(0)
-				.setRange(sizeof(float) * 8);
+				.setRange(sizeof(float) * 8 * 4);
 
 			writes = vk::WriteDescriptorSet()
 				.setBufferInfo(bufferInfo)
@@ -262,7 +262,7 @@ void ShadowBlurPipeline::initialize(
 			vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
 				.setBuffer(buffers[EBufferType::eGaussWeights]->buffer(0))
 				.setOffset(0)
-				.setRange(sizeof(float) * 8);
+				.setRange(sizeof(float) * 8 * 4);
 
 			writes = vk::WriteDescriptorSet()
 				.setBufferInfo(bufferInfo)
@@ -312,7 +312,7 @@ void ShadowBlurPipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t
 		barriers[1].setSrcAccessMask(vk::AccessFlagBits::eShaderRead);
 		barriers[1].setDstAccessMask(vk::AccessFlagBits::eShaderWrite);
 		barriers[1].setImage(textures_[ETextureType::eDstX]->image());
-		barriers[1].setOldLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+		barriers[1].setOldLayout(vk::ImageLayout::eUndefined);
 		barriers[1].setNewLayout(vk::ImageLayout::eGeneral);
 		barriers[1].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
 		barriers[1].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
@@ -321,7 +321,7 @@ void ShadowBlurPipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t
 		barriers[2].setSrcAccessMask(vk::AccessFlagBits::eShaderRead);
 		barriers[2].setDstAccessMask(vk::AccessFlagBits::eShaderWrite);
 		barriers[2].setImage(textures_[ETextureType::eDstY]->image());
-		barriers[2].setOldLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+		barriers[2].setOldLayout(vk::ImageLayout::eUndefined);
 		barriers[2].setNewLayout(vk::ImageLayout::eGeneral);
 		barriers[2].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
 		barriers[2].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
@@ -398,8 +398,8 @@ void ShadowBlurPipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t
 		std::array<vk::ImageMemoryBarrier, 3> barriers;
 		barriers[0].setSrcAccessMask(vk::AccessFlagBits::eShaderRead);
 		barriers[0].setDstAccessMask(vk::AccessFlagBits::eShaderRead);
-		barriers[0].setImage(textures_[ETextureType::eDstX]->image());
-		barriers[0].setOldLayout(vk::ImageLayout::eUndefined);
+		barriers[0].setImage(textures_[ETextureType::eSrc]->image());
+		barriers[0].setOldLayout(vk::ImageLayout::eGeneral);
 		barriers[0].setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
 		barriers[0].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
 		barriers[0].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
@@ -408,7 +408,7 @@ void ShadowBlurPipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t
 		barriers[1].setSrcAccessMask(vk::AccessFlagBits::eShaderRead);
 		barriers[1].setDstAccessMask(vk::AccessFlagBits::eShaderRead);
 		barriers[1].setImage(textures_[ETextureType::eDstX]->image());
-		barriers[1].setOldLayout(vk::ImageLayout::eUndefined);
+		barriers[1].setOldLayout(vk::ImageLayout::eGeneral);
 		barriers[1].setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
 		barriers[1].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
 		barriers[1].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
@@ -417,7 +417,7 @@ void ShadowBlurPipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t
 		barriers[2].setSrcAccessMask(vk::AccessFlagBits::eShaderWrite);
 		barriers[2].setDstAccessMask(vk::AccessFlagBits::eShaderRead);
 		barriers[2].setImage(textures_[ETextureType::eDstY]->image());
-		barriers[2].setOldLayout(vk::ImageLayout::eUndefined);
+		barriers[2].setOldLayout(vk::ImageLayout::eGeneral);
 		barriers[2].setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
 		barriers[2].setSrcQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
 		barriers[2].setDstQueueFamilyIndex(engine->graphicsQueueFamilyIndex());
