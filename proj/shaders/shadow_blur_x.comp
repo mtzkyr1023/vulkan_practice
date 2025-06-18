@@ -1,7 +1,7 @@
 #version 450
 
 
-const int BLUR_SIZE = 8;
+const int BLUR_SIZE = 16;
 const int THREADS_PER_GROUP = 256;
 const int SCAN_SIZE = THREADS_PER_GROUP + BLUR_SIZE;
 const int TEX_SIZE = 2048;

@@ -55,9 +55,9 @@ void main()
 	vec3 R = reflect(-V, N);
 	
 	float roughness = roughMetalVelocity.x;
-	float metalic = 1.0f - roughMetalVelocity.y;
+	float metalic = roughMetalVelocity.y;
 	
-	vec3 F0 = vec3(0.04f);
+	vec3 F0 = vec3(0.01f);
 	F0 = mix(F0, albedo.rgb, metalic);
 	
 	vec3 L = normalize(ub1.lightVector.xyz);
@@ -69,7 +69,6 @@ void main()
 	
 	vec3 kS = F;
 	vec3 kD = vec3(1.0f) - kS;
-	kD *= 1.0f - metalic;
 	
 	vec3 numerator = NDF * G * F;
 	float denominator = 4.0f * max(dot(N, V), 0.0f) * max(dot(N, L), 0.0f) + 0.0001f;
@@ -90,19 +89,21 @@ void main()
 	shadow = sampleShadowMap(worldPosition.xyz, NdotL, vec2(0.0f, 0.0f));
 	
 	int miplevel = textureQueryLevels(samplerCube(cubeMap, clampSampler));
-	vec3 irradiance = textureLod(samplerCube(cubeMap, clampSampler), N, roughness * float(miplevel)).rgb;
+	vec3 irradiance = textureLod(samplerCube(cubeMap, clampSampler), N, 1.0f * float(miplevel)).rgb;
+	
+	specular = textureLod(samplerCube(cubeMap, clampSampler), R, roughness * float(miplevel)).rgb;
 	
 	vec3 diffuse = irradiance * albedo.rgb;
 	
-	vec3 color = (kD * albedo.rgb / PI + specular) * vec3(4.0f) * shadow;
+	vec3 color = (kD * albedo.rgb / PI + specular) * vec3(4.0f) * NdotL * shadow;
     
 	kS = fresnelSchlickRoughness(max(dot(N, V), 0.0f), F0, roughness);
 	kD = vec3(1.0f) - kS;
-	kD *= max(1.0f - metalic, 0.0f);
+	kD *= 1.0f - metalic;
 	
-    vec3 ambient = max((kD * diffuse), vec3(0.04f));
+    vec3 ambient = max((kD * diffuse), vec3(0.0f));
 	
-	color = color + ambient;
+	color = ambient + specular * kS;
 	
 	outResult = vec4(color, 1.0f);
 }
@@ -171,7 +172,9 @@ float sampleShadowMap(vec3 worldPosition, float NdotL, vec2 offset)
 	float md = z - shadowMapDepth.x;
 	float p = variance / (variance + (md * md));
 	
-	float bias = max(0.00000001f * (1.0f - NdotL), 0.00000000001f) * 2.0f;
+	float bias = max(0.0001f * (1.0f - NdotL), 0.00001f);
 	
-	return max(shadowMapDepth.x > z ? 1.0f : 0.0f, p);
+	float litfactor = shadowMapDepth.x <= z ? p : 0.0f;
+	
+	return litfactor;
 }

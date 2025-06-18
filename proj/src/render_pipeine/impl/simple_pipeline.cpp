@@ -735,10 +735,10 @@ void SimplePipeline::initialize(
 			.setBorderColor(vk::BorderColor::eFloatOpaqueWhite)
 			.setCompareEnable(false)
 			.setCompareOp(vk::CompareOp::eAlways)
-			.setMagFilter(vk::Filter::eNearest)
+			.setMagFilter(vk::Filter::eLinear)
 			.setMaxAnisotropy(16.0f)
-			.setMinFilter(vk::Filter::eNearest)
-			.setMaxLod(0)
+			.setMinFilter(vk::Filter::eLinear)
+			.setMaxLod(FLT_MAX)
 			.setMipLodBias(0)
 			.setMinLod(0)
 			.setMipmapMode(vk::SamplerMipmapMode::eLinear);

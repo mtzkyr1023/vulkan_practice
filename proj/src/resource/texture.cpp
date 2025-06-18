@@ -517,7 +517,18 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 				int sampledX = glm::clamp((int)(normalizedX * (float)srcWidth), 0, srcWidth - 1);
 				int sampledY = glm::clamp((int)(normalizedY * (float)srcHeight), 0, srcHeight - 1);
 
-				memcpy_s(&tempMap[0][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
+				int offsetX = (sampledX + 1) % 2 * 2 - 1;
+				int offsetY = (sampledY + 1) % 2 * 2 - 1;
+
+				int ddx = glm::clamp((int)((normalizedX) * (float)srcWidth + offsetX), 0, srcWidth - 1);
+				int ddy = glm::clamp((int)((normalizedY) * (float)srcHeight + offsetY), 0, srcHeight - 1);
+
+				tempMap[0][(y * width + x) * 4 + 0] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 0] + pixels[(ddy * srcWidth + ddx) * 4 + 0]) * 0.5f;
+				tempMap[0][(y * width + x) * 4 + 1] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 1] + pixels[(ddy * srcWidth + ddx) * 4 + 1]) * 0.5f;
+				tempMap[0][(y * width + x) * 4 + 2] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 2] + pixels[(ddy * srcWidth + ddx) * 4 + 2]) * 0.5f;
+				tempMap[0][(y * width + x) * 4 + 3] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 3] + pixels[(ddy * srcWidth + ddx) * 4 + 3]) * 0.5f;
+
+				//memcpy_s(&tempMap[0][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
 			}
 		}
 	}
@@ -538,7 +549,18 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 				int sampledX = glm::clamp((int)(normalizedX * (float)srcWidth), 0, srcWidth - 1);
 				int sampledY = glm::clamp((int)(normalizedY * (float)srcHeight), 0, srcHeight - 1);
 
-				memcpy_s(&tempMap[1][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
+				int offsetX = (sampledX + 1) % 2 * 2 - 1;
+				int offsetY = (sampledY + 1) % 2 * 2 - 1;
+
+				int ddx = glm::clamp((int)((normalizedX) * (float)srcWidth + offsetX), 0, srcWidth - 1);
+				int ddy = glm::clamp((int)((normalizedY) * (float)srcHeight + offsetY), 0, srcHeight - 1);
+
+				tempMap[1][(y * width + x) * 4 + 0] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 0] + pixels[(ddy * srcWidth + ddx) * 4 + 0]) * 0.5f;
+				tempMap[1][(y * width + x) * 4 + 1] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 1] + pixels[(ddy * srcWidth + ddx) * 4 + 1]) * 0.5f;
+				tempMap[1][(y * width + x) * 4 + 2] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 2] + pixels[(ddy * srcWidth + ddx) * 4 + 2]) * 0.5f;
+				tempMap[1][(y * width + x) * 4 + 3] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 3] + pixels[(ddy * srcWidth + ddx) * 4 + 3]) * 0.5f;
+
+				//memcpy_s(&tempMap[1][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
 			}
 		}
 	}
@@ -559,7 +581,18 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 				int sampledX = glm::clamp((int)(normalizedX * (float)srcWidth), 0, srcWidth - 1);
 				int sampledY = glm::clamp((int)(normalizedY * (float)srcHeight), 0, srcHeight - 1);
 
-				memcpy_s(&tempMap[2][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
+				int offsetX = (sampledX + 1) % 2 * 2 - 1;
+				int offsetY = (sampledY + 1) % 2 * 2 - 1;
+
+				int ddx = glm::clamp((int)((normalizedX) * (float)srcWidth + offsetX), 0, srcWidth - 1);
+				int ddy = glm::clamp((int)((normalizedY) * (float)srcHeight + offsetY), 0, srcHeight - 1);
+
+				tempMap[2][(y * width + x) * 4 + 0] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 0] + pixels[(ddy * srcWidth + ddx) * 4 + 0]) * 0.5f;
+				tempMap[2][(y * width + x) * 4 + 1] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 1] + pixels[(ddy * srcWidth + ddx) * 4 + 1]) * 0.5f;
+				tempMap[2][(y * width + x) * 4 + 2] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 2] + pixels[(ddy * srcWidth + ddx) * 4 + 2]) * 0.5f;
+				tempMap[2][(y * width + x) * 4 + 3] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 3] + pixels[(ddy * srcWidth + ddx) * 4 + 3]) * 0.5f;
+
+				//memcpy_s(&tempMap[2][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
 			}
 		}
 	}
@@ -580,7 +613,18 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 				int sampledX = glm::clamp((int)(normalizedX * (float)srcWidth), 0, srcWidth - 1);
 				int sampledY = glm::clamp((int)(normalizedY * (float)srcHeight), 0, srcHeight - 1);
 
-				memcpy_s(&tempMap[3][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
+				int offsetX = (sampledX + 1) % 2 * 2 - 1;
+				int offsetY = (sampledY + 1) % 2 * 2 - 1;
+
+				int ddx = glm::clamp((int)((normalizedX) * (float)srcWidth + offsetX), 0, srcWidth - 1);
+				int ddy = glm::clamp((int)((normalizedY) * (float)srcHeight + offsetY), 0, srcHeight - 1);
+
+				tempMap[3][(y * width + x) * 4 + 0] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 0] + pixels[(ddy * srcWidth + ddx) * 4 + 0]) * 0.5f;
+				tempMap[3][(y * width + x) * 4 + 1] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 1] + pixels[(ddy * srcWidth + ddx) * 4 + 1]) * 0.5f;
+				tempMap[3][(y * width + x) * 4 + 2] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 2] + pixels[(ddy * srcWidth + ddx) * 4 + 2]) * 0.5f;
+				tempMap[3][(y * width + x) * 4 + 3] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 3] + pixels[(ddy * srcWidth + ddx) * 4 + 3]) * 0.5f;
+
+				//memcpy_s(&tempMap[3][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
 			}
 		}
 	}
@@ -601,7 +645,18 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 				int sampledX = glm::clamp((int)(normalizedX * (float)srcWidth), 0, srcWidth - 1);
 				int sampledY = glm::clamp((int)(normalizedY * (float)srcHeight), 0, srcHeight - 1);
 
-				memcpy_s(&tempMap[4][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
+				int offsetX = (sampledX + 1) % 2 * 2 - 1;
+				int offsetY = (sampledY + 1) % 2 * 2 - 1;
+
+				int ddx = glm::clamp((int)((normalizedX) * (float)srcWidth + offsetX), 0, srcWidth - 1);
+				int ddy = glm::clamp((int)((normalizedY) * (float)srcHeight + offsetY), 0, srcHeight - 1);
+
+				tempMap[4][(y * width + x) * 4 + 0] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 0] + pixels[(ddy * srcWidth + ddx) * 4 + 0]) * 0.5f;
+				tempMap[4][(y * width + x) * 4 + 1] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 1] + pixels[(ddy * srcWidth + ddx) * 4 + 1]) * 0.5f;
+				tempMap[4][(y * width + x) * 4 + 2] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 2] + pixels[(ddy * srcWidth + ddx) * 4 + 2]) * 0.5f;
+				tempMap[4][(y * width + x) * 4 + 3] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 3] + pixels[(ddy * srcWidth + ddx) * 4 + 3]) * 0.5f;
+
+				//memcpy_s(&tempMap[4][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
 			}
 		}
 	}
@@ -622,7 +677,17 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 				int sampledX = glm::clamp((int)(normalizedX * (float)srcWidth), 0, srcWidth - 1);
 				int sampledY = glm::clamp((int)(normalizedY * (float)srcHeight), 0, srcHeight - 1);
 
-				memcpy_s(&tempMap[5][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
+				int offsetX = (sampledX + 1) % 2 * 2 - 1;
+				int offsetY = (sampledY + 1) % 2 * 2 - 1;
+
+				int ddx = glm::clamp((int)((normalizedX) * (float)srcWidth + offsetX), 0, srcWidth - 1);
+				int ddy = glm::clamp((int)((normalizedY) * (float)srcHeight + offsetY), 0, srcHeight - 1);
+
+				tempMap[5][(y * width + x) * 4 + 0] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 0] + pixels[(ddy * srcWidth + ddx) * 4 + 0]) * 0.5f;
+				tempMap[5][(y * width + x) * 4 + 1] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 1] + pixels[(ddy * srcWidth + ddx) * 4 + 1]) * 0.5f;
+				tempMap[5][(y * width + x) * 4 + 2] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 2] + pixels[(ddy * srcWidth + ddx) * 4 + 2]) * 0.5f;
+				tempMap[5][(y * width + x) * 4 + 3] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 3] + pixels[(ddy * srcWidth + ddx) * 4 + 3]) * 0.5f;
+				//memcpy_s(&tempMap[5][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
 			}
 		}
 	}
