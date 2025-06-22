@@ -31,6 +31,9 @@ void SimplePipeline::initialize(
 	const std::vector<class Texture*>& textures,
 	const std::vector<class Buffer*>& buffers,
 	const std::vector<class Mesh*>& meshes) {
+
+	RenderPipeline::initialize(engine, pass, textures, buffers, meshes);
+
 	{
 		{
 			std::array<vk::DescriptorSetLayoutBinding, 1> binding =
@@ -1087,10 +1090,6 @@ void SimplePipeline::initialize(
 			}
 		}
 	}
-
-	textures_ = textures;
-	buffers_ = buffers;
-	meshes_ = meshes;
 }
 
 void SimplePipeline::cleanup(RenderEngine* engine) {

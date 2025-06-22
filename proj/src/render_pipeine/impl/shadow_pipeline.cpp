@@ -27,6 +27,7 @@ void ShadowPipeline::initialize(
 	const std::vector<class Buffer*>& buffers,
 	const std::vector<class Mesh*>& meshes)
 {
+	RenderPipeline::initialize(engine, pass, textures, buffers, meshes);
 	{
 		{
 			std::array<vk::DescriptorSetLayoutBinding, 2> binding =
@@ -334,10 +335,6 @@ void ShadowPipeline::initialize(
 			}
 		}
 	}
-
-	buffers_ = buffers;
-	textures_ = textures;
-	meshes_ = meshes;
 }
 
 void ShadowPipeline::cleanup(RenderEngine* engine)

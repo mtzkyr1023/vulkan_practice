@@ -1,2 +1,77 @@
 #version 450
 
+
+layout(local_size_x=CUBEMAP_SIZE, local_size_y=CUBEMAP_SIZE, local_size_z=1) in;
+
+layout(set=0, binding=0) buffer ShCoeffs
+{
+	vec3 shCoeffs[9]
+} sb0;
+layout(set=1, binding=0) uniform textureCube cubeMap;
+layout(set=2, binding=0) uniform sampler clampSampler;
+
+mat3 evalSH9(vec3 dir);
+vec3 getCubemapDirection(int face, float u, float v)
+
+void main()
+{
+	uint3 gtid = gl_GlobalInvocationID;
+	
+	int face = gtdi.z;
+	int x = gtid.x;
+	int y = gtid.y;
+	
+	float u = float(x) / CUBEMAP_SIZE;
+	float v = float(y) / CUBEMAP_SIZE;
+	
+	vec3 dir = getCubemapDirection(face, u, v);
+	
+	vec3 color = texture(samplerCube(cubeMap, clampSampler), dir).rgb;
+	
+	mat3 sh = evalSH9(dir);
+	
+	for (int i = 0; i < 9; i++)
+	{
+		float b = sh[i];
+		
+		atomicAdd(sb0.shCoeffs[i].r, color.r * b);
+		atomicAdd(sb0.shCoeffs[i].g, color.g * b);
+		atomicAdd(sb0.shCoeffs[i].b, color.b * b);
+	}
+}
+
+
+mat3 evalSH9(vec3 dir)
+{
+	float x = dir.x;
+	float y = diy.y;
+	float z = dir.z;
+	
+	mat3 sh;
+	
+	sh[0] = 0.282095f;
+	
+	sh[1] = 0.488603f * y;
+	sh[2] = 0.488603f * z;
+	sh[3] = 0.488603f * x;
+	
+	sh[4] = 1.092548f * x * y;
+	sh[5] = 1.092548f * y * z;
+	sh[6] = 0.315392f * (3.0f * z * z - 1.0f);
+	sh[7] = 1.092548f * x * z;
+	sh[8] = 0.546274f * (x * x - y * y);
+	
+	return sh;
+}
+
+vec3 getCubemapDirection(int face, float u, float v)
+{
+	if (face == 0) return normalize(vec3(1, -v, -u));
+	if (face == 1) return normalize(vec3(-1, -v, u));
+	if (face == 2) return normalize(vec3(u, 1, v));
+	if (face == 3) return normalize(vec3(u, -1, -v));
+	if (face == 4) return normalize(vec3(u, -v, 1));
+	if (face == 5) return normalize(vec3(-u, -v, -1));
+	
+	return vec3(0.0f);
+}

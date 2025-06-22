@@ -23,6 +23,7 @@ void FbPipeline::initialize(
 	const std::vector<Buffer*>& buffers,
 	const std::vector<Mesh*>& meshes)
 {
+	RenderPipeline::initialize(engine, pass, textures, buffers, meshes);
 	{
 		{
 			std::array<vk::DescriptorSetLayoutBinding, 1> binding =
@@ -251,10 +252,6 @@ void FbPipeline::initialize(
 
 		engine->device().updateDescriptorSets(writes, {});
 	}
-
-	textures_ = textures;
-	buffers_ = buffers;
-	meshes_ = meshes;
 
 }
 

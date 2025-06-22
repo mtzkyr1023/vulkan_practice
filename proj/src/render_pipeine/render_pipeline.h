@@ -14,7 +14,7 @@ public:
 		class RenderPass* pass,
 		const std::vector<class Texture*>& textures,
 		const std::vector<class Buffer*>& buffers,
-		const std::vector<class Mesh*>& meshes) = 0;
+		const std::vector<class Mesh*>& meshes);
 	virtual void cleanup(class RenderEngine* engine);
 	
 	virtual void render(class RenderEngine* engine, class RenderPass* pass, uint32_t currentImageIndex) = 0;

@@ -24,6 +24,7 @@ void ShadowBlurPipeline::initialize(
 	const std::vector<Buffer*>& buffers,
 	const std::vector<Mesh*>& meshes)
 {
+	RenderPipeline::initialize(engine, pass, textures, buffers, meshes);
 	{
 		{
 			std::array<vk::DescriptorSetLayoutBinding, 2> binding =
@@ -275,10 +276,6 @@ void ShadowBlurPipeline::initialize(
 			engine->device().updateDescriptorSets(writes, {});
 		}
 	}
-
-	textures_ = textures;
-	buffers_ = buffers;
-	meshes_ = meshes;
 
 }
 

@@ -5,6 +5,17 @@
 #include <fstream>
 #include <iostream>
 
+void RenderPipeline::initialize(
+	RenderEngine* engine,
+	RenderPass* pass,
+	const std::vector<Texture*>& textures,
+	const std::vector<Buffer*>& buffers,
+	const std::vector<Mesh*>& meshes)
+{
+	textures_ = textures;
+	buffers_ = buffers;
+	meshes_ = meshes;
+}
 
 void RenderPipeline::cleanup(RenderEngine* engine) {
 	for (auto& it : pipeline_)
