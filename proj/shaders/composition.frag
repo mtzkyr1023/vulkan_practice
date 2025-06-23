@@ -23,6 +23,10 @@ layout(set=1, binding=2) uniform ShadowMatrix {
 layout(set=2, binding=0) uniform texture2D shadowMap;
 layout(set=2, binding=1) uniform textureCube cubeMap;
 layout(set=3, binding=0) uniform sampler clampSampler;
+layout(set=4, binding=0) buffer ShCoeff
+{
+	vec3 shCoeffs[9];
+} sb0;
 
 layout(location=0) out vec4 outResult;
 
@@ -34,6 +38,7 @@ float distributionGGX(vec3 N, vec3 H, float roughness);
 float geometrySchlickGGX(float NdotV, float roughness);
 float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 float sampleShadowMap(vec3 worldPosition, float NdotL, vec2 offset);
+vec3 evaluateSH9(vec3 normal);
 
 void main()
 {
@@ -103,7 +108,7 @@ void main()
 	
     vec3 ambient = max((kD * diffuse), vec3(0.0f));
 	
-	color = ambient + specular * kS;
+	color = evaluateSH9(N);
 	
 	outResult = vec4(color, 1.0f);
 }
@@ -178,3 +183,29 @@ float sampleShadowMap(vec3 worldPosition, float NdotL, vec2 offset)
 	
 	return litfactor;
 }
+
+vec3 evaluateSH9(vec3 normal)
+{
+	float x = normal.x;
+	float y = normal.y;
+	float z = normal.z;
+
+	float basis[9];
+	basis[0] = 0.282095;
+	basis[1] = 0.488603 * y;
+	basis[2] = 0.488603 * z;
+	basis[3] = 0.488603 * x;
+	basis[4] = 1.092548 * x * y;
+	basis[5] = 1.092548 * y * z;
+	basis[6] = 0.315392 * (3.0 * z * z - 1.0);
+	basis[7] = 1.092548 * x * z;
+	basis[8] = 0.546274 * (x * x - y * y);
+
+	vec3 result = vec3(0.0);
+	for (int i = 0; i < 9; ++i)
+		result += sb0.shCoeffs[i] * basis[i];
+
+	return result;
+}
+
+

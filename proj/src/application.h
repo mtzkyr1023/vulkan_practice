@@ -6,6 +6,7 @@
 #include "render_pipeine/impl/shadow_blur_pipeline.h"
 #include "render_pipeine/impl/simple_pipeline.h"
 #include "render_pipeine/impl/fb_pipeline.h"
+#include "render_pipeine/impl/prt_pipeline.h"
 #include "render_pass/impl/deferred_pass.h"
 #include "render_pass/impl/shadow_pass.h"
 #include "util/imgui_wrapper.h"
@@ -32,9 +33,9 @@ private:
 	ShadowPipeline shadowPipeline_;
 	ShadowBlurPipeline shadowBlurPipeline_;
 	SimplePipeline simplePipeline_;
+	FbPipeline fbPipeline_;
 	ShadowPass shadowPass_;
 	DeferredPass deferredPass_;
-	FbPipeline fbPipeline_;
 	ImGuiWrapper imgui_;
 	TestScene testscene_;
 
@@ -44,6 +45,7 @@ private:
 	Buffer sceneInfoBuffer_;
 	Buffer skyboxInfoBuffer_;
 	Buffer vsmWeightsBuffer_;
+	Buffer shCoeffBufffer_;
 
 	Texture albedoBuffer_;
 	Texture normalDepthBuffer_;

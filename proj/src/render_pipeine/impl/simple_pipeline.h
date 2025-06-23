@@ -41,6 +41,7 @@ public:
 		eCameraInv,
 		eSceneInfo,
 		eSkyboxInfo,
+		eShCoeff,
 	};
 
 	enum EMeshType : uint32_t

@@ -193,6 +193,22 @@ void SimplePipeline::initialize(
 
 			descriptorLayouts_[ESubpassType::eComposition].push_back(engine->device().createDescriptorSetLayout(layoutCreateInfo));
 		}
+
+		{
+			std::array<vk::DescriptorSetLayoutBinding, 1> binding =
+			{
+				vk::DescriptorSetLayoutBinding()
+				.setBinding(0)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eStorageBuffer)
+				.setStageFlags(vk::ShaderStageFlagBits::eFragment),
+			};
+
+			vk::DescriptorSetLayoutCreateInfo layoutCreateInfo = vk::DescriptorSetLayoutCreateInfo()
+				.setBindings(binding);
+
+			descriptorLayouts_[ESubpassType::eComposition].push_back(engine->device().createDescriptorSetLayout(layoutCreateInfo));
+		}
 	}
 
 	{
@@ -1013,6 +1029,24 @@ void SimplePipeline::initialize(
 					.setDstArrayElement(0)
 					.setDstBinding(0)
 					.setDstSet(sets_[ESubpassType::eComposition][i][3]);
+
+				engine->device().updateDescriptorSets(write, {});
+			}
+			{
+				vk::WriteDescriptorSet write;
+
+				vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
+					.setBuffer(buffers[EBufferType::eShCoeff]->buffer(0))
+					.setOffset(0)
+					.setRange(sizeof(float) * 27);
+
+				write = vk::WriteDescriptorSet()
+					.setBufferInfo(bufferInfo)
+					.setDescriptorCount(1)
+					.setDescriptorType(vk::DescriptorType::eStorageBuffer)
+					.setDstArrayElement(0)
+					.setDstBinding(0)
+					.setDstSet(sets_[ESubpassType::eComposition][i][4]);
 
 				engine->device().updateDescriptorSets(write, {});
 			}

@@ -21,11 +21,19 @@ public:
 	const vk::Image& image() { return image_; }
 	const vk::ImageView& view() { return view_; }
 
+	uint32_t width() { return width_; }
+	uint32_t height() { return height_; }
+	uint32_t depth() { return depth_; }
+
 protected:
 	std::shared_ptr<class Memory> memory_;
 
 	vk::Image image_;
 	vk::ImageView view_;
+
+	uint32_t width_;
+	uint32_t height_;
+	uint32_t depth_;
 };
 
 #endif

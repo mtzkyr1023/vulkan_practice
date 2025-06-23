@@ -494,6 +494,10 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 	int width = srcWidth / 4;
 	int height = width;
 
+	width_ = width;
+	height_ = height;
+	depth_ = 6;
+
 	std::vector<float> tempMap[6];
 	for (int i = 0; i < 6; i++)
 	{

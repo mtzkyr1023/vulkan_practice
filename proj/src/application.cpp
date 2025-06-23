@@ -27,6 +27,7 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 		sceneInfoBuffer_.setupUniformBuffer(engine, sizeof(glm::mat4) * 4, engine->swapchainImageCount());
 		skyboxInfoBuffer_.setupUniformBuffer(engine, sizeof(glm::mat4) * 4, engine->swapchainImageCount());
 		vsmWeightsBuffer_.setupUniformBuffer(engine, sizeof(glm::mat4) * 4, engine->swapchainImageCount());
+		shCoeffBufffer_.setupStorageBuffer(engine, sizeof(float) * 27, 1, nullptr);
 
 		albedoBuffer_.setupRenderTarget2d(
 			engine,
@@ -89,7 +90,7 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 		//sponzaModel_.loadMesh(engine, "models/ABeautifulGame/gltf/", "ABeautifulGame.gltf");
 		sphereModel_.loadMesh(engine, "models/", "sphere.gltf");
 
-		cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/industrial_sunset_puresky_4k.hdr");
+		cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/industrial_sunset_puresky_1k.hdr");
 
 		imgui_.setup(engine, hwnd);
 		shadowPass_.setup(
@@ -159,6 +160,7 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 				&cameraInvViewProjBuffer_,
 				&sceneInfoBuffer_,
 				&skyboxInfoBuffer_,
+				&shCoeffBufffer_,
 			},
 			{
 				&sponzaModel_,
@@ -176,6 +178,25 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 			{
 
 			});
+
+		PrtPipeline prtPipeline(cubemapTexture_.width());
+		prtPipeline.initialize(
+			engine,
+			nullptr,
+			{
+				&cubemapTexture_,
+			},
+			{
+				&shCoeffBufffer_,
+			},
+			{
+
+			}
+			);
+
+		prtPipeline.render(engine, nullptr, 0);
+
+		prtPipeline.cleanup(engine);
 
 			vk::SamplerCreateInfo samplerCreateInfo = vk::SamplerCreateInfo()
 				.setAddressModeU(vk::SamplerAddressMode::eRepeat)
@@ -242,6 +263,7 @@ void Application::cleanup(RenderEngine* engine) {
 	sceneInfoBuffer_.release(engine);
 	skyboxInfoBuffer_.release(engine);
 	vsmWeightsBuffer_.release(engine);
+	shCoeffBufffer_.release(engine);
 
 	albedoBuffer_.release(engine);
 	normalDepthBuffer_.release(engine);

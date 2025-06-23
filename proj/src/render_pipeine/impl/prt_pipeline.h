@@ -6,6 +6,8 @@
 
 class PrtPipeline : public RenderPipeline
 {
+public:
+
 	enum ETextureType : uint32_t
 	{
 		eCubemap = 0,
@@ -21,7 +23,7 @@ class PrtPipeline : public RenderPipeline
 		eSh = 0,
 	};
 
-	PrtPipeline();
+	PrtPipeline(uint32_t cubemapSize);
 	~PrtPipeline();
 
 	virtual void initialize(
@@ -34,6 +36,11 @@ class PrtPipeline : public RenderPipeline
 
 	virtual void render(class RenderEngine* engine, class RenderPass* pass, uint32_t currentImageIndex) override;
 	virtual void update(class RenderEngine* engine, uint32_t currentImageIndex) override;
+
+private:
+	vk::Sampler sampler_;
+
+	uint32_t cubemapSize_;
 };
 
 #endif
