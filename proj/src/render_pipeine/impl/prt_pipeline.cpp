@@ -143,7 +143,7 @@ void PrtPipeline::initialize(
 			vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
 				.setBuffer(buffers[EBufferType::eShCoeffs]->buffer(0))
 				.setOffset(0)
-				.setRange(sizeof(float) * 27);
+				.setRange(sizeof(float) * 3 * 9);
 
 			writes = vk::WriteDescriptorSet()
 				.setBufferInfo(bufferInfo)
@@ -152,6 +152,8 @@ void PrtPipeline::initialize(
 				.setDstArrayElement(0)
 				.setDstBinding(0)
 				.setDstSet(sets_[EPassType::eSh][0][0]);
+
+			engine->device().updateDescriptorSets(writes, {});
 		}
 		{
 			vk::DescriptorImageInfo imageInfo = vk::DescriptorImageInfo()
@@ -206,7 +208,7 @@ void PrtPipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t curren
 
 	cb.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipelineLayout_[EPassType::eSh], 0, sets_[EPassType::eSh][0], {});
 
-	cb.dispatch(cubemapSize_ / 8, cubemapSize_ / 8, 6);
+	cb.dispatch(1, 1, 6);
 
 	cb.end();
 

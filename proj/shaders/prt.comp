@@ -1,7 +1,7 @@
 #version 450
 
 
-layout(local_size_x=8, local_size_y=8, local_size_z=1) in;
+layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
 
 layout(set=0, binding=0) buffer ShCoeffs
 {
@@ -13,58 +13,46 @@ layout(set=2, binding=0) uniform sampler clampSampler;
 mat3 evalSH9(vec3 dir);
 vec3 getCubemapDirection(int face, float u, float v);
 
-shared vec3 sShCoeff[CUBEMAP_SIZE][9];
-
 void main()
 {
 	uvec3 gtid = gl_GlobalInvocationID;
 	
+	vec3 coeff[9];
+	
 	int face = int(gtid.z);
-	int x = int(gtid.x);
-	int y = int(gtid.y);
 	
-	float u = float(x) / CUBEMAP_SIZE;
-	float v = float(y) / CUBEMAP_SIZE;
+	float weight = 0.0f;
 	
-	vec3 dir = getCubemapDirection(face, u, v);
-	
-	vec3 color = texture(samplerCube(cubeMap, clampSampler), dir).rgb;
-	
-	mat3 sh = evalSH9(dir);
+	for (int y = 0; y < CUBEMAP_SIZE; y++)
+	{
+		for (int x = 0; x < CUBEMAP_SIZE; x++)
+		{
+			float u = float(x) / CUBEMAP_SIZE * 2.0f - 1.0f;
+			float v = float(y) / CUBEMAP_SIZE * 2.0f - 1.0f;
+			
+			vec3 dir = getCubemapDirection(face, u, v);
+			
+			vec3 color = texture(samplerCube(cubeMap, clampSampler), dir).rgb;
+			
+			mat3 sh = evalSH9(dir);
+			
+			for (int i = 0; i < 9; i++)
+			{
+				int ix = i % 3;
+				int iy = i / 3;
+				float b = sh[iy][ix];
+				
+				coeff[i] += color * b;
+				
+				weight += b;
+			}
+		}
+	}
 	
 	for (int i = 0; i < 9; i++)
 	{
-		int ix = i % 3;
-		int iy = i / 3;
-		float b = sh[iy][ix];
-		
-		sShCoeff[x][i] = color * b;
-	}
-	
-	memoryBarrierShared();
-	barrier();
-	
-	if (x == 0 && y == 0)
-	{
-		vec3 groupSh[9];
-		for (int i = 0; i < 9; i++)
-		{
-			groupSh[i] = vec3(0.0f);
-		}
-		
-		
-		for (int i = 0; i < 9; i++)
-		{
-			for (int j = 0; j < CUBEMAP_SIZE; j++)
-			{
-				groupSh[i] += sShCoeff[j][i];
-			}
-		}
-		
-		for (int i = 0; i < 9; i++)
-		{
-			sb0.shCoeffs[i] += groupSh[i];
-		}
+		coeff[i] *= (3.141592f * 4.0f) / (CUBEMAP_SIZE * CUBEMAP_SIZE);
+		sb0.shCoeffs[i] = coeff[i];
 	}
 }
 

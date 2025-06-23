@@ -27,7 +27,7 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 		sceneInfoBuffer_.setupUniformBuffer(engine, sizeof(glm::mat4) * 4, engine->swapchainImageCount());
 		skyboxInfoBuffer_.setupUniformBuffer(engine, sizeof(glm::mat4) * 4, engine->swapchainImageCount());
 		vsmWeightsBuffer_.setupUniformBuffer(engine, sizeof(glm::mat4) * 4, engine->swapchainImageCount());
-		shCoeffBufffer_.setupStorageBuffer(engine, sizeof(float) * 27, 1, nullptr);
+		shCoeffBufffer_.setupStorageBuffer(engine, sizeof(glm::vec3) * 9, 1, nullptr);
 
 		albedoBuffer_.setupRenderTarget2d(
 			engine,
@@ -86,15 +86,15 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 			(uint32_t)kShadowMapHeight,
 			vk::Format::eR32G32Sfloat);
 
-		sponzaModel_.loadMesh(engine, "models/sponza/gltf/", "sponza.gltf");
-		//sponzaModel_.loadMesh(engine, "models/ABeautifulGame/gltf/", "ABeautifulGame.gltf");
+		//sponzaModel_.loadMesh(engine, "models/sponza/gltf/", "sponza.gltf");
+		sponzaModel_.loadMesh(engine, "models/ABeautifulGame/gltf/", "ABeautifulGame.gltf");
 		sphereModel_.loadMesh(engine, "models/", "sphere.gltf");
 
 		cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/industrial_sunset_puresky_1k.hdr");
 
 		imgui_.setup(engine, hwnd);
 		shadowPass_.setup(
-			engine,
+			engine,	
 			{
 				&shadowMap_,
 				&shadowDepthBuffer_,
@@ -434,7 +434,13 @@ void Application::update(RenderEngine* engine, uint32_t currentFrameIndex)
 
 	cameraVp.view = testscene_.camera().viewMatrix();
 	cameraVp.proj = testscene_.camera().projMatrix();
-	cameraVp.world = glm::scale(glm::identity<glm::mat4>(), glm::vec3(scale, scale, scale));
+
+	static float x;
+
+	if (Input::Instance().Push(DIK_Z))
+		x += Timer::instance().deltaTime();
+
+	cameraVp.world = glm::rotate(glm::identity<glm::mat4>(), x, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::scale(glm::identity<glm::mat4>(), glm::vec3(scale, scale, scale));
 
 	shadowVp.view = testscene_.shadowCaster().viewMatrix();
 	shadowVp.proj = testscene_.shadowCaster().projMatrix();

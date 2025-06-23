@@ -98,7 +98,7 @@ void main()
 	
 	specular = textureLod(samplerCube(cubeMap, clampSampler), R, roughness * float(miplevel)).rgb;
 	
-	vec3 diffuse = irradiance * albedo.rgb;
+	vec3 diffuse = evaluateSH9(N) * albedo.rgb;
 	
 	vec3 color = (kD * albedo.rgb / PI + specular) * vec3(4.0f) * NdotL * shadow;
     
@@ -108,7 +108,7 @@ void main()
 	
     vec3 ambient = max((kD * diffuse), vec3(0.0f));
 	
-	color = evaluateSH9(N);
+	color = ambient + specular * kS;
 	
 	outResult = vec4(color, 1.0f);
 }
@@ -186,9 +186,9 @@ float sampleShadowMap(vec3 worldPosition, float NdotL, vec2 offset)
 
 vec3 evaluateSH9(vec3 normal)
 {
-	float x = normal.x;
+	float x = normal.z;
 	float y = normal.y;
-	float z = normal.z;
+	float z = -normal.x;
 
 	float basis[9];
 	basis[0] = 0.282095;
