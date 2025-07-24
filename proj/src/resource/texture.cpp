@@ -1,6 +1,7 @@
 ﻿
 #define STB_IMAGE_IMPLEMENTATION
 
+#define DEBUG_CUBEMAP
 
 #include <functional>
 
@@ -532,6 +533,13 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 				tempMap[0][(y * width + x) * 4 + 2] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 2] + pixels[(ddy * srcWidth + ddx) * 4 + 2]) * 0.5f;
 				tempMap[0][(y * width + x) * 4 + 3] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 3] + pixels[(ddy * srcWidth + ddx) * 4 + 3]) * 0.5f;
 
+#if defined(DEBUG_CUBEMAP)
+				tempMap[0][(y * width + x) * 4 + 0] = 1.0f;
+				tempMap[0][(y * width + x) * 4 + 1] = 0.0f;
+				tempMap[0][(y * width + x) * 4 + 2] = 0.0f;
+				tempMap[0][(y * width + x) * 4 + 3] = 1.0f;
+#endif
+
 				//memcpy_s(&tempMap[0][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
 			}
 		}
@@ -563,6 +571,13 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 				tempMap[1][(y * width + x) * 4 + 1] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 1] + pixels[(ddy * srcWidth + ddx) * 4 + 1]) * 0.5f;
 				tempMap[1][(y * width + x) * 4 + 2] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 2] + pixels[(ddy * srcWidth + ddx) * 4 + 2]) * 0.5f;
 				tempMap[1][(y * width + x) * 4 + 3] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 3] + pixels[(ddy * srcWidth + ddx) * 4 + 3]) * 0.5f;
+
+#if defined(DEBUG_CUBEMAP)
+				tempMap[1][(y * width + x) * 4 + 0] = 0.0f;
+				tempMap[1][(y * width + x) * 4 + 1] = 1.0f;
+				tempMap[1][(y * width + x) * 4 + 2] = 0.0f;
+				tempMap[1][(y * width + x) * 4 + 3] = 1.0f;
+#endif
 
 				//memcpy_s(&tempMap[1][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
 			}
@@ -596,6 +611,13 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 				tempMap[2][(y * width + x) * 4 + 2] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 2] + pixels[(ddy * srcWidth + ddx) * 4 + 2]) * 0.5f;
 				tempMap[2][(y * width + x) * 4 + 3] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 3] + pixels[(ddy * srcWidth + ddx) * 4 + 3]) * 0.5f;
 
+#if defined(DEBUG_CUBEMAP)
+				tempMap[2][(y * width + x) * 4 + 0] = 0.0f;
+				tempMap[2][(y * width + x) * 4 + 1] = 0.0f;
+				tempMap[2][(y * width + x) * 4 + 2] = 1.0f;
+				tempMap[2][(y * width + x) * 4 + 3] = 1.0f;
+#endif
+
 				//memcpy_s(&tempMap[2][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
 			}
 		}
@@ -628,6 +650,12 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 				tempMap[3][(y * width + x) * 4 + 2] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 2] + pixels[(ddy * srcWidth + ddx) * 4 + 2]) * 0.5f;
 				tempMap[3][(y * width + x) * 4 + 3] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 3] + pixels[(ddy * srcWidth + ddx) * 4 + 3]) * 0.5f;
 
+#if defined(DEBUG_CUBEMAP)
+				tempMap[3][(y * width + x) * 4 + 0] = 0.0f;
+				tempMap[3][(y * width + x) * 4 + 1] = 1.0f;
+				tempMap[3][(y * width + x) * 4 + 2] = 1.0f;
+				tempMap[3][(y * width + x) * 4 + 3] = 1.0f;
+#endif
 				//memcpy_s(&tempMap[3][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
 			}
 		}
@@ -660,6 +688,12 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 				tempMap[4][(y * width + x) * 4 + 2] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 2] + pixels[(ddy * srcWidth + ddx) * 4 + 2]) * 0.5f;
 				tempMap[4][(y * width + x) * 4 + 3] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 3] + pixels[(ddy * srcWidth + ddx) * 4 + 3]) * 0.5f;
 
+#if defined(DEBUG_CUBEMAP)
+				tempMap[4][(y * width + x) * 4 + 0] = 1.0f;
+				tempMap[4][(y * width + x) * 4 + 1] = 1.0f;
+				tempMap[4][(y * width + x) * 4 + 2] = 0.0f;
+				tempMap[4][(y * width + x) * 4 + 3] = 1.0f;
+#endif
 				//memcpy_s(&tempMap[4][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
 			}
 		}
@@ -691,7 +725,13 @@ void Texture::setupResourceCubemap(RenderEngine* engine, const char* filename)
 				tempMap[5][(y * width + x) * 4 + 1] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 1] + pixels[(ddy * srcWidth + ddx) * 4 + 1]) * 0.5f;
 				tempMap[5][(y * width + x) * 4 + 2] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 2] + pixels[(ddy * srcWidth + ddx) * 4 + 2]) * 0.5f;
 				tempMap[5][(y * width + x) * 4 + 3] = (pixels[(sampledY * srcWidth + sampledX) * 4 + 3] + pixels[(ddy * srcWidth + ddx) * 4 + 3]) * 0.5f;
-				//memcpy_s(&tempMap[5][(y * width + x) * 4], sizeof(float) * 4, &pixels[(sampledY * srcWidth + sampledX) * 4], sizeof(float) * 4);
+
+#if defined(DEBUG_CUBEMAP)
+				tempMap[5][(y * width + x) * 4 + 0] = 1.0f;
+				tempMap[5][(y * width + x) * 4 + 1] = 0.0f;
+				tempMap[5][(y * width + x) * 4 + 2] = 1.0f;
+				tempMap[5][(y * width + x) * 4 + 3] = 1.0f;
+#endif
 			}
 		}
 	}

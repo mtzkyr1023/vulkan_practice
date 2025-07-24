@@ -22,5 +22,9 @@ void main()
 
 	color = clamp(num / denom, vec3(0.0f), vec3(1.0f));
 	
+	//color = color / (vec3(1.0f) + color);
+	//color = pow(color, vec3(1.0f / 2.2f));
+
+	
 	outResult = vec4(color, 1.0f);
 }

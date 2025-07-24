@@ -208,7 +208,7 @@ void PrtPipeline::render(RenderEngine* engine, RenderPass* pass, uint32_t curren
 
 	cb.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipelineLayout_[EPassType::eSh], 0, sets_[EPassType::eSh][0], {});
 
-	cb.dispatch(1, 1, 6);
+	cb.dispatch(1, 1, 1);
 
 	cb.end();
 

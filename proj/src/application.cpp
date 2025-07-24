@@ -86,8 +86,8 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 			(uint32_t)kShadowMapHeight,
 			vk::Format::eR32G32Sfloat);
 
-		//sponzaModel_.loadMesh(engine, "models/sponza/gltf/", "sponza.gltf");
-		sponzaModel_.loadMesh(engine, "models/ABeautifulGame/gltf/", "ABeautifulGame.gltf");
+		sponzaModel_.loadMesh(engine, "models/sponza/gltf/", "sponza.gltf");
+		//sponzaModel_.loadMesh(engine, "models/ABeautifulGame/gltf/", "ABeautifulGame.gltf");
 		sphereModel_.loadMesh(engine, "models/", "sphere.gltf");
 
 		cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/industrial_sunset_puresky_1k.hdr");

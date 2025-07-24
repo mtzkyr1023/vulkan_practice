@@ -59,7 +59,7 @@ void main()
 	vec3 V = normalize(ub1.cameraPosition.xyz - worldPosition.xyz);
 	vec3 R = reflect(-V, N);
 	
-	float roughness = roughMetalVelocity.x;
+	float roughness = roughMetalVelocity.y;
 	float metalic = roughMetalVelocity.y;
 	
 	vec3 F0 = vec3(0.01f);
@@ -98,7 +98,7 @@ void main()
 	
 	specular = textureLod(samplerCube(cubeMap, clampSampler), R, roughness * float(miplevel)).rgb;
 	
-	vec3 diffuse = evaluateSH9(N) * albedo.rgb;
+	vec3 diffuse = albedo.rgb * evaluateSH9(N);
 	
 	vec3 color = (kD * albedo.rgb / PI + specular) * vec3(4.0f) * NdotL * shadow;
     
@@ -108,7 +108,7 @@ void main()
 	
     vec3 ambient = max((kD * diffuse), vec3(0.0f));
 	
-	color = ambient + specular * kS;
+	color = ambient + kS * evaluateSH9(R);
 	
 	outResult = vec4(color, 1.0f);
 }
@@ -186,9 +186,9 @@ float sampleShadowMap(vec3 worldPosition, float NdotL, vec2 offset)
 
 vec3 evaluateSH9(vec3 normal)
 {
-	float x = normal.z;
+	float x = normal.x;
 	float y = normal.y;
-	float z = -normal.x;
+	float z = normal.z;
 
 	float basis[9];
 	basis[0] = 0.282095;
