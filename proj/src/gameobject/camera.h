@@ -72,6 +72,8 @@ public:
 	bool& isFps() { return isFps_; }
 	bool& isOrtho() { return isOrtho_; }
 
+	const glm::vec3 position();
+
 protected:
 	glm::mat4 viewMatrix_;
 	glm::mat4 projMatrix_;

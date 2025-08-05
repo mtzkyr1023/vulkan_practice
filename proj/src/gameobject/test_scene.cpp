@@ -22,6 +22,7 @@ void TestScene::initialize(RenderEngine* engine)
 	shadowCaster_.isOrtho() = true;
 	shadowCaster_.width() = (float)kShadowMapWidth * 4;
 	shadowCaster_.height() = (float)kShadowMapHeight * 4;
+	camera_.isFps() = false;
 
 	camera_.aspect() = (float)kScreenWidth / (float)kScreenHeight;
 	shadowCaster_.transform().position() = bgMesh_->mesh().center() * 0.25f;
@@ -54,6 +55,8 @@ void TestScene::update(float deltaTime)
 	{
 		camera_.transform().position() -= camera_.transform().up() * 50.0f * deltaTime;
 	}
+	camera_.range() -= Input::Instance().GetWheelAmout() * 500.0f * deltaTime;
+
 
 	camera_.transform().rotation() *=
 		glm::rotate(glm::identity<glm::quat>(), Input::Instance().GetMoveYRightPushed() * deltaTime * -2.0f, camera_.transform().right()) *

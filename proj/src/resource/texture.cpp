@@ -1,7 +1,7 @@
 ﻿
 #define STB_IMAGE_IMPLEMENTATION
 
-#define DEBUG_CUBEMAP
+//#define DEBUG_CUBEMAP
 
 #include <functional>
 
@@ -214,6 +214,16 @@ void Texture::setupResource2d(RenderEngine* engine, const char* filename)
 			if (pixels != nullptr)
 			{
 				memcpy_s(mappedMemory, alignment, pixels, alignment);
+			}
+			else
+			{
+				for (int i = 0; i < 16; i++)
+				{
+					mappedMemory[i * 4 + 0] = 128;
+					mappedMemory[i * 4 + 1] = 128;
+					mappedMemory[i * 4 + 2] = 255;
+					mappedMemory[i * 4 + 3] = 255;
+				}
 			}
 		}
 

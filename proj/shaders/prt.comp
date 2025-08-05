@@ -41,7 +41,8 @@ void main()
 				vec3 dir = getCubemapDirection(face, u, v);
 			
 				vec3 color = texture(samplerCube(cubeMap, clampSampler), dir).rgb;
-			
+				color = color / (color + vec3(1.0f));
+				color = pow(color, vec3(1.0f / 2.2f));
 			
 				for (int i = 0; i < 9; i++)
 				{
@@ -57,7 +58,7 @@ void main()
 
 	for (int i = 0; i < 9; i++)
 	{
-		coeff[i] *= (3.141592f) / (CUBEMAP_SIZE * CUBEMAP_SIZE);
+		coeff[i] *= (4.0f * 3.141592f) / (CUBEMAP_SIZE * CUBEMAP_SIZE * 6);
 		sb0.shCoeffs[i] = coeff[i];
 	}
 }

@@ -86,11 +86,17 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 			(uint32_t)kShadowMapHeight,
 			vk::Format::eR32G32Sfloat);
 
-		sponzaModel_.loadMesh(engine, "models/sponza/gltf/", "sponza.gltf");
+		//sponzaModel_.loadMesh(engine, "models/sponza/gltf/", "sponza.gltf");
+		//sponzaModel_.loadMesh(engine, "models/Lantern/gltf/", "Lantern.gltf");
+		//sponzaModel_.loadMesh(engine, "models/Duck/gltf/", "duck.gltf");
+		//sponzaModel_.loadMesh(engine, "models/Cube/gltf/", "Cube.gltf");
+		sponzaModel_.loadMesh(engine, "models/bunny/", "bunny.obj");
 		//sponzaModel_.loadMesh(engine, "models/ABeautifulGame/gltf/", "ABeautifulGame.gltf");
 		sphereModel_.loadMesh(engine, "models/", "sphere.gltf");
-
-		cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/industrial_sunset_puresky_1k.hdr");
+		
+		cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/kloofendal_38d_partly_cloudy_1k.hdr");
+		//cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/industrial_sunset_puresky_1k.hdr");
+		//cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/syferfontein_1d_clear_1k.hdr");
 
 		imgui_.setup(engine, hwnd);
 		shadowPass_.setup(
@@ -450,7 +456,7 @@ void Application::update(RenderEngine* engine, uint32_t currentFrameIndex)
 	camerainvVp.proj = glm::inverse(cameraVp.proj);
 
 	sceneInfo.lightVec = glm::vec4(testscene_.shadowCaster().transform().forward() * -1.0f, 0.0f);
-	sceneInfo.cameraPos = glm::vec4(testscene_.camera().transform().position(), 0.0f);
+	sceneInfo.cameraPos = glm::vec4(testscene_.camera().position(), 0.0f);
 	sceneInfo.sceneInfo = glm::vec4((float)kScreenWidth, (float)kScreenHeight, testscene_.camera().nearZ(), testscene_.camera().farZ());
 
 	skyboxVp.world = glm::scale(glm::identity<glm::mat4>(), glm::vec3(10000.0f));

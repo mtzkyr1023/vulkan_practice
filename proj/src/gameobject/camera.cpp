@@ -73,3 +73,8 @@ void Camera::update(float deltaTime) {
 		projMatrix_[3][3] = 0.0f;
 	}
 }
+
+const glm::vec3 Camera::position()
+{
+	return transform_.position() - transform_.forward() * range_;
+}

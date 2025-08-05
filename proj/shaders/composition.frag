@@ -98,7 +98,9 @@ void main()
 	
 	specular = textureLod(samplerCube(cubeMap, clampSampler), R, roughness * float(miplevel)).rgb;
 	
-	vec3 diffuse = albedo.rgb * evaluateSH9(N);
+	vec3 sh = evaluateSH9(N);
+
+	vec3 diffuse = albedo.rgb * sh;
 	
 	vec3 color = (kD * albedo.rgb / PI + specular) * vec3(4.0f) * NdotL * shadow;
     
@@ -108,9 +110,9 @@ void main()
 	
     vec3 ambient = max((kD * diffuse), vec3(0.0f));
 	
-	color = ambient + kS * evaluateSH9(R);
+	color = ambient + kS * specular;
 	
-	outResult = vec4(color, 1.0f);
+	outResult = vec4(sh, 1.0f);
 }
 
 
@@ -205,7 +207,7 @@ vec3 evaluateSH9(vec3 normal)
 	for (int i = 0; i < 9; ++i)
 		result += sb0.shCoeffs[i] * basis[i];
 
-	return result;
+	return max(result, vec3(0.0f));
 }
 
 

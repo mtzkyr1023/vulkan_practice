@@ -5,7 +5,6 @@
 
 void Scene::initialize(RenderEngine* engine)
 {
-
 }
 
 void Scene::cleanup(RenderEngine* engine)
