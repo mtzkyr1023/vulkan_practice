@@ -25,7 +25,7 @@ layout(set=2, binding=1) uniform textureCube cubeMap;
 layout(set=3, binding=0) uniform sampler clampSampler;
 layout(set=4, binding=0) buffer ShCoeff
 {
-	vec3 shCoeffs[9];
+	vec4 shCoeffs[16];
 } sb0;
 
 layout(location=0) out vec4 outResult;
@@ -39,6 +39,7 @@ float geometrySchlickGGX(float NdotV, float roughness);
 float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 float sampleShadowMap(vec3 worldPosition, float NdotL, vec2 offset);
 vec3 evaluateSH9(vec3 normal);
+vec3 sampleRadiance(vec3 normal);
 
 void main()
 {
@@ -94,7 +95,6 @@ void main()
 	shadow = sampleShadowMap(worldPosition.xyz, NdotL, vec2(0.0f, 0.0f));
 	
 	int miplevel = textureQueryLevels(samplerCube(cubeMap, clampSampler));
-	vec3 irradiance = textureLod(samplerCube(cubeMap, clampSampler), N, 1.0f * float(miplevel)).rgb;
 	
 	specular = textureLod(samplerCube(cubeMap, clampSampler), R, roughness * float(miplevel)).rgb;
 	
@@ -205,9 +205,21 @@ vec3 evaluateSH9(vec3 normal)
 
 	vec3 result = vec3(0.0);
 	for (int i = 0; i < 9; ++i)
-		result += sb0.shCoeffs[i] * basis[i];
+	{
+		result += sb0.shCoeffs[i].rgb * basis[i];
+	}
 
-	return max(result, vec3(0.0f));
+	result = max(result, vec3(0.0f));
+	
+
+	return result;
 }
 
 
+
+vec3 sampleRadiance(vec3 N)
+{
+	vec3 irradiance = vec3(0.0f);
+	
+	return irradiance;
+}

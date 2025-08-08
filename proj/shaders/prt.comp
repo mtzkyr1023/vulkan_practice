@@ -5,17 +5,27 @@ layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
 
 layout(set=0, binding=0) buffer ShCoeffs
 {
-	vec3 shCoeffs[9];
+	vec4 shCoeffs[16];
 } sb0;
 layout(set=1, binding=0) uniform textureCube cubeMap;
 layout(set=2, binding=0) uniform sampler clampSampler;
 
 float evalSH9(vec3 dir, int index);
 vec3 getCubemapDirection(int face, float u, float v);
-float texelSolidAngle(float u, float v);
+float texelSolidAngle(vec3 dir);
 float atan2(in float y, in float x)
 {
     return x == 0.0 ? sign(y)*3.141592f/2 : atan(y, x);
+}
+
+vec3 ACESFilm(vec3 x)
+{
+	const float a = 2.51;
+	const float b = 0.03;
+	const float c = 2.43;
+	const float d = 0.59;
+	const float e = 0.14;
+	return clamp((x*(a*x + b)) / (x*(c*x + d) + e), 0.0, 1.0);
 }
 
 void main()
@@ -38,17 +48,17 @@ void main()
 				float u = float(x) / CUBEMAP_SIZE * 2.0f - 1.0f;
 				float v = float(y) / CUBEMAP_SIZE * 2.0f - 1.0f;
 			
-				vec3 dir = getCubemapDirection(face, u, v);
+				vec3 dir = normalize(getCubemapDirection(face, u, v));
 			
 				vec3 color = texture(samplerCube(cubeMap, clampSampler), dir).rgb;
-				color = color / (color + vec3(1.0f));
-				color = pow(color, vec3(1.0f / 2.2f));
+				
+				//color = ACESFilm(color);
 			
 				for (int i = 0; i < 9; i++)
 				{
 					float sh = evalSH9(dir, i);
 			
-					float b = sh;
+					float b = sh * texelSolidAngle(getCubemapDirection(face, u, v));
 				
 					coeff[i] += color * b;
 				}
@@ -58,8 +68,8 @@ void main()
 
 	for (int i = 0; i < 9; i++)
 	{
-		coeff[i] *= (4.0f * 3.141592f) / (CUBEMAP_SIZE * CUBEMAP_SIZE * 6);
-		sb0.shCoeffs[i] = coeff[i];
+		//coeff[i] *= 1.0f / (CUBEMAP_SIZE * CUBEMAP_SIZE * 1);
+		sb0.shCoeffs[i] = vec4(coeff[i], 0.0f);
 	}
 }
 
@@ -89,24 +99,20 @@ float evalSH9(vec3 dir, int index)
 
 vec3 getCubemapDirection(int face, float u, float v)
 {
-	if (face == 0) return normalize(vec3(1, -v, -u));
-	if (face == 1) return normalize(vec3(-1, -v, u));
-	if (face == 2) return normalize(vec3(u, 1, v));
-	if (face == 3) return normalize(vec3(u, -1, -v));
-	if (face == 4) return normalize(vec3(u, -v, 1));
-	if (face == 5) return normalize(vec3(-u, -v, -1));
+	if (face == 0) return (vec3(1, -v, -u));
+	if (face == 1) return (vec3(-1, -v, u));
+	if (face == 2) return (vec3(u, 1, v));
+	if (face == 3) return (vec3(u, -1, -v));
+	if (face == 4) return (vec3(u, -v, 1));
+	if (face == 5) return (vec3(-u, -v, -1));
 	
 	return vec3(0.0f);
 }
 
-float texelSolidAngle(float u, float v)
+float texelSolidAngle(vec3 dir)
 {
-	float invSize = 1.0f / CUBEMAP_SIZE;
-	float aU = u;
-	float aV = v;
-	float bU = u + invSize;
-	float bV = v + invSize;
+	float length2 = dot(dir, dir);
 
-	float angle = atan2(aU * bV - bU * aV, aU * aU + aV * aV + 1.0f + bU * bU + bV * bV + 1.0f);
-	return 4.0f * angle;
+	return (4.0f * 3.141592f) / (6.0f * CUBEMAP_SIZE * CUBEMAP_SIZE) * pow(length2, -1.5f);
 }
+

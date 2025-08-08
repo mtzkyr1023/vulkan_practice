@@ -27,7 +27,7 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 		sceneInfoBuffer_.setupUniformBuffer(engine, sizeof(glm::mat4) * 4, engine->swapchainImageCount());
 		skyboxInfoBuffer_.setupUniformBuffer(engine, sizeof(glm::mat4) * 4, engine->swapchainImageCount());
 		vsmWeightsBuffer_.setupUniformBuffer(engine, sizeof(glm::mat4) * 4, engine->swapchainImageCount());
-		shCoeffBufffer_.setupStorageBuffer(engine, sizeof(glm::vec3) * 9, 1, nullptr);
+		shCoeffBufffer_.setupStorageBuffer(engine, sizeof(glm::vec4) * 16, 1, nullptr);
 
 		albedoBuffer_.setupRenderTarget2d(
 			engine,
@@ -91,13 +91,17 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 		//sponzaModel_.loadMesh(engine, "models/Duck/gltf/", "duck.gltf");
 		//sponzaModel_.loadMesh(engine, "models/Cube/gltf/", "Cube.gltf");
 		sponzaModel_.loadMesh(engine, "models/bunny/", "bunny.obj");
+		//sponzaModel_.loadMesh(engine, "models/DragonAttenuation/gltf/", "DragonAttenuation.gltf");
 		//sponzaModel_.loadMesh(engine, "models/ABeautifulGame/gltf/", "ABeautifulGame.gltf");
 		sphereModel_.loadMesh(engine, "models/", "sphere.gltf");
 		
 		cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/kloofendal_38d_partly_cloudy_1k.hdr");
 		//cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/industrial_sunset_puresky_1k.hdr");
+		//cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/brown_photostudio_01_1k.hdr");
+		//cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/studio_small_08_1k.hdr");
 		//cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/syferfontein_1d_clear_1k.hdr");
-
+		//cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/studio_garden_1k.hdr");
+		
 		imgui_.setup(engine, hwnd);
 		shadowPass_.setup(
 			engine,	

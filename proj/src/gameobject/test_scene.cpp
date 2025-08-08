@@ -55,8 +55,21 @@ void TestScene::update(float deltaTime)
 	{
 		camera_.transform().position() -= camera_.transform().up() * 50.0f * deltaTime;
 	}
-	camera_.range() -= Input::Instance().GetWheelAmout() * 500.0f * deltaTime;
 
+	if (Input::Instance().Trigger(DIK_SPACE))
+	{
+		//if (camera_.isFps())
+		//{
+		//	camera_.transform().position() = camera_.transform().position();
+		//}
+		//else
+		//{
+		//	camera_.transform().position() = camera_.position();
+		//}
+		camera_.isFps() = !camera_.isFps();
+	}
+	camera_.range() -= Input::Instance().GetWheelAmout() * 500.0f * deltaTime;
+	camera_.range() = glm::max(camera_.range(), 0.01f);
 
 	camera_.transform().rotation() *=
 		glm::rotate(glm::identity<glm::quat>(), Input::Instance().GetMoveYRightPushed() * deltaTime * -2.0f, camera_.transform().right()) *

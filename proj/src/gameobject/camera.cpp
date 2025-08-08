@@ -76,5 +76,12 @@ void Camera::update(float deltaTime) {
 
 const glm::vec3 Camera::position()
 {
-	return transform_.position() - transform_.forward() * range_;
+	if (!isFps_)
+	{
+		return transform_.position() - transform_.forward() * range_;
+	}
+	else
+	{
+		return transform_.position();
+	}
 }
