@@ -95,9 +95,9 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 		//sponzaModel_.loadMesh(engine, "models/ABeautifulGame/gltf/", "ABeautifulGame.gltf");
 		sphereModel_.loadMesh(engine, "models/", "sphere.gltf");
 		
-		cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/kloofendal_38d_partly_cloudy_1k.hdr");
+		//cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/kloofendal_38d_partly_cloudy_1k.hdr");
 		//cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/industrial_sunset_puresky_1k.hdr");
-		//cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/brown_photostudio_01_1k.hdr");
+		cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/brown_photostudio_01_1k.hdr");
 		//cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/studio_small_08_1k.hdr");
 		//cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/syferfontein_1d_clear_1k.hdr");
 		//cubemapTexture_.setupResourceCubemap(engine, "textures/cubemaps/studio_garden_1k.hdr");
