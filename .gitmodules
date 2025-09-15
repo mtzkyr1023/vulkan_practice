@@ -16,3 +16,7 @@
 [submodule "SPIRV-Cross"]
 	path = SPIRV-Cross
 	url = https://github.com/KhronosGroup/SPIRV-Cross.git
+[submodule "spir-vcross"]
+	url = https://github.com/KhronosGroup/SPIRV-Cross.git
+[submodule "spirv-cross"]
+	url = https://github.com/KhronosGroup/SPIRV-Cross.git
