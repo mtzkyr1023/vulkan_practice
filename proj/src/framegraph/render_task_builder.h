@@ -3,12 +3,14 @@
 
 #include <string>
 
-namespace framegraph
+namespace fg
 {
 	class RenderTaskBuilder
 	{
 	public:
 		explicit RenderTaskBuilder(class Framegraph* framegraph, class RenderTaskBase* renderTask)
+			: framegraph_(framegraph)
+			, renderTask_(renderTask)
 		{
 
 		}

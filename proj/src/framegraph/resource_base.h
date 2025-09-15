@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace framegraph
+namespace fg
 {
 	class ResourceBase
 	{

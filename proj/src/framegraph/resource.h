@@ -10,7 +10,7 @@
 #include "resource_base.h"
 #include "realize.h"
 
-namespace framegraph
+namespace fg
 {
 	template<typename DescriptionType_, typename ActualType_>
 	class Resource : public ResourceBase

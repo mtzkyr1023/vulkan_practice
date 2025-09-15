@@ -4,7 +4,7 @@
 #include <memory>
 #include <type_traits>
 
-namespace framegraph
+namespace fg
 {
 	template<typename DescriptionType, typename ActualType>
 	struct MisingRealizeImplementation : std::false_type {};

@@ -14,7 +14,7 @@
 #include "render_task_builder.h"
 #include "resource.h"
 
-namespace framegraph
+namespace fg
 {
 	class Framegraph
 	{

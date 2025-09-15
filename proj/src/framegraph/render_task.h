@@ -8,7 +8,7 @@
 
 #include "render_task_base.h"
 
-namespace framegraph
+namespace fg
 {
 	template<typename DataType_>
 	class RenderTask : public RenderTaskBase
