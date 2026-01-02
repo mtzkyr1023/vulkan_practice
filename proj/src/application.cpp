@@ -86,11 +86,11 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 			(uint32_t)kShadowMapHeight,
 			vk::Format::eR32G32Sfloat);
 
-		//sponzaModel_.loadMesh(engine, "models/sponza/gltf/", "sponza.gltf");
+		sponzaModel_.loadMesh(engine, "models/sponza/gltf/", "sponza.gltf");
 		//sponzaModel_.loadMesh(engine, "models/Lantern/gltf/", "Lantern.gltf");
 		//sponzaModel_.loadMesh(engine, "models/Duck/gltf/", "duck.gltf");
 		//sponzaModel_.loadMesh(engine, "models/Cube/gltf/", "Cube.gltf");
-		sponzaModel_.loadMesh(engine, "models/bunny/", "bunny.obj");
+		//sponzaModel_.loadMesh(engine, "models/bunny/", "bunny.obj");
 		//sponzaModel_.loadMesh(engine, "models/DragonAttenuation/gltf/", "DragonAttenuation.gltf");
 		//sponzaModel_.loadMesh(engine, "models/ABeautifulGame/gltf/", "ABeautifulGame.gltf");
 		sphereModel_.loadMesh(engine, "models/", "sphere.gltf");
@@ -236,17 +236,17 @@ void Application::initialize(RenderEngine* engine, HWND hwnd) {
 				glm::vec3 padding;
 			};
 			float sigma = 0.5f;
-			Weights weights[kBlurSize];
+			Weights weights[kVSMBlurSize];
 			float total = 0.0f;
 			float d = sigma * sigma;
-			for (int i = 0; i < kBlurSize; i++)
+			for (int i = 0; i < kVSMBlurSize; i++)
 			{
-				float pos = 1.0f + 2.0f * (float)(i - kBlurSize / 2);
+				float pos = 1.0f + 2.0f * (float)(i - kVSMBlurSize / 2);
 				weights[i].weight = glm::exp(-0.5f * pos * pos / d);
 				total += weights[i].weight;
 			}
 
-			for (int i = 0; i < kBlurSize; i++)
+			for (int i = 0; i < kVSMBlurSize; i++)
 			{
 				weights[i].weight /= total;
 			}

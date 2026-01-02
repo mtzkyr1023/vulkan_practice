@@ -203,7 +203,7 @@ void ShadowBlurPipeline::initialize(
 			vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
 				.setBuffer(buffers[EBufferType::eGaussWeights]->buffer(0))
 				.setOffset(0)
-				.setRange(sizeof(float) * kBlurSize * 4);
+				.setRange(sizeof(float) * kVSMBlurSize * 4);
 
 			writes = vk::WriteDescriptorSet()
 				.setBufferInfo(bufferInfo)
@@ -263,7 +263,7 @@ void ShadowBlurPipeline::initialize(
 			vk::DescriptorBufferInfo bufferInfo = vk::DescriptorBufferInfo()
 				.setBuffer(buffers[EBufferType::eGaussWeights]->buffer(0))
 				.setOffset(0)
-				.setRange(sizeof(float) * kBlurSize * 4);
+				.setRange(sizeof(float) * kVSMBlurSize * 4);
 
 			writes = vk::WriteDescriptorSet()
 				.setBufferInfo(bufferInfo)
