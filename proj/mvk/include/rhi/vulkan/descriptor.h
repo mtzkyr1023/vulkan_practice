@@ -1,0 +1,8 @@
+﻿
+#ifndef _MVK_RHI_VULKAN_DESCRIPTOR_
+#define _MVK_RHI_VULKAN_DESCRIPTOR_
+
+
+
+
+#endif

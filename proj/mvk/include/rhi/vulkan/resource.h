@@ -1,0 +1,7 @@
+﻿
+#ifndef _MVK_RHI_VULKAN_RESOURCE_
+#define _MVK_RHI_VULKAN_RESOURCE_
+
+
+
+#endif

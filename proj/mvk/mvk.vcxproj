@@ -140,9 +140,37 @@
     <ClInclude Include="include\boot\boot_application.h" />
     <ClInclude Include="include\boot\win\boot_application.win.h" />
     <ClInclude Include="include\gfx\annonymas.h" />
+    <ClInclude Include="include\rhi\constant_buffer_pool.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
     <ClInclude Include="include\rhi\rhi.h" />
+    <ClInclude Include="include\rhi\rhi_object_garbage_collect.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
     <ClInclude Include="include\rhi\rhi_ref.h" />
+    <ClInclude Include="include\rhi\vulkan\command_list.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="include\rhi\vulkan\descriptor.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
     <ClInclude Include="include\rhi\vulkan\device.vulkan.h" />
+    <ClInclude Include="include\rhi\vulkan\resource.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="include\rhi\vulkan\rhi_util.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="include\rhi\vulkan\shader.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
     <ClInclude Include="include\text\hash_text.h" />
     <ClInclude Include="include\thread\job_thread.h" />
     <ClInclude Include="include\thread\lockfree_stack_intrusive.h" />
