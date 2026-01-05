@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -110,7 +110,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>C:\work\vulkan_practice\proj\mvk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -141,7 +141,16 @@
     <ClInclude Include="include\boot\win\boot_application.win.h" />
     <ClInclude Include="include\gfx\annonymas.h" />
     <ClInclude Include="include\rhi\rhi.h" />
+    <ClInclude Include="include\rhi\rhi_ref.h" />
+    <ClInclude Include="include\rhi\vulkan\device.vulkan.h" />
     <ClInclude Include="include\text\hash_text.h" />
+    <ClInclude Include="include\thread\job_thread.h" />
+    <ClInclude Include="include\thread\lockfree_stack_intrusive.h" />
+    <ClInclude Include="include\thread\lockfree_stack_static_size.h" />
+    <ClInclude Include="include\thread\lockfree_stack_fixed_size.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
     <ClInclude Include="include\util\noncopyable.h" />
     <ClInclude Include="include\util\types.h" />
     <ClInclude Include="pch.h" />
