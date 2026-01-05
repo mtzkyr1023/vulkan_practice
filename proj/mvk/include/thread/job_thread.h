@@ -1,4 +1,4 @@
-
+﻿
 #ifndef _MVK_THREAD_JOBTHREAD_
 #define _MVK_THREAD_JOBTREAED_
 

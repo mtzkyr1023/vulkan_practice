@@ -1,4 +1,4 @@
-
+﻿
 #ifndef _MVK_THREAD_LOCK_FREE_STACK_INTRUSIVE_
 #define _MVK_THREAD_LOCK_FREE_STACK_INTRUSIVE_
 
@@ -56,6 +56,29 @@ namespace mvk
 					{
 						break;
 					}
+				}
+			}
+
+			T* pop()
+			{
+				T* old = nullptr;
+				while (true)
+				{
+					old = top_.load(std::memory_order_relaxed);
+					if (old == nullptr)
+						break;
+
+					T* next = old->next.load(std::memory_order_relaxed);
+					if (top_.compare_exchange_weak(
+						old,
+						next,
+						std::memory_order_relaxed,
+						std::memory_order_relaxed))
+					{
+						break;
+					}
+
+					return old;
 				}
 			}
 

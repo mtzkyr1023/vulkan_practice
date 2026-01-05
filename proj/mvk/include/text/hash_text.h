@@ -1,4 +1,4 @@
-
+﻿
 #ifndef _MVK_TEXT_HASHTEXT_
 #define _MVK_TEXT_HASHTEXT_
 

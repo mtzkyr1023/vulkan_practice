@@ -1,4 +1,4 @@
-
+﻿
 #ifndef _MVK_RHI_VULKAN_DEVICE_
 #define _MVK_RHI_VULKAN_DEVICE_
 
@@ -20,7 +20,6 @@ namespace mvk
 	{
 
 
-		class DeviceDep :
 	}
 }
 
