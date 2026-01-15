@@ -150,24 +150,24 @@
       </SubType>
     </ClInclude>
     <ClInclude Include="include\rhi\rhi_ref.h" />
-    <ClInclude Include="include\rhi\vulkan\command_list.h">
+    <ClInclude Include="include\rhi\vulkan\command_list.vulkan.h">
       <SubType>
       </SubType>
     </ClInclude>
-    <ClInclude Include="include\rhi\vulkan\descriptor.h">
+    <ClInclude Include="include\rhi\vulkan\descriptor.vulkan.h">
       <SubType>
       </SubType>
     </ClInclude>
     <ClInclude Include="include\rhi\vulkan\device.vulkan.h" />
-    <ClInclude Include="include\rhi\vulkan\resource.h">
+    <ClInclude Include="include\rhi\vulkan\resource.vulkan.h">
       <SubType>
       </SubType>
     </ClInclude>
-    <ClInclude Include="include\rhi\vulkan\rhi_util.h">
+    <ClInclude Include="include\rhi\vulkan\rhi_util.vulkan.h">
       <SubType>
       </SubType>
     </ClInclude>
-    <ClInclude Include="include\rhi\vulkan\shader.h">
+    <ClInclude Include="include\rhi\vulkan\shader.vulkan.h">
       <SubType>
       </SubType>
     </ClInclude>

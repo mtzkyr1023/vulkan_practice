@@ -28,7 +28,7 @@ namespace mvk
 		};
 
 		static const u32 k_cbv_table_size = 16;
-		static const u32 k_src_table_size = 16;
+		static const u32 k_srv_table_size = 16;
 		static const u32 k_uav_table_size = 16;
 		static const u32 k_sampler_table_size = 16;
 
@@ -38,7 +38,7 @@ namespace mvk
 			const u32 type_size[] =
 			{
 				k_cbv_table_size,
-				k_src_table_size,
+				k_srv_table_size,
 				k_uav_table_size,
 				k_sampler_table_size,
 
