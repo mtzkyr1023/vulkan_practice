@@ -3,6 +3,8 @@
 #define _MVK_RHI_VULKAN_SHADER_
 
 
+#include <memory>
+
 #include "rhi/rhi.h"
 #include "rhi/rhi_ref.h"
 #include "rhi/rhi_object_garbage_collect.h"
@@ -15,7 +17,13 @@ namespace mvk
 {
 	namespace rhi
 	{
-		class DeviceDep;
+		class CommandListBaseDep;
+		class DescriptorSetDep;
+
+		class ConstantBufferViewDep;
+		class ShaderResourceViewDep;
+		class UnorderedAccessViewDep;
+		class SamplerDep;
 
 		class ShaderDep
 		{
@@ -206,6 +214,87 @@ namespace mvk
 			std::unordered_map<ResourceViewName, Slot> slot_map_;
 
 			DescriptorTableBindInfo resource_table_;
+		};
+
+
+		class PipelineStateBaseDep : public RhiObjectBase
+		{
+		public:
+			PipelineStateBaseDep() = default;
+			virtual ~PipelineStateBaseDep()
+			{
+			}
+
+			const PipelineResourceViewLayoutDep* getPipelineResourceViewLayout() const
+			{
+				return view_layout_.get();
+			}
+
+		public:
+			void setView(DescriptorSetDep* p_desc_set, const char* name, const ConstantBufferViewDep* p_view);
+			void setView(DescriptorSetDep* p_desc_set, const char* name, const ShaderResourceViewDep* p_view);
+			void setView(DescriptorSetDep* p_desc_set, const char* name, const UnorderedAccessViewDep* p_view);
+			void setView(DescriptorSetDep* p_desc_set, const char* name, const SamplerDep* p_view);
+
+			const ShaderStageMask& getPipelineShaderStageMask() const
+			{
+				assert(stage_mask_ != 0);
+				return stage_mask_;
+			}
+
+			const bool isContainShaderStage(EShaderStage stage)
+			{
+				return rhi::isContainShaderStage(getPipelineShaderStageMask(), stage);
+			}
+
+		public:
+			vk::UniquePipeline getVulkanPipelineState();
+			vk::UniqueDescriptorSetLayout getVulkanDescriptorSetLayout();
+			const vk::UniquePipeline getVulkanPielineState() const;
+			const vk::UniqueDescriptorSetLayout getVulkanDescriptorSetLayout() const;
+
+		protected:
+			void SetPipelineContainShaderStage(const ShaderStageMask& stage_mask)
+			{
+				stage_mask_ = stage_mask;
+			}
+
+		protected:
+			std::shared_ptr<PipelineResourceViewLayoutDep> view_layout_;
+			ShaderStageMask stage_mask_;
+			vk::UniquePipeline pso_;
+		};
+
+		class GraphicsPipelineStateDep : public PipelineStateBaseDep
+		{
+		public:
+			struct Desc
+			{
+				const ShaderDep* vs = nullptr;
+				const ShaderDep* ps = nullptr;
+				const ShaderDep* gs = nullptr;
+
+				BlendState blend_state = {};
+				types::u32 sample_mask = ~(types::u32(0));
+				RasterizerState rasterize_state = {};
+				DepthStencilState depth_stencil_state = {};
+
+				InputLayout input_layout = {};
+				EPrimitiveTopologyType primitive_topology_type = EPrimitiveTopologyType::Triangle;
+
+				types::u32 num_render_targets = 0;
+				EResourceFormat render_target_formats[8] = {};
+				EResourceFormat depth_stencil_format = EResourceFormat::Format_UNKNOWN;
+				SampleDesc sample_desc = {};
+				types::u32 node_mask = 0;
+			};
+
+
+			GraphicsPipelineStateDep();
+			~GraphicsPipelineStateDep();
+
+			bool initialize(DeviceDep* p_device, const Desc& desc);
+			void finalize();
 		};
 	}
 }
